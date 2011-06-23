@@ -1,0 +1,18 @@
+AC_INIT([scruffy], [0.1])
+
+PKG_CHECK_MODULES(THIS, [mycpp-1.0, mylang-1.0, pargen-1.0])
+AC_SUBST(THIS_CFLAGS)
+AC_SUBST(THIS_LIBS)
+
+AM_INIT_AUTOMAKE
+
+AC_PROG_CC
+AC_PROG_CXX
+AC_LIBTOOL_WIN32_DLL
+AC_PROG_LIBTOOL
+
+AC_CONFIG_FILES([Makefile
+		 scruffy/Makefile
+		 scruffy-1.0.pc])
+AC_OUTPUT
+
