@@ -115,7 +115,7 @@ PpItemStreamTokenStream::getNextToken (Ref<SimplyReferenced> *ret_user_obj,
     cur_pmark = pp_stream->getPosition ();
 
     if (ret_user_obj) {
-	errf->print ("--- PpItemStreamTokenStream::GetNextToken: saving pp_item 0x").printHex ((UintPtr) pp_item.ptr()).pendl ();
+//	errf->print ("--- PpItemStreamTokenStream::GetNextToken: saving pp_item 0x").printHex ((UintPtr) pp_item.ptr()).pendl ();
 	*ret_user_obj = pp_item;
     }
 
