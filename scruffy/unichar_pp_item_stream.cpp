@@ -128,6 +128,9 @@ UnicharPpItemStream::getNextItem (Ref<PpItem> *pp_item)
 	 .pendl ();
   );
 
+    if (pp_token_type == PpTokenStringLiteral)
+	pp_token_str = unescapeStringLiteral (pp_token_str);
+
     if (pp_item != NULL)
 	*pp_item = grab (new PpToken (pp_token_type, pp_token_str, NULL, fpos));
 

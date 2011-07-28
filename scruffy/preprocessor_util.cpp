@@ -2727,6 +2727,99 @@ spellPpItems (List< Ref<PpItem> > *pp_items)
     return spelling;
 }
 
+Ref<String>
+unescapeStringLiteral (String * const mt_nonnull str)
+{
+    Size from_pos = 0;
+    Size to_pos = 0;
+
+    Size const from_len = str->getLength ();
+    Byte * const data = (Byte*) str->getData ();
+
+    /* Substituting only simple escape sequences for now.
+     *     \' \" \? \\
+     *     \a \b \f \n \r \t \v
+     *
+     * See 'ses_chars' and 'num_ses_chars' above.
+     */
+    bool escaped = false;
+    while (from_pos < from_len) {
+	if (!escaped) {
+	    if (data [from_pos] == 0x5c /* \ */) {
+		escaped = true;
+	    } else {
+		data [to_pos] = data [from_pos];
+		++to_pos;
+	    }
+	} else {
+	    switch (data [from_pos]) {
+		case '\'':
+		    data [to_pos] = 0x27 /* \', ' */;
+		    ++to_pos;
+		    break;
+		case '\"':
+		    data [to_pos] = 0x22 /* \", " */;
+		    ++to_pos;
+		    break;
+		case '?':
+		    data [to_pos] = 0x3f /* \?, ? */;
+		    ++to_pos;
+		    break;
+		case '\\':
+		    data [to_pos] = 0x5c /* \\, \ */;
+		    ++to_pos;
+		    break;
+		case 'a':
+		    data [to_pos] = 0x07 /* \a, BEL */;
+		    ++to_pos;
+		    break;
+		case 'b':
+		    data [to_pos] = 0x08 /* \b, BS */;
+		    ++to_pos;
+		    break;
+		case 'f':
+		    data [to_pos] = 0x0c /* \f, FF*/;
+		    ++to_pos;
+		    break;
+		case 'n':
+		    data [to_pos] = 0x0a /* \n, LF */;
+		    ++to_pos;
+		    break;
+		case 'r':
+		    data [to_pos] = 0x0d /* \r, CR */;
+		    ++to_pos;
+		    break;
+		case 't':
+		    data [to_pos] = 0x09 /* \t, HT */;
+		    ++to_pos;
+		    break;
+		case 'v':
+		    data [to_pos] = 0x0b /* \v, VT */;
+		    ++to_pos;
+		    break;
+		default:
+		  // Not an escape sequence.
+		    data [to_pos] = 0x5c /* \ */;
+		    data [to_pos + 1] = data [from_pos];
+		    to_pos += 2;
+		    break;
+	    }
+
+	    escaped = false;
+	}
+
+	++from_pos;
+    }
+
+    if (escaped) {
+	data [to_pos] = 0x5c /* \ */;
+	++to_pos;
+    }
+
+    str->setLength (to_pos);
+    return str;
+}
+
 // TODO What about boolean literals?
 Ref<Token>
 ppTokenToToken (PpToken *pp_token)

@@ -142,6 +142,8 @@ Ref<String> spellPpItems (List< Ref<PpItem> > *pp_items)
 				 throw (InternalException,
 					ParsingException);
 
+Ref<String> unescapeStringLiteral (String * mt_nonnull string);
+
 Ref<Token> ppTokenToToken (PpToken *pp_token)
 			   throw (ParsingException);
 
