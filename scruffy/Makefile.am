@@ -22,10 +22,10 @@ BUILT_SOURCES = cpp_pargen.h	\
 CLEANFILES = $(PARGEN_GENFILES)
 
 cpp_pargen.h: cpp.par
-	pargen --module-name scruffy --header-name cpp $^
+	pargen --module-name scruffy --header-name cpp cpp.par
 
 cpp_cond_pargen.h: cpp_cond.par
-	pargen --module-name scruffy --header-name cpp_cond $^
+	pargen --module-name scruffy --header-name cpp_cond cpp_cond.par
 
 scruffy_private_headers =		\
 	cpp.h				\
