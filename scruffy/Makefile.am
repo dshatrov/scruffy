@@ -1,12 +1,10 @@
 COMMON_CFLAGS =				\
-	-D_POSIX_C_SOURCE=199309L	\
-	-D_XOPEN_SOURCE=600		\
 	-ggdb				\
 	-Wno-long-long -Wall -Wextra	\
 	-rdynamic			\
 	$(THIS_CFLAGS)
 
-AM_CFLAGS = -std=c99 $(COMMON_CFLAGS)
+AM_CFLAGS = -std=gnu99 $(COMMON_CFLAGS)
 AM_CXXFLAGS = -std=gnu++0x $(COMMON_CFLAGS) #-fno-default-inline -fkeep-inline-functions
 
 INCLUDES = -I$(top_srcdir)
