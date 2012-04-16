@@ -189,7 +189,7 @@ Name::toString () const
 	    Ref<TemplateArgument> &template_argument = arg_iter.next ();
 
 	    switch (template_argument->getType ()) {
-		case TemplateArgument::_Type: {
+		case TemplateArgument::t_Type: {
 		    TemplateArgument_Type * const template_argument__type =
 			    static_cast <TemplateArgument_Type*> (template_argument.ptr ());
 
@@ -197,7 +197,7 @@ Name::toString () const
 
 		    str = String::forPrintTask (Pr << str << "TYPE");
 		} break;
-		case TemplateArgument::_Expression: {
+		case TemplateArgument::t_Expression: {
 		    TemplateArgument_Expression * const template_argument__expression =
 			    static_cast <TemplateArgument_Expression*> (template_argument.ptr ());
 
@@ -257,8 +257,8 @@ TypeDesc::toString () const
 bool
 Member::isObject () const
 {
-    if (getType () == _Object ||
-	getType () == _DependentObject)
+    if (getType () == t_Object ||
+	getType () == t_DependentObject)
     {
 	return true;
     }
@@ -269,7 +269,7 @@ Member::isObject () const
 bool
 Member::isClass () const
 {
-    if (getType () == _Type) {
+    if (getType () == t_Type) {
 	// TODO
     }
 
@@ -281,15 +281,15 @@ Member::isClass () const
 bool
 Member::isTemplate () const
 {
-    if (getType () == Member::_Function) {
+    if (getType () == Member::t_Function) {
 	Member_Function const * const member__function =
 		static_cast <Member_Function const *> (this);
 
 	if (member__function->function->is_template)
 	    return true;
     } else
-    if (getType () == Member::_Object) {
-	if (type_desc->getType () == TypeDesc::_Class) {
+    if (getType () == Member::t_Object) {
+	if (type_desc->getType () == TypeDesc::t_Class) {
 	    TypeDesc_Class const * const type_desc__class =
 		    static_cast <TypeDesc_Class const *> (type_desc.ptr ());
 

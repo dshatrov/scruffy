@@ -78,13 +78,13 @@ got_prefix_type_atoms (List< Ref<Cpp::TypeDesc::TypeAtom> >::Element const *cur_
     while (cur_el != NULL) {
 	Ref<Cpp::TypeDesc::TypeAtom> const &type_atom = cur_el->data;
 	switch (type_atom->type_atom_type) {
-	    case Cpp::TypeDesc::TypeAtom::_Pointer: {
+	    case Cpp::TypeDesc::TypeAtom::t_Pointer: {
 		return true;
 	    } break;
-	    case Cpp::TypeDesc::TypeAtom::_PointerToMember: {
+	    case Cpp::TypeDesc::TypeAtom::t_PointerToMember: {
 		return true;
 	    } break;
-	    case Cpp::TypeDesc::TypeAtom::_Array: {
+	    case Cpp::TypeDesc::TypeAtom::t_Array: {
 	    } break;
 	    default:
 		abortIfReached ();
@@ -101,13 +101,13 @@ static bool
 type_atom_is_prefix (Cpp::TypeDesc::TypeAtom const &type_atom)
 {
     switch (type_atom.type_atom_type) {
-	case Cpp::TypeDesc::TypeAtom::_Pointer: {
+	case Cpp::TypeDesc::TypeAtom::t_Pointer: {
 	    return true;
 	} break;
-	case Cpp::TypeDesc::TypeAtom::_PointerToMember: {
+	case Cpp::TypeDesc::TypeAtom::t_PointerToMember: {
 	    return true;
 	} break;
-	case Cpp::TypeDesc::TypeAtom::_Array: {
+	case Cpp::TypeDesc::TypeAtom::t_Array: {
 	    return false;
 	} break;
 	default:
@@ -123,7 +123,7 @@ void
 DumpContext::dumpTypeSpecifier (TypeDesc * const type_desc)
 {
     switch (type_desc->getType ()) {
-	case Cpp::TypeDesc::_BasicType: {
+	case Cpp::TypeDesc::t_BasicType: {
 	    Cpp::TypeDesc_BasicType const * const type_desc__basic_type =
 		    static_cast <TypeDesc_BasicType const *> (type_desc);
 
@@ -202,7 +202,7 @@ DumpContext::dumpTypeSpecifier (TypeDesc * const type_desc)
 		    abortIfReached ();
 	    }
 	} break;
-	case TypeDesc::_Class: {
+	case TypeDesc::t_Class: {
 	    TypeDesc_Class const * const type_desc__class =
 		    static_cast <TypeDesc_Class const *> (type_desc);
 
@@ -218,7 +218,7 @@ DumpContext::dumpTypeSpecifier (TypeDesc * const type_desc)
 	    file->out ("classTS ");
 	    abortIfReached ();
 	} break;
-	case TypeDesc::_Enum: {
+	case TypeDesc::t_Enum: {
 	    TypeDesc_Enum const * const type_desc__enum =
 		    static_cast <TypeDesc_Enum const *> (type_desc);
 
@@ -283,14 +283,14 @@ DumpContext::dumpInitializer (Initializer * const initializer)
 	return;
 
     switch (initializer->getType ()) {
-	case Initializer::_Assignment: {
+	case Initializer::t_Assignment: {
 	    Initializer_Assignment const * const initializer__assignment =
 		    static_cast <Initializer_Assignment const *> (initializer);
 
 	    file->out (" = ");
 	    dumpExpression (initializer__assignment->expression);
 	} break;
-	case Initializer::_Constructor: {
+	case Initializer::t_Constructor: {
 	    Initializer_Constructor const * const initializer__constructor =
 		    static_cast <Initializer_Constructor const *> (initializer);
 
@@ -309,7 +309,7 @@ DumpContext::dumpInitializer (Initializer * const initializer)
 
 	    file->out (")");
 	} break;
-	case Initializer::_InitializerList: {
+	case Initializer::t_InitializerList: {
 	    Initializer_InitializerList const * const initializer__initializer_list =
 		    static_cast <Initializer_InitializerList const *> (initializer);
 
@@ -361,13 +361,13 @@ DumpContext::dumpName (Cpp::Name * const name)
 	    Ref<Cpp::TemplateArgument> &template_argument = arg_iter.next ();
 
 	    switch (template_argument->getType ()) {
-		case Cpp::TemplateArgument::_Type: {
+		case Cpp::TemplateArgument::t_Type: {
 		    Cpp::TemplateArgument_Type * const template_argument__type =
 			    static_cast <TemplateArgument_Type*> (template_argument.ptr ());
 
 		    dumpDeclaration (template_argument__type->type_desc, NULL);
 		} break;
-		case Cpp::TemplateArgument::_Expression: {
+		case Cpp::TemplateArgument::t_Expression: {
 		    TemplateArgument_Expression * const template_argument__expression =
 			    static_cast <TemplateArgument_Expression*> (template_argument.ptr ());
 
@@ -397,10 +397,10 @@ DumpContext::dumpMember (Cpp::Member      const &member,
 	List< Ref<Member> > const *template_parameters = NULL;
 
 	switch (member.getType ()) {
-	    case Member::_Type: {
+	    case Member::t_Type: {
 		TypeDesc const * const type_desc = member.type_desc;
 		switch (type_desc->getType ()) {
-		    case TypeDesc::_Class: {
+		    case TypeDesc::t_Class: {
 			TypeDesc_Class const * const type_desc__class =
 				static_cast <TypeDesc_Class const *> (type_desc);
 
@@ -414,7 +414,7 @@ DumpContext::dumpMember (Cpp::Member      const &member,
 			;
 		}
 	    } break;
-	    case Member::_Function: {
+	    case Member::t_Function: {
 		Member_Function const * const member__function =
 			static_cast <Member_Function const *> (&member);
 		Function const * const function = member__function->function;
@@ -422,7 +422,7 @@ DumpContext::dumpMember (Cpp::Member      const &member,
 		is_template = function->is_template;
 		template_parameters = &function->template_parameters;
 	    } break;
-	    case Member::_TypeTemplateParameter: {
+	    case Member::t_TypeTemplateParameter: {
 		Member_TypeTemplateParameter const * const member__type_template_parameter =
 			static_cast <Member_TypeTemplateParameter const *> (&member);
 
@@ -452,7 +452,7 @@ DumpContext::dumpMember (Cpp::Member      const &member,
 	}
     }
 
-    if (member.getType () == Member::_TypeTemplateParameter) {
+    if (member.getType () == Member::t_TypeTemplateParameter) {
 //	Member_TypeTemplateParameter const * const member__type_template_parameter =
 //		static_cast <Member_TypeTemplateParameter const *> (&member);
 
@@ -461,7 +461,7 @@ DumpContext::dumpMember (Cpp::Member      const &member,
 	return;
     }
 
-    if (member.getType () == Member::_Type) {
+    if (member.getType () == Member::t_Type) {
 	Member_Type const * const member__type = static_cast <Member_Type const *> (&member);
 	if (member__type->is_typedef)
 	    file->out ("typedef ");
@@ -518,7 +518,7 @@ DumpContext::dumpClassNestedNameSpecifier (Container * const dst_container)
 
 	Container *cur_container = dst_container;
 	while (cur_container != NULL) {
-	    if (cur_container->getType () != Container::_Class)
+	    if (cur_container->getType () != Container::t_Class)
 		break;
 
 	    class_containers.append (static_cast <Class*> (cur_container));
@@ -576,7 +576,7 @@ DumpContext::do_dumpDeclaration (Cpp::TypeDesc        * const type_desc,
 //	dumpTypeSpecifier (type_desc);
 
 	switch (type_desc->getType ()) {
-	    case Cpp::TypeDesc::_BasicType: {
+	    case Cpp::TypeDesc::t_BasicType: {
 		Cpp::TypeDesc_BasicType const * const type_desc__basic_type =
 			static_cast <TypeDesc_BasicType const *> (type_desc);
 
@@ -655,7 +655,7 @@ DumpContext::do_dumpDeclaration (Cpp::TypeDesc        * const type_desc,
 			abortIfReached ();
 		}
 	    } break;
-	    case TypeDesc::_Class: {
+	    case TypeDesc::t_Class: {
 		TypeDesc_Class const * const type_desc__class =
 			static_cast <TypeDesc_Class const *> (type_desc);
 
@@ -677,7 +677,7 @@ DumpContext::do_dumpDeclaration (Cpp::TypeDesc        * const type_desc,
 #endif
 		file->out ("class ").out (type_desc__class->class_->name->toString ());
 	    } break;
-	    case TypeDesc::_Enum: {
+	    case TypeDesc::t_Enum: {
 		TypeDesc_Enum const * const type_desc__enum =
 			static_cast <TypeDesc_Enum const *> (type_desc);
 
@@ -690,7 +690,7 @@ DumpContext::do_dumpDeclaration (Cpp::TypeDesc        * const type_desc,
 		// TODO
 		file->out ("ENUM ");
 	    } break;
-	    case Cpp::TypeDesc::_Function: {
+	    case Cpp::TypeDesc::t_Function: {
 		Cpp::TypeDesc_Function * const type_desc__function =
 			static_cast <TypeDesc_Function*> (type_desc);
 
@@ -715,7 +715,7 @@ DumpContext::do_dumpDeclaration (Cpp::TypeDesc        * const type_desc,
     } // if (!after_ret_type)
 
     bool need_braces = false;
-    if (type_desc->getType () == Cpp::TypeDesc::_Function) {
+    if (type_desc->getType () == Cpp::TypeDesc::t_Function) {
 	if (!type_desc->type_atoms.isEmpty ()) {
 	    if (type_atom_is_prefix (*type_desc->type_atoms.last->data))
 		need_braces = true;
@@ -744,7 +744,7 @@ DumpContext::do_dumpDeclaration (Cpp::TypeDesc        * const type_desc,
 	    Ref<Cpp::TypeDesc::TypeAtom> const &type_atom = cur_el->data;
 
 	    switch (type_atom->type_atom_type) {
-		case Cpp::TypeDesc::TypeAtom::_Pointer: {
+		case Cpp::TypeDesc::TypeAtom::t_Pointer: {
 		    TypeDesc::TypeAtom_Pointer * const type_atom__pointer =
 			    static_cast <TypeDesc::TypeAtom_Pointer*> (type_atom.ptr ());
 
@@ -756,12 +756,12 @@ DumpContext::do_dumpDeclaration (Cpp::TypeDesc        * const type_desc,
 		    if (type_atom__pointer->is_volatile)
 			file->out (" volatile ");
 		} break;
-		case Cpp::TypeDesc::TypeAtom::_PointerToMember: {
+		case Cpp::TypeDesc::TypeAtom::t_PointerToMember: {
 		    // TODO const/volatile?
 
 		    file->out (" .* ");
 		} break;
-		case Cpp::TypeDesc::TypeAtom::_Array: {
+		case Cpp::TypeDesc::TypeAtom::t_Array: {
 		    do_dumpDeclaration (type_desc,
 					nested_name_container,
 					name,
@@ -820,7 +820,7 @@ DumpContext::do_dumpDeclaration (Cpp::TypeDesc        * const type_desc,
     if (need_braces)
 	file->out (")");
 
-    if (type_desc->getType () == Cpp::TypeDesc::_Function) {
+    if (type_desc->getType () == Cpp::TypeDesc::t_Function) {
 	Cpp::TypeDesc_Function const * const type_desc__function =
 		static_cast <TypeDesc_Function const *> (type_desc);
 
@@ -842,19 +842,19 @@ DumpContext::do_dumpDeclaration (Cpp::TypeDesc        * const type_desc,
 				 nest_level);
 
 		switch (function_parameter->getType ()) {
-		    case Cpp::Member::_Object: {
+		    case Cpp::Member::t_Object: {
 			Cpp::Member_Object const * const member__object =
 				static_cast <Cpp::Member_Object const *> (function_parameter.ptr ());
 
 			dumpInitializer (member__object->initializer);
 		    } break;
-		    case Cpp::Member::_DependentObject: {
+		    case Cpp::Member::t_DependentObject: {
 			Cpp::Member_DependentObject const * const member__dependent_object =
 				static_cast <Cpp::Member_DependentObject const *> (function_parameter.ptr ());
 
 			dumpInitializer (member__dependent_object->initializer);
 		    } break;
-		    case Cpp::Member::_Function: {
+		    case Cpp::Member::t_Function: {
 			// TODO inlines, virtuals, explicits (explicits ?)
 		    } break;
 		    default:
@@ -882,13 +882,13 @@ DumpContext::dumpObject (Member  * const member,
     dumpDeclaration (member->type_desc, member->name, nest_level);
 
     switch (member->getType ()) {
-	case Cpp::Member::_Object: {
+	case Cpp::Member::t_Object: {
 	    Cpp::Member_Object const * const member__object =
 		    static_cast <Cpp::Member_Object const *> (member);
 
 	    dumpInitializer (member__object->initializer);
 	} break;
-	case Cpp::Member::_DependentObject: {
+	case Cpp::Member::t_DependentObject: {
 	    Cpp::Member_DependentObject const * const member__dependent_object =
 		    static_cast <Cpp::Member_DependentObject const *> (member);
 
@@ -899,7 +899,7 @@ DumpContext::dumpObject (Member  * const member,
 	    ;
     }
 
-    if (member->getType () == Member::_Function) {
+    if (member->getType () == Member::t_Function) {
 	Member_Function const * const member__function =
 		static_cast <Member_Function const *> (member);
 
@@ -1273,10 +1273,10 @@ DumpContext::dumpStatement (Statement * const statement,
 	return;
 
     switch (statement->getType ()) {
-	case Statement::_Label: {
+	case Statement::t_Label: {
 	    file->print ("Statement_Label\n");
 	} break;
-	case Statement::_Expression: {
+	case Statement::t_Expression: {
 	    Statement_Expression const * const statement__expression =
 		    static_cast <Statement_Expression const *> (statement);
 
@@ -1288,7 +1288,7 @@ DumpContext::dumpStatement (Statement * const statement,
 	    file->out (";");
 	    outNewline ();
 	} break;
-	case Statement::_Compound: {
+	case Statement::t_Compound: {
 	    Statement_Compound const * const statement__compound =
 		    static_cast <Statement_Compound const *> (statement);
 
@@ -1307,7 +1307,7 @@ DumpContext::dumpStatement (Statement * const statement,
 	    file->out ("}");
 	    outNewline ();
 	} break;
-	case Statement::_If: {
+	case Statement::t_If: {
 	    Statement_If const * const statement__if =
 		    static_cast <Statement_If const *> (statement);
 
@@ -1330,10 +1330,10 @@ DumpContext::dumpStatement (Statement * const statement,
 		dumpStatement (statement__if->else_statement, nest_level + 1);
 	    }
 	} break;
-	case Statement::_Switch: {
+	case Statement::t_Switch: {
 	    file->print ("Statement_Switch\n");
 	} break;
-	case Statement::_While: {
+	case Statement::t_While: {
 	    Statement_While const * const statement__while =
 		    static_cast <Statement_While const *> (statement);
 
@@ -1348,7 +1348,7 @@ DumpContext::dumpStatement (Statement * const statement,
 		file->out (";\n");
 	    }
 	} break;
-	case Statement::_DoWhile: {
+	case Statement::t_DoWhile: {
 	    Statement_DoWhile const * const statement__do_while =
 		    static_cast <Statement_DoWhile const *> (statement);
 
@@ -1367,7 +1367,7 @@ DumpContext::dumpStatement (Statement * const statement,
 	    dumpExpression (statement__do_while->condition_expression);
 	    file->out (");\n");
 	} break;
-	case Statement::_For: {
+	case Statement::t_For: {
 	    Statement_For const * const statement__for =
 		    static_cast <Statement_For const *> (statement);
 
@@ -1385,19 +1385,19 @@ DumpContext::dumpStatement (Statement * const statement,
 		file->out (";\n");
 	    }
 	} break;
-	case Statement::_Break: {
+	case Statement::t_Break: {
 	    file->print ("Statement_Break\n");
 	} break;
-	case Statement::_Continue: {
+	case Statement::t_Continue: {
 	    file->print ("Statement_Continue\n");
 	} break;
-	case Statement::_Return: {
+	case Statement::t_Return: {
 	    file->print ("Statement_Return\n");
 	} break;
-	case Statement::_Goto: {
+	case Statement::t_Goto: {
 	    file->print ("Statement_Goto\n");
 	} break;
-	case Statement::_Declaration: {
+	case Statement::t_Declaration: {
 	    Statement_Declaration const * const statement__declaration =
 		    static_cast <Statement_Declaration const *> (statement);
 
@@ -1410,13 +1410,13 @@ DumpContext::dumpStatement (Statement * const statement,
 			     nest_level + 1);
 
 	    switch (statement__declaration->member->getType ()) {
-		case Cpp::Member::_Object: {
+		case Cpp::Member::t_Object: {
 		    Cpp::Member_Object const * const member__object =
 			    static_cast <Cpp::Member_Object const *> (statement__declaration->member.ptr ());
 
 		    dumpInitializer (member__object->initializer);
 		} break;
-		case Cpp::Member::_DependentObject: {
+		case Cpp::Member::t_DependentObject: {
 		    Cpp::Member_DependentObject const * const member__dependent_object =
 			    static_cast <Cpp::Member_DependentObject const *> (statement__declaration->member.ptr ());
 
@@ -1430,7 +1430,7 @@ DumpContext::dumpStatement (Statement * const statement,
 #if 0
 // Deprecated
 	    switch (statement__declaration->declration_desc->getType ()) {
-		case DeclarationDesc::_Object: {
+		case DeclarationDesc::t_Object: {
 		    DeclarationDesc_Object const * const declaration_desc__object =
 			    static_cast <DeclarationDesc_Object const *> (statement__declaration->declaration_desc.ptr ());
 
@@ -1439,7 +1439,7 @@ DumpContext::dumpStatement (Statement * const statement,
 				     declaration_desc__object->declaration_entry->name,
 				     nest_level + 1);
 		} break;
-		case DeclarationDesc::_Type: {
+		case DeclarationDesc::t_Type: {
 		    // TODO
 		    file->out ("TYPE_DECL");
 		} break;
@@ -1449,7 +1449,7 @@ DumpContext::dumpStatement (Statement * const statement,
 	    file->out (";");
 	    outNewline ();
 	} break;
-	case Statement::_Try: {
+	case Statement::t_Try: {
 	    file->print ("Statement_Try\n");
 	} break;
 	default:
@@ -1603,7 +1603,7 @@ namespace {
 	class ContainerState
 	{
 	public:
-	    enum _ContainerState
+	    enum ContainerState_
 	    {
 		None,
 		Defined,
@@ -1611,15 +1611,15 @@ namespace {
 	    };
 
 	private:
-	    _ContainerState value;
+	    ContainerState_ value;
 
 	public:
-	    operator _ContainerState () const
+	    operator ContainerState_ () const
 	    {
 		return value;
 	    }
 
-	    ContainerState (_ContainerState const value)
+	    ContainerState (ContainerState_ const value)
 		: value (value)
 	    {
 	    }
@@ -1632,7 +1632,7 @@ namespace {
 	class ProcessingState
 	{
 	public:
-	    enum _ProcessingState
+	    enum ProcessingState_
 	    {
 		NotStarted,
 		Started,
@@ -1640,15 +1640,15 @@ namespace {
 	    };
 
 	private:
-	    _ProcessingState value;
+	    ProcessingState_ value;
 
 	public:
-	    operator _ProcessingState () const
+	    operator ProcessingState_ () const
 	    {
 		return value;
 	    }
 
-	    ProcessingState (_ProcessingState const value)
+	    ProcessingState (ProcessingState_ const value)
 		: value (value)
 	    {
 	    }
@@ -1805,10 +1805,10 @@ namespace {
 		    PathEntry const &cur_path_entry = *tmp_el.data;
 
 		    switch (cur_path_entry.container->getType ()) {
-			case Container::_Namespace: {
+			case Container::t_Namespace: {
 			    file.out ("}\n");
 			} break;
-			case Container::_Class: {
+			case Container::t_Class: {
 			    abortIfReached ();
 			} break;
 			default:
@@ -1832,7 +1832,7 @@ namespace {
 		    )
 
 		    switch (container->getType ()) {
-			case Container::_Namespace: {
+			case Container::t_Namespace: {
 			    Namespace const * const tmp_namespace =
 				    static_cast <Namespace const *> (container);
 
@@ -1847,7 +1847,7 @@ namespace {
 
 			    file.out ("namespace ").out (tmp_namespace->primary_name).out (" {\n");
 			} break;
-			case Container::_Class: {
+			case Container::t_Class: {
 			    abortIfReached ();
 			} break;
 			default:
@@ -1860,14 +1860,14 @@ namespace {
 	void dumpMemberDependencies (Member const * const member)
 	{
 	    switch (member->getType ()) {
-		case Member::_Type: {
+		case Member::t_Type: {
 		    Member_Type const * const member__type =
 			    static_cast <Member_Type const *> (member);
 
 		    if (member__type->is_typedef) {
 		      // TODO Request type declaration.
 		    } else {
-			if (member->type_desc->getType () == TypeDesc::_Class) {
+			if (member->type_desc->getType () == TypeDesc::t_Class) {
 			    abortIf (!member->type_desc->type_atoms.isEmpty () ||
 				     member->type_desc->is_reference);
 
@@ -1903,8 +1903,8 @@ namespace {
 			}
 		    }
 		} break;
-		case Member::_Object: {
-		    if (member->type_desc->getType () == TypeDesc::_Class) {
+		case Member::t_Object: {
+		    if (member->type_desc->getType () == TypeDesc::t_Class) {
 			if (member->type_desc->type_atoms.isEmpty () &&
 			    !member->type_desc->is_reference)
 			{
@@ -1914,7 +1914,7 @@ namespace {
 			}
 		    }
 		} break;
-		case Member::_Function: {
+		case Member::t_Function: {
 		    // TODO
 		} break;
 		default:
@@ -1979,17 +1979,17 @@ namespace {
 	    )
 
 	    switch (member->getType ()) {
-		case Member::_Type: {
+		case Member::t_Type: {
 		    DEBUG (
-			errf->print (_func_name).print (": Member::_Type").pendl ();
+			errf->print (_func_name).print (": Member::t_Type").pendl ();
 		    )
 
 		    Member_Type const * const member__type =
 			    static_cast <Member_Type const *> (member);
 
 		    if (!member__type->is_typedef &&
-			member->type_desc->getType () == TypeDesc::_Class &&
-			member->type_desc->type_atoms.isEmpty ()          &&
+			member->type_desc->getType () == TypeDesc::t_Class &&
+			member->type_desc->type_atoms.isEmpty ()           &&
 			!member->type_desc->is_reference)
 		    {
 		      // This is a class declaration (at least).
@@ -2018,7 +2018,7 @@ namespace {
 			    abortIf (member->name.isNull ());
 			    if (known_containers.lookup (type_desc__class->class_->getUid ()).isNull ()) {
 #if 0
-				if (container->getType () == Container::_Namespace) {
+				if (container->getType () == Container::t_Namespace) {
 				    Namespace const * const namespace_ =
 					    static_cast <Namespace const *> (container);
 				    enterNamespace (namespace_);
@@ -2033,7 +2033,7 @@ namespace {
 //			file.out (";\n");
 		    }
 		} break;
-		case Member::_Function: {
+		case Member::t_Function: {
 		    Member_Function * const member__function = static_cast <Member_Function*> (member);
 
 		    dump_context.dumpMember (*member__function, 0 /* nest_level */, nested_name_container);
@@ -2193,13 +2193,13 @@ namespace {
 		)
 
 		switch (member->getType ()) {
-		    case Member::_Type: {
+		    case Member::t_Type: {
 			Member_Type const * const member__type =
 				static_cast <Member_Type const *> (member.ptr ());
 
 			if (!member__type->is_typedef &&
-			    member->type_desc->getType () == TypeDesc::_Class &&
-			    member->type_desc->type_atoms.isEmpty ()          &&
+			    member->type_desc->getType () == TypeDesc::t_Class &&
+			    member->type_desc->type_atoms.isEmpty ()           &&
 			    !member->type_desc->is_reference)
 			{
 			  // Dumping bodies of class methods (member functions).
@@ -2214,7 +2214,7 @@ namespace {
 				    Ref<Cpp::Member> &member = iter.next ();
 				    abortIf (member.isNull ());
 
-				    if (member->getType () == Member::_Function) {
+				    if (member->getType () == Member::t_Function) {
 					Member_Function * const member__function =
 						static_cast <Member_Function*> (member.ptr ());
 
@@ -2234,7 +2234,7 @@ namespace {
 			    }
 			}
 		    } break;
-		    case Member::_Function: {
+		    case Member::t_Function: {
 			Member_Function * const member__function =
 				static_cast <Member_Function*> (member.ptr ());
 

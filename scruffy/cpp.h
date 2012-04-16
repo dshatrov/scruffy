@@ -81,8 +81,8 @@ class TemplateArgument : public SimplyReferenced
 {
 public:
     enum Type {
-	_Type,
-	_Expression
+	t_Type,
+	t_Expression
     };
 
 private:
@@ -110,7 +110,7 @@ public:
     Ref<TypeDesc> type_desc;
 
     TemplateArgument_Type ()
-	: TemplateArgument (TemplateArgument::_Type)
+	: TemplateArgument (TemplateArgument::t_Type)
     {
     }
 };
@@ -121,7 +121,7 @@ public:
     Ref<Expression> expression;
 
     TemplateArgument_Expression ()
-	: TemplateArgument (TemplateArgument::_Expression)
+	: TemplateArgument (TemplateArgument::t_Expression)
     {
     }
 };
@@ -312,11 +312,11 @@ class TypeDesc : public Cloneable<TypeDesc>,
 {
 public:
     enum Type {
-	_BasicType,
-	_Class,
-	_Enum,
-	_Function,
-	_Dependent
+	t_BasicType,
+	t_Class,
+	t_Enum,
+	t_Function,
+	t_Dependent
     };
 
     // Used when comparing names (TODO?)
@@ -336,9 +336,9 @@ public:
     {
     public:
 	enum Type {
-	    _Pointer,
-	    _PointerToMember,
-	    _Array
+	    t_Pointer,
+	    t_PointerToMember,
+	    t_Array
 	};
 
 	Type const type_atom_type;
@@ -375,7 +375,7 @@ public:
 	}
 
 	TypeAtom_Pointer ()
-	    : TypeAtom (TypeAtom::_Pointer)
+	    : TypeAtom (TypeAtom::t_Pointer)
 	{
 	}
     };
@@ -395,7 +395,7 @@ public:
 	}
 
 	TypeAtom_PointerToMember ()
-	    : TypeAtom (TypeAtom::_PointerToMember)
+	    : TypeAtom (TypeAtom::t_PointerToMember)
 	{
 	}
     };
@@ -419,7 +419,7 @@ public:
 	}
 
 	TypeAtom_Array ()
-	    : TypeAtom (TypeAtom::_Array)
+	    : TypeAtom (TypeAtom::t_Array)
 	{
 	}
     };
@@ -500,15 +500,15 @@ public:
 
     bool isClass ()
     {
-	return getType () == Cpp::TypeDesc::_Class &&
-	       !is_reference                       &&
+	return getType () == Cpp::TypeDesc::t_Class &&
+	       !is_reference                        &&
 	       type_atoms.isEmpty ();
     }
 
     bool isFunction ()
     {
-	return getType () == Cpp::TypeDesc::_Function &&
-	       !is_reference                          &&
+	return getType () == Cpp::TypeDesc::t_Function &&
+	       !is_reference                           &&
 	       type_atoms.isEmpty ();
     }
 
@@ -549,7 +549,7 @@ public:
     }
 
     TypeDesc_BasicType ()
-	: TypeDesc (TypeDesc::_BasicType),
+	: TypeDesc (TypeDesc::t_BasicType),
 	  basic_type (Void)
     {
     }
@@ -567,7 +567,7 @@ public:
     }
 
     TypeDesc_Class ()
-	: TypeDesc (TypeDesc::_Class)
+	: TypeDesc (TypeDesc::t_Class)
     {
     }
 };
@@ -583,7 +583,7 @@ public:
     }
 
     TypeDesc_Enum ()
-	: TypeDesc (TypeDesc::_Enum)
+	: TypeDesc (TypeDesc::t_Enum)
     {
     }
 };
@@ -607,7 +607,7 @@ public:
     }
 
     TypeDesc_Function ()
-	: TypeDesc (TypeDesc::_Function)
+	: TypeDesc (TypeDesc::t_Function)
     {
     }
 };
@@ -630,7 +630,7 @@ public:
 private:
     TypeDesc_Dependent (TypeDesc_Dependent const &type_desc)
 	: M::Referenced(),
-	  TypeDesc (TypeDesc::_Dependent)
+	  TypeDesc (TypeDesc::t_Dependent)
     {
 	{
 	    List< Ref<ContainerName> >::DataIterator iter (type_desc.nested_name);
@@ -648,7 +648,7 @@ public:
     }
 
     TypeDesc_Dependent ()
-	: TypeDesc (TypeDesc::_Dependent)
+	: TypeDesc (TypeDesc::t_Dependent)
     {
     }
 };
@@ -658,12 +658,12 @@ class Member : public Cloneable<Member>,
 {
 public:
     enum Type {
-	_Type,
-	_Object,
-	_Function,
-	_TypeTemplateParameter,
-	_DependentType,
-	_DependentObject
+	t_Type,
+	t_Object,
+	t_Function,
+	t_TypeTemplateParameter,
+	t_DependentType,
+	t_DependentObject
     };
 
     enum Category {
@@ -743,7 +743,7 @@ public:
     }
 
     Member_Type (Category const category = Generic)
-	: Member (Member::_Type, category)
+	: Member (Member::t_Type, category)
     {
     }
 };
@@ -765,7 +765,7 @@ public:
     }
 
     Member_Object (Category const category = Generic)
-	: Member (Member::_Object, category)
+	: Member (Member::t_Object, category)
     {
     }
 };
@@ -786,7 +786,7 @@ public:
     }
 
     Member_Function (Category const category = Generic)
-	: Member (Member::_Function, category)
+	: Member (Member::t_Function, category)
     {
     }
 };
@@ -820,7 +820,7 @@ public:
     }
 
     Member_TypeTemplateParameter ()
-	: Member (Member::_TypeTemplateParameter, Member::Generic)
+	: Member (Member::t_TypeTemplateParameter, Member::Generic)
     {
     }
 };
@@ -853,7 +853,7 @@ public:
     }
 
     Member_DependentType (Category const category = Generic)
-	: Member (Member::_DependentType, category)
+	: Member (Member::t_DependentType, category)
     {
     }
 };
@@ -889,7 +889,7 @@ public:
     }
 
     Member_DependentObject (Category const category = Generic)
-	: Member (Member::_DependentObject, category)
+	: Member (Member::t_DependentObject, category)
     {
     }
 };
@@ -927,8 +927,8 @@ class Container : public SimplyReferenced,
 {
 public:
     enum Type {
-	_Namespace,
-	_Class
+	t_Namespace,
+	t_Class
     };
 
 private:
@@ -995,7 +995,7 @@ public:
     }
 
     Namespace ()
-	: Container (Container::_Namespace)
+	: Container (Container::t_Namespace)
 //	: parent_namespace (NULL)
     {
     }
@@ -1020,8 +1020,8 @@ class TemplateInstance : public virtual SimplyReferenced
 {
 public:
     enum Type {
-	_Class,
-	_Function
+	t_Class,
+	t_Function
     };
 
 private:
@@ -1053,7 +1053,7 @@ public:
     Ref<Class> class_;
 
     ClassTemplateInstance ()
-	: TemplateInstance (TemplateInstance::_Class)
+	: TemplateInstance (TemplateInstance::t_Class)
     {
     }
 };
@@ -1068,7 +1068,7 @@ public:
     Ref<Function> function;
 
     FunctionTemplateInstance ()
-	: TemplateInstance (TemplateInstance::_Function)
+	: TemplateInstance (TemplateInstance::t_Function)
     {
     }
 };
@@ -1109,7 +1109,7 @@ public:
     List< Ref<ParentEntry> > parents;
 
     Class ()
-	: Container (Container::_Class)
+	: Container (Container::t_Class)
     {
     }
 };
@@ -1137,9 +1137,9 @@ class Initializer : public SimplyReferenced
 {
 public:
     enum Type {
-	_Assignment,
-	_Constructor,
-	_InitializerList
+	t_Assignment,
+	t_Constructor,
+	t_InitializerList
     };
 
 private:
@@ -1163,7 +1163,7 @@ public:
     Ref<Expression> expression;
 
     Initializer_Assignment ()
-	: Initializer (Initializer::_Assignment)
+	: Initializer (Initializer::t_Assignment)
     {
     }
 };
@@ -1174,7 +1174,7 @@ public:
     List< Ref<Expression> > expressions;
 
     Initializer_Constructor ()
-	: Initializer (Initializer::_Constructor)
+	: Initializer (Initializer::t_Constructor)
     {
     }
 };
@@ -1185,7 +1185,7 @@ public:
     List< Ref<Expression> > expressions;
 
     Initializer_InitializerList ()
-	: Initializer (Initializer::_InitializerList)
+	: Initializer (Initializer::t_InitializerList)
     {
     }
 };
@@ -1194,8 +1194,8 @@ class MemInitializer : public SimplyReferenced
 {
 public:
     enum Type {
-	_Base,
-	_Data
+	t_Base,
+	t_Data
     };
 
 private:
@@ -1223,7 +1223,7 @@ class MemInitializer_Base : public MemInitializer
 {
 public:
     MemInitializer_Base ()
-	: MemInitializer (MemInitializer::_Base)
+	: MemInitializer (MemInitializer::t_Base)
     {
     }
 };
@@ -1234,7 +1234,7 @@ public:
 //    Ref<Object> object;
 
     MemInitializer_Data ()
-	: MemInitializer (MemInitializer::_Data)
+	: MemInitializer (MemInitializer::t_Data)
     {
     }
 };
@@ -1264,20 +1264,20 @@ class Statement : public SimplyReferenced
 {
 public:
     enum Type {
-	_Label,
-	_Expression,
-	_Compound,
-	_If,
-	_Switch,
-	_While,
-	_DoWhile,
-	_For,
-	_Break,
-	_Continue,
-	_Return,
-	_Goto,
-	_Declaration,
-	_Try
+	t_Label,
+	t_Expression,
+	t_Compound,
+	t_If,
+	t_Switch,
+	t_While,
+	t_DoWhile,
+	t_For,
+	t_Break,
+	t_Continue,
+	t_Return,
+	t_Goto,
+	t_Declaration,
+	t_Try
     };
 
 private:
@@ -1301,7 +1301,7 @@ public:
     Ref<Expression> expression;
 
     Statement_Expression ()
-	: Statement (Statement::_Expression)
+	: Statement (Statement::t_Expression)
     {
     }
 };
@@ -1312,7 +1312,7 @@ public:
     Ref<String> label;
 
     Statement_Label ()
-	: Statement (Statement::_Label)
+	: Statement (Statement::t_Label)
     {
     }
 };
@@ -1323,7 +1323,7 @@ public:
     List< Ref<Statement> > statements;
 
     Statement_Compound ()
-	: Statement (Statement::_Compound)
+	: Statement (Statement::t_Compound)
     {
     }
 };
@@ -1337,7 +1337,7 @@ public:
     Ref<Statement> else_statement;
 
     Statement_If ()
-	: Statement (Statement::_If)
+	: Statement (Statement::t_If)
     {
     }
 };
@@ -1350,7 +1350,7 @@ public:
     Ref<Expression> condition;
 
     Statement_Switch ()
-	: Statement (Statement::_Switch)
+	: Statement (Statement::t_Switch)
     {
     }
 };
@@ -1362,7 +1362,7 @@ public:
     Ref<Statement> statement;
 
     Statement_While ()
-	: Statement (Statement::_While)
+	: Statement (Statement::t_While)
     {
     }
 };
@@ -1374,7 +1374,7 @@ public:
     Ref<Statement> statement;
 
     Statement_DoWhile ()
-	: Statement (Statement::_DoWhile)
+	: Statement (Statement::t_DoWhile)
     {
     }
 };
@@ -1388,7 +1388,7 @@ public:
     Ref<Statement> statement;
 
     Statement_For ()
-	: Statement (Statement::_For)
+	: Statement (Statement::t_For)
     {
     }
 };
@@ -1397,7 +1397,7 @@ class Statement_Break : public Statement
 {
 public:
     Statement_Break ()
-	: Statement (Statement::_Break)
+	: Statement (Statement::t_Break)
     {
     }
 };
@@ -1406,7 +1406,7 @@ class Statement_Continue : public Statement
 {
 public:
     Statement_Continue ()
-	: Statement (Statement::_Continue)
+	: Statement (Statement::t_Continue)
     {
     }
 };
@@ -1417,7 +1417,7 @@ public:
     Ref<Expression> expression;
 
     Statement_Return ()
-	: Statement (Statement::_Return)
+	: Statement (Statement::t_Return)
     {
     }
 };
@@ -1428,7 +1428,7 @@ public:
     Ref<String> label;
 
     Statement_Goto ()
-	: Statement (Statement::_Goto)
+	: Statement (Statement::t_Goto)
     {
     }
 };
@@ -1446,7 +1446,7 @@ public:
     Ref<Member> member;
 
     Statement_Declaration ()
-	: Statement (Statement::_Declaration)
+	: Statement (Statement::t_Declaration)
     {
     }
 };
@@ -1457,7 +1457,7 @@ public:
     // TODO
 
     Statement_Try ()
-	: Statement (Statement::_Try)
+	: Statement (Statement::t_Try)
     {
     }
 };
@@ -1846,7 +1846,7 @@ public:
     // TODO literal
 
     Expression_Literal ()
-	: Expression (Expression::_Literal)
+	: Expression (Expression::t_Literal)
     {
     }
 };
@@ -1855,7 +1855,7 @@ class Expression_This : public Expression
 {
 public:
     Expression_This ()
-	: Expression (Expression::_This)
+	: Expression (Expression::t_This)
     {
     }
 };
@@ -1871,7 +1871,7 @@ public:
     Ref<Member> member;
 
     Expression_Id ()
-	: Expression (Expression::_Id)
+	: Expression (Expression::t_Id)
     {
     }
 };
@@ -1883,7 +1883,7 @@ public:
     Ref<Expression> subscript;
 
     Expression_Subscripting ()
-	: Expression (Expression::_Subscripting)
+	: Expression (Expression::t_Subscripting)
     {
     }
 };
@@ -1895,7 +1895,7 @@ public:
     List< Ref<Expression> > arguments;
 
     Expression_FunctionCall ()
-	: Expression (Expression::_FunctionCall)
+	: Expression (Expression::t_FunctionCall)
     {
     }
 };
@@ -1908,7 +1908,7 @@ public:
     Ref<Expression> expression;
 
     Expression_TypeConversion ()
-	: Expression (Expression::_TypeConversion)
+	: Expression (Expression::t_TypeConversion)
     {
     }
 };
@@ -1920,7 +1920,7 @@ public:
     Ref<Name> member_name;
 
     Expression_DotMemberAccess ()
-	: Expression (Expression::_DotMemberAccess)
+	: Expression (Expression::t_DotMemberAccess)
     {
     }
 };
@@ -1932,7 +1932,7 @@ public:
     Ref<Name> member_name;
 
     Expression_ArrowMemberAccess ()
-	: Expression (Expression::_ArrowMemberAccess)
+	: Expression (Expression::t_ArrowMemberAccess)
     {
     }
 };
@@ -1943,7 +1943,7 @@ public:
     Ref<Expression> expression;
 
     Expression_PostfixIncrement ()
-	: Expression (Expression::_PostfixIncrement)
+	: Expression (Expression::t_PostfixIncrement)
     {
     }
 };
@@ -1954,7 +1954,7 @@ public:
     Ref<Expression> expression;
 
     Expression_PostfixDecrement ()
-	: Expression (Expression::_PostfixDecrement)
+	: Expression (Expression::t_PostfixDecrement)
     {
     }
 };
@@ -1966,7 +1966,7 @@ public:
     Ref<Expression> expression;
 
     Expression_DynamicCast ()
-	: Expression (Expression::_DynamicCast)
+	: Expression (Expression::t_DynamicCast)
     {
     }
 };
@@ -1978,7 +1978,7 @@ public:
     Ref<Expression> expression;
 
     Expression_StaticCast ()
-	: Expression (Expression::_StaticCast)
+	: Expression (Expression::t_StaticCast)
     {
     }
 };
@@ -1990,7 +1990,7 @@ public:
     Ref<Expression> expression;
 
     Expression_ReinterpretCast ()
-	: Expression (Expression::_ReinterpretCast)
+	: Expression (Expression::t_ReinterpretCast)
     {
     }
 };
@@ -2002,7 +2002,7 @@ public:
     Ref<Expression> expression;
 
     Expression_ConstCast ()
-	: Expression (Expression::_ConstCast)
+	: Expression (Expression::t_ConstCast)
     {
     }
 };
@@ -2013,7 +2013,7 @@ public:
     Ref<Expression> expression;
 
     Expression_TypeidExpression ()
-	: Expression (Expression::_TypeidExpression)
+	: Expression (Expression::t_TypeidExpression)
     {
     }
 };
@@ -2024,7 +2024,7 @@ public:
     Ref<TypeDesc> type_desc;
 
     Expression_TypeidType ()
-	: Expression (Expression::_TypeidType)
+	: Expression (Expression::t_TypeidType)
     {
     }
 };
@@ -2035,7 +2035,7 @@ public:
     Ref<Expression> expression;
 
     Expression_PrefixIncrement ()
-	: Expression (Expression::_PrefixIncrement)
+	: Expression (Expression::t_PrefixIncrement)
     {
     }
 };
@@ -2046,7 +2046,7 @@ public:
     Ref<Expression> expression;
 
     Expression_PrefixDecrement ()
-	: Expression (Expression::_PrefixDecrement)
+	: Expression (Expression::t_PrefixDecrement)
     {
     }
 };
@@ -2057,7 +2057,7 @@ public:
     Ref<Expression> expression;
 
     Expression_SizeofExpression ()
-	: Expression (Expression::_SizeofExpression)
+	: Expression (Expression::t_SizeofExpression)
     {
     }
 };
@@ -2068,7 +2068,7 @@ public:
     Ref<TypeDesc> type_desc;
 
     Expression_SizeofType ()
-	: Expression (Expression::_SizeofType)
+	: Expression (Expression::t_SizeofType)
     {
     }
 };
@@ -2079,7 +2079,7 @@ public:
     Ref<Expression> expression;
 
     Expression_Indirection ()
-	: Expression (Expression::_Indirection)
+	: Expression (Expression::t_Indirection)
     {
     }
 };
@@ -2090,7 +2090,7 @@ public:
     Ref<Expression> expression;
 
     Expression_PointerTo ()
-	: Expression (Expression::_PointerTo)
+	: Expression (Expression::t_PointerTo)
     {
     }
 };
@@ -2101,7 +2101,7 @@ public:
     Ref<Expression> expression;
 
     Expression_UnaryPlus ()
-	: Expression (Expression::_UnaryPlus)
+	: Expression (Expression::t_UnaryPlus)
     {
     }
 };
@@ -2112,7 +2112,7 @@ public:
     Ref<Expression> expression;
 
     Expression_UnaryMinus ()
-	: Expression (Expression::_UnaryMinus)
+	: Expression (Expression::t_UnaryMinus)
     {
     }
 };
@@ -2123,7 +2123,7 @@ public:
     Ref<Expression> expression;
 
     Expression_LogicalNegation ()
-	: Expression (Expression::_LogicalNegation)
+	: Expression (Expression::t_LogicalNegation)
     {
     }
 };
@@ -2134,7 +2134,7 @@ public:
     Ref<Expression> expression;
 
     Expression_OnesComplement ()
-	: Expression (Expression::_OnesComplement)
+	: Expression (Expression::t_OnesComplement)
     {
     }
 };
@@ -2145,7 +2145,7 @@ public:
     // TODO
 
     Expression_Delete ()
-	: Expression (Expression::_Delete)
+	: Expression (Expression::t_Delete)
     {
     }
 };
@@ -2157,7 +2157,7 @@ public:
     Ref<Expression> expression;
 
     Expression_Cast ()
-	: Expression (Expression::_Cast)
+	: Expression (Expression::t_Cast)
     {
     }
 };
@@ -2168,7 +2168,7 @@ public:
     // TODO
 
     Expression_DotPointerToMember ()
-	: Expression (Expression::_DotPointerToMember)
+	: Expression (Expression::t_DotPointerToMember)
     {
     }
 };
@@ -2179,7 +2179,7 @@ public:
     // TODO
 
     Expression_ArrowPointerToMember ()
-	: Expression (Expression::_ArrowPointerToMember)
+	: Expression (Expression::t_ArrowPointerToMember)
     {
     }
 };
@@ -2191,7 +2191,7 @@ public:
     Ref<Expression> right;
 
     Expression_Multiplication ()
-	: Expression (Expression::_Multiplication)
+	: Expression (Expression::t_Multiplication)
     {
     }
 };
@@ -2203,7 +2203,7 @@ public:
     Ref<Expression> right;
 
     Expression_Division ()
-	: Expression (Expression::_Division)
+	: Expression (Expression::t_Division)
     {
     }
 };
@@ -2215,7 +2215,7 @@ public:
     Ref<Expression> right;
 
     Expression_Remainder ()
-	: Expression (Expression::_Remainder)
+	: Expression (Expression::t_Remainder)
     {
     }
 };
@@ -2227,7 +2227,7 @@ public:
     Ref<Expression> right;
 
     Expression_Addition ()
-	: Expression (Expression::_Addition)
+	: Expression (Expression::t_Addition)
     {
     }
 };
@@ -2239,7 +2239,7 @@ public:
     Ref<Expression> right;
 
     Expression_Subtraction ()
-	: Expression (Expression::_Subtraction)
+	: Expression (Expression::t_Subtraction)
     {
     }
 };
@@ -2251,7 +2251,7 @@ public:
     Ref<Expression> right;
 
     Expression_LeftShift ()
-	: Expression (Expression::_LeftShift)
+	: Expression (Expression::t_LeftShift)
     {
     }
 };
@@ -2263,7 +2263,7 @@ public:
     Ref<Expression> right;
 
     Expression_RightShift ()
-	: Expression (Expression::_RightShift)
+	: Expression (Expression::t_RightShift)
     {
     }
 };
@@ -2275,7 +2275,7 @@ public:
     Ref<Expression> right;
 
     Expression_Less ()
-	: Expression (Expression::_Less)
+	: Expression (Expression::t_Less)
     {
     }
 };
@@ -2287,7 +2287,7 @@ public:
     Ref<Expression> right;
 
     Expression_Greater ()
-	: Expression (Expression::_Greater)
+	: Expression (Expression::t_Greater)
     {
     }
 };
@@ -2299,7 +2299,7 @@ public:
     Ref<Expression> right;
 
     Expression_LessOrEqual ()
-	: Expression (Expression::_LessOrEqual)
+	: Expression (Expression::t_LessOrEqual)
     {
     }
 };
@@ -2311,7 +2311,7 @@ public:
     Ref<Expression> right;
 
     Expression_GreaterOrEqual ()
-	: Expression (Expression::_GreaterOrEqual)
+	: Expression (Expression::t_GreaterOrEqual)
     {
     }
 };
@@ -2323,7 +2323,7 @@ public:
     Ref<Expression> right;
 
     Expression_Equal ()
-	: Expression (Expression::_Equal)
+	: Expression (Expression::t_Equal)
     {
     }
 };
@@ -2335,7 +2335,7 @@ public:
     Ref<Expression> right;
 
     Expression_NotEqual ()
-	: Expression (Expression::_NotEqual)
+	: Expression (Expression::t_NotEqual)
     {
     }
 };
@@ -2347,7 +2347,7 @@ public:
     Ref<Expression> right;
 
     Expression_BitwiseAnd ()
-	: Expression (Expression::_BitwiseAnd)
+	: Expression (Expression::t_BitwiseAnd)
     {
     }
 };
@@ -2359,7 +2359,7 @@ public:
     Ref<Expression> right;
 
     Expression_BitwiseExclusiveOr ()
-	: Expression (Expression::_BitwiseExclusiveOr)
+	: Expression (Expression::t_BitwiseExclusiveOr)
     {
     }
 };
@@ -2371,7 +2371,7 @@ public:
     Ref<Expression> right;
 
     Expression_BitwiseInclusiveOr ()
-	: Expression (Expression::_BitwiseInclusiveOr)
+	: Expression (Expression::t_BitwiseInclusiveOr)
     {
     }
 };
@@ -2383,7 +2383,7 @@ public:
     Ref<Expression> right;
 
     Expression_LogicalAnd ()
-	: Expression (Expression::_LogicalAnd)
+	: Expression (Expression::t_LogicalAnd)
     {
     }
 };
@@ -2395,7 +2395,7 @@ public:
     Ref<Expression> right;
 
     Expression_LogicalOr ()
-	: Expression (Expression::_LogicalOr)
+	: Expression (Expression::t_LogicalOr)
     {
     }
 };
@@ -2406,7 +2406,7 @@ public:
     // TODO
 
     Expression_Conditional ()
-	: Expression (Expression::_Conditional)
+	: Expression (Expression::t_Conditional)
     {
     }
 };
@@ -2418,7 +2418,7 @@ public:
     Ref<Expression> right;
 
     Expression_Assignment ()
-	: Expression (Expression::_Assignment)
+	: Expression (Expression::t_Assignment)
     {
     }
 };
@@ -2430,7 +2430,7 @@ public:
     Ref<Expression> right;
 
     Expression_Assignment_Multiplication ()
-	: Expression (Expression::_Assignment_Multiplication)
+	: Expression (Expression::t_Assignment_Multiplication)
     {
     }
 };
@@ -2442,7 +2442,7 @@ public:
     Ref<Expression> right;
 
     Expression_Assignment_Division ()
-	: Expression (Expression::_Assignment_Division)
+	: Expression (Expression::t_Assignment_Division)
     {
     }
 };
@@ -2454,7 +2454,7 @@ public:
     Ref<Expression> right;
 
     Expression_Assignment_Remainder ()
-	: Expression (Expression::_Assignment_Remainder)
+	: Expression (Expression::t_Assignment_Remainder)
     {
     }
 };
@@ -2466,7 +2466,7 @@ public:
     Ref<Expression> right;
 
     Expression_Assignment_Addition ()
-	: Expression (Expression::_Assignment_Addition)
+	: Expression (Expression::t_Assignment_Addition)
     {
     }
 };
@@ -2478,7 +2478,7 @@ public:
     Ref<Expression> right;
 
     Expression_Assignment_Subtraction ()
-	: Expression (Expression::_Assignment_Subtraction)
+	: Expression (Expression::t_Assignment_Subtraction)
     {
     }
 };
@@ -2490,7 +2490,7 @@ public:
     Ref<Expression> right;
 
     Expression_Assignment_RightShift ()
-	: Expression (Expression::_Assignment_RightShift)
+	: Expression (Expression::t_Assignment_RightShift)
     {
     }
 };
@@ -2502,7 +2502,7 @@ public:
     Ref<Expression> right;
 
     Expression_Assignment_LeftShift ()
-	: Expression (Expression::_Assignment_LeftShift)
+	: Expression (Expression::t_Assignment_LeftShift)
     {
     }
 };
@@ -2514,7 +2514,7 @@ public:
     Ref<Expression> right;
 
     Expression_Assignment_BitwiseAnd ()
-	: Expression (Expression::_Assignment_BitwiseAnd)
+	: Expression (Expression::t_Assignment_BitwiseAnd)
     {
     }
 };
@@ -2526,7 +2526,7 @@ public:
     Ref<Expression> right;
 
     Expression_Assignment_BitwiseExclusiveOr ()
-	: Expression (Expression::_BitwiseExclusiveOr)
+	: Expression (Expression::t_BitwiseExclusiveOr)
     {
     }
 };
@@ -2538,7 +2538,7 @@ public:
     Ref<Expression> right;
 
     Expression_Assignment_BitwiseInclusiveOr ()
-	: Expression (Expression::_BitwiseInclusiveOr)
+	: Expression (Expression::t_BitwiseInclusiveOr)
     {
     }
 };
@@ -2549,7 +2549,7 @@ public:
     Ref<Expression> expression;
 
     Expression_Throw ()
-	: Expression (Expression::_Throw)
+	: Expression (Expression::t_Throw)
     {
     }
 };
@@ -2560,7 +2560,7 @@ public:
     List< Ref<Expression> > expressions;
 
     Expression_Comma ()
-	: Expression (Expression::_Comma)
+	: Expression (Expression::t_Comma)
     {
     }
 };

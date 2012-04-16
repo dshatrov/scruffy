@@ -737,7 +737,7 @@ namespace {
 	{
 	    return !member.isNull () &&
 		       (!member->type_desc.isNull () ||
-			member->getType () == Cpp::Member::_TypeTemplateParameter);
+			member->getType () == Cpp::Member::t_TypeTemplateParameter);
 	}
 
 	bool hasNestedNameSpecifier () const
@@ -1396,7 +1396,7 @@ CppParser_Impl::lookupNamespace (ConstMemoryDesc const &identifier_str,
     abortIf (containers.isEmpty ());
     Cpp::Container *cur_container = containers.last->data;
     for (;;) {
-	if (cur_container->getType () != Cpp::Container::_Namespace) {
+	if (cur_container->getType () != Cpp::Container::t_Namespace) {
 	    DEBUG (
 		errf->print (_func_name).print (": not a namespace").pendl ();
 	    )
@@ -1426,7 +1426,7 @@ CppParser_Impl::lookupNamespace (ConstMemoryDesc const &identifier_str,
 
 	Cpp::Container *atom = nested_name_specifier_state.atoms.last->data;
 	switch (atom->getType ()) {
-	    case Cpp::Container::_Namespace: {
+	    case Cpp::Container::t_Namespace: {
 		Cpp::Namespace * const atom_namespace =
 			static_cast <Cpp::Namespace*> (atom);
 
@@ -1434,7 +1434,7 @@ CppParser_Impl::lookupNamespace (ConstMemoryDesc const &identifier_str,
 
 //		errf->print ("--- looking in namespace ").print (namespace_->name).pendl ();
 	    } break;
-	    case Cpp::Container::_Class: {
+	    case Cpp::Container::t_Class: {
 		DEBUG (
 		    errf->print ("--- WARNING: looking up a namespace in a class").pendl ();
 		)
@@ -1472,7 +1472,7 @@ CppParser_Impl::lookupNamespace (ConstMemoryDesc const &identifier_str,
 	}
 
 	if (namespace_->parent_container != NULL) {
-	    abortIf (namespace_->parent_container->getType () != Cpp::Container::_Namespace);
+	    abortIf (namespace_->parent_container->getType () != Cpp::Container::t_Namespace);
 	    namespace_ = static_cast <Cpp::Namespace*> (namespace_->parent_container);
 	} else
 	    namespace_ = NULL;
@@ -1546,7 +1546,7 @@ CppParser_Impl::lookupMember (bool                  const  global_scope,
 	)
 
 	switch (cur_container->getType ()) {
-	    case Cpp::Container::_Namespace: {
+	    case Cpp::Container::t_Namespace: {
 		Cpp::Namespace const * const namespace_ =
 			static_cast <Cpp::Namespace const *> (cur_container);
 
@@ -1558,7 +1558,7 @@ CppParser_Impl::lookupMember (bool                  const  global_scope,
 		    return map_entry.getData ();
 		}
 	    } break;
-	    case Cpp::Container::_Class: {
+	    case Cpp::Container::t_Class: {
 		Cpp::Class const * const class_ =
 			static_cast <Cpp::Class const *> (cur_container);
 
@@ -1639,7 +1639,7 @@ CppParser_Impl::lookupType (ConstMemoryDesc const &identifier_str)
 	)
 
 	switch (cur_container->getType ()) {
-	    case Cpp::Container::_Namespace: {
+	    case Cpp::Container::t_Namespace: {
 		Cpp::Namespace const * const namespace_ =
 			static_cast <Cpp::Namespace const *> (cur_container);
 
@@ -1656,7 +1656,7 @@ CppParser_Impl::lookupType (ConstMemoryDesc const &identifier_str)
 		    return type_map_entry.getData ();
 		}
 	    } break;
-	    case Cpp::Container::_Class: {
+	    case Cpp::Container::t_Class: {
 		Cpp::Class const * const class_ =
 			static_cast <Cpp::Class const *> (cur_container);
 
@@ -1770,7 +1770,7 @@ CppParser_Impl::getPreviousObjectDeclaration (DeclarationDesc const &declaration
 	if (name_container != NULL) {
 	  // DEBUG
 
-	    if (name_container->getType () == Cpp::Container::_Namespace) {
+	    if (name_container->getType () == Cpp::Container::t_Namespace) {
 		DEBUG (
 		    errf->print ("--- NAMESPACE").pendl ();
 		)
@@ -1855,9 +1855,9 @@ createObjectForDeclaration (Cpp::Member const &member)
 
     Ref<Cpp::Object> object;
     switch (member.type_desc->getType ()) {
-	case Cpp::TypeDesc::_BasicType:
-	case Cpp::TypeDesc::_Class:
-	case Cpp::TypeDesc::_Enum: {
+	case Cpp::TypeDesc::t_BasicType:
+	case Cpp::TypeDesc::t_Class:
+	case Cpp::TypeDesc::t_Enum: {
 	    Ref<Cpp::Object_Data> object__data =
 		    grab (new Cpp::Object_Data);
 	    object__data->type_desc = declaration_entry.type_desc;
@@ -1865,7 +1865,7 @@ createObjectForDeclaration (Cpp::Member const &member)
 
 	    object = object__data;
 	} break;
-	case Cpp::TypeDesc::_Function: {
+	case Cpp::TypeDesc::t_Function: {
 	    Ref<Cpp::Object_Function> object__function =
 		    grab (new Cpp::Object_Function);
 	    object__function->type_desc = declaration_entry.type_desc;
@@ -1899,7 +1899,7 @@ CppParser_Impl::acceptDeclaration (Cpp::Container                         &conta
   // TODO Handle symbol redefinitions
   //      ISO C++ 3.3.4
 
-    if (declaration_desc.member->getType () == Cpp::Member::_Type) {
+    if (declaration_desc.member->getType () == Cpp::Member::t_Type) {
 	// TODO getPreviousTypeDeclaration ()
 	//      Types may be redefined only if declarations are equivalent.
 
@@ -2077,7 +2077,7 @@ CppParser_Impl::beginNamespace (ConstMemoryDesc const &namespace_name)
 
     abortIf (containers.isEmpty ());
     Cpp::Container *cur_container = containers.last->data;
-    if (cur_container->getType () != Cpp::Container::_Namespace) {
+    if (cur_container->getType () != Cpp::Container::t_Namespace) {
 	errf->print (_func_name).print (": not a namespace").pendl ();
 	abortIfReached ();
     }
@@ -2215,7 +2215,7 @@ static Ref<Cpp::TypeDesc_Class>
 getTypeForClassName (Cpp_ClassName const * const class_name)
 {
     switch (class_name->class_name_type) {
-	case Cpp_ClassName::_ClassNameIdentifier: {
+	case Cpp_ClassName::t_ClassNameIdentifier: {
 	    Cpp_ClassName_ClassNameIdentifier const * const class_name__class_name_identifier =
 		    static_cast <Cpp_ClassName_ClassNameIdentifier const *> (class_name);
 	    Cpp_ClassNameIdentifier const * const class_name_identifier =
@@ -2227,7 +2227,7 @@ getTypeForClassName (Cpp_ClassName const * const class_name)
 
 	    return type_desc__class;
 	} break;
-	case Cpp_ClassName::_TemplateId: {
+	case Cpp_ClassName::t_TemplateId: {
 	  // TODO
 	    abortIfReached ();
 	} break;
@@ -2363,13 +2363,13 @@ cpp_NestedNameSpecifier_ClassOrNamespaceName_accept_func (Cpp_NestedNameSpecifie
 
     Cpp_ClassOrNamespaceName const *class_or_namespace_name = NULL;
     switch (nested_name_specifier->nested_name_specifier_type) {
-	case Cpp_NestedNameSpecifier::_Template: {
+	case Cpp_NestedNameSpecifier::t_Template: {
 	    Cpp_NestedNameSpecifier_Template const * const nested_name_specifier__template =
 		    static_cast <Cpp_NestedNameSpecifier_Template const *> (nested_name_specifier);
 
 	    class_or_namespace_name = nested_name_specifier__template->classOrNamespaceName;
 	} break;
-	case Cpp_NestedNameSpecifier::_Generic: {
+	case Cpp_NestedNameSpecifier::t_Generic: {
 	    Cpp_NestedNameSpecifier_Generic const * const nested_name_specifier__generic =
 		    static_cast <Cpp_NestedNameSpecifier_Generic const *> (nested_name_specifier);
 
@@ -2381,7 +2381,7 @@ cpp_NestedNameSpecifier_ClassOrNamespaceName_accept_func (Cpp_NestedNameSpecifie
 
     List<Cpp::Container*>::Element *atom_el = NULL;
     switch (class_or_namespace_name->class_or_namespace_name_type) {
-	case Cpp_ClassOrNamespaceName::_ClassName: {
+	case Cpp_ClassOrNamespaceName::t_ClassName: {
 	    Cpp_ClassOrNamespaceName_ClassName const * const class_or_namespace_name__class_name =
 		    static_cast <Cpp_ClassOrNamespaceName_ClassName const *> (class_or_namespace_name);
 	    Cpp_ClassName const * const class_name =
@@ -2401,7 +2401,7 @@ cpp_NestedNameSpecifier_ClassOrNamespaceName_accept_func (Cpp_NestedNameSpecifie
 #if 0
 // getClassForClassName (done)
 	    switch (class_name->class_name_type) {
-		case Cpp_ClassName::_ClassNameIdentifier: {
+		case Cpp_ClassName::t_ClassNameIdentifier: {
 		    Cpp_ClassName_ClassNameIdentifier const * const class_name__class_name_identifier =
 			    static_cast <Cpp_ClassName_ClassNameIdentifier const *> (class_name);
 		    Cpp_ClassNameIdentifier const * const class_name_identifier =
@@ -2423,7 +2423,7 @@ cpp_NestedNameSpecifier_ClassOrNamespaceName_accept_func (Cpp_NestedNameSpecifie
 			atom_el = nested_name_specifier_state.atoms.append (type_desc__class->class_);
 		    }
 		} break;
-		case Cpp_ClassName::_TemplateId: {
+		case Cpp_ClassName::t_TemplateId: {
 		  // TODO
 		    abortIfReached ();
 		} break;
@@ -2432,7 +2432,7 @@ cpp_NestedNameSpecifier_ClassOrNamespaceName_accept_func (Cpp_NestedNameSpecifie
 	    }
 #endif
 	} break;
-	case Cpp_ClassOrNamespaceName::_NamespaceName: {
+	case Cpp_ClassOrNamespaceName::t_NamespaceName: {
 	    Cpp_ClassOrNamespaceName_NamespaceName const * const class_or_namespace_name__namespace_name =
 		    static_cast <Cpp_ClassOrNamespaceName_NamespaceName const *> (class_or_namespace_name);
 	    Cpp_NamespaceName const * const namespace_name =
@@ -2681,14 +2681,14 @@ cpp_function_definition_match_func (Cpp_FunctionDefinition * const /* function_d
     switch (function_definition->function_definition_type) {
       // Note: 'declarator' is fictively optional for constructor name disambiguation.
 
-	case Cpp_FunctionDefinition::_FunctionBody: {
+	case Cpp_FunctionDefinition::t_FunctionBody: {
 	    Cpp_FunctionDefinition_FunctionBody const * const function_definition__function_body =
 		    static_cast <Cpp_FunctionDefinition_FunctionBody const *> (function_definition);
 
 	    if (function_definition__function_body->declarator.isNull ())
 		return false;
 	} break;
-	case Cpp_FunctionDefinition::_FunctionTryBlock: {
+	case Cpp_FunctionDefinition::t_FunctionTryBlock: {
 	    Cpp_FunctionDefinition_FunctionTryBlock const * const function_definition__function_try_block =
 		    static_cast <Cpp_FunctionDefinition_FunctionTryBlock const *> (function_definition);
 
@@ -2719,7 +2719,7 @@ cpp_function_definition_match_func (Cpp_FunctionDefinition * const /* function_d
 	abortIf (declaration_state.member.isNull () ||
 		 declaration_state.member->type_desc.isNull ());
 
-	if (declaration_state.member->getType () != Cpp::Member::_Function) {
+	if (declaration_state.member->getType () != Cpp::Member::t_Function) {
 	    errf->print ("Not a function").pendl ();
 	    abortIfReached ();
 	}
@@ -2751,15 +2751,15 @@ cpp_accept_type_specifier__cv_qualifier (Cpp_TypeSpecifier * const type_specifie
 
     DeclarationState &declaration_state = self->declaration_states.getLast ();
 
-    abortIf (type_specifier->type_specifier_type != Cpp_TypeSpecifier::_CvQualifier);
+    abortIf (type_specifier->type_specifier_type != Cpp_TypeSpecifier::t_CvQualifier);
     Cpp_TypeSpecifier_CvQualifier * const type_specifier__cv_qualifier =
 	    static_cast <Cpp_TypeSpecifier_CvQualifier*> (type_specifier);
 
     switch (type_specifier__cv_qualifier->cvQualifier->cv_qualifier_type) {
-	case Cpp_CvQualifier::_Const: {
+	case Cpp_CvQualifier::t_Const: {
 	    declaration_state.type_specifier_parser.setConst ();
 	} break;
-	case Cpp_CvQualifier::_Volatile: {
+	case Cpp_CvQualifier::t_Volatile: {
 	    declaration_state.type_specifier_parser.setVolatile ();
 	} break;
 	default:
@@ -2779,14 +2779,14 @@ cpp_accept_elaborated_type_specifier (Cpp_ElaboratedTypeSpecifier * const elabor
     DeclarationState &declaration_state = self->declaration_states.getLast ();
 
     switch (elaborated_type_specifier->elaborated_type_specifier_type) {
-	case Cpp_ElaboratedTypeSpecifier::_Class: {
+	case Cpp_ElaboratedTypeSpecifier::t_Class: {
 	    Cpp_ElaboratedTypeSpecifier_Class const * const elaborated_type_specifier__class =
 		    static_cast <Cpp_ElaboratedTypeSpecifier_Class const *> (elaborated_type_specifier);
 
 	    ConstMemoryDesc identifier_mem = elaborated_type_specifier__class->identifier->any_token->token;
 	    Cpp::Member * const member = self->lookupType (identifier_mem);
 	    if (member != NULL) {
-		abortIf (member->getType () != Cpp::Member::_Type);
+		abortIf (member->getType () != Cpp::Member::t_Type);
 
 		Cpp::Member_Type const * const member__type =
 			static_cast <Cpp::Member_Type const *> (member);
@@ -2798,7 +2798,7 @@ cpp_accept_elaborated_type_specifier (Cpp_ElaboratedTypeSpecifier * const elabor
 
 		abortIf (member->type_desc.isNull ());
 		switch (member->type_desc->getType ()) {
-		    case Cpp::TypeDesc::_Class: {
+		    case Cpp::TypeDesc::t_Class: {
 			Cpp::TypeDesc_Class const * const type_desc__class =
 				static_cast <Cpp::TypeDesc_Class const *> (member->type_desc.ptr ());
 
@@ -2806,7 +2806,7 @@ cpp_accept_elaborated_type_specifier (Cpp_ElaboratedTypeSpecifier * const elabor
 
 			declaration_state.type_specifier_parser.setClass (type_desc__class->class_);
 		    } break;
-		    case Cpp::TypeDesc::_Dependent: {
+		    case Cpp::TypeDesc::t_Dependent: {
 			// TODO
 			abortIfReached ();
 		    } break;
@@ -2824,28 +2824,28 @@ cpp_accept_elaborated_type_specifier (Cpp_ElaboratedTypeSpecifier * const elabor
 		self->setDeclarationTypeDesc (declaration_state, member->type_desc);
 
 		abortIf (member->type_desc.isNull () ||
-			 member->type_desc->getType () != Cpp::TypeDesc::_Class);
+			 member->type_desc->getType () != Cpp::TypeDesc::t_Class);
 		Cpp::TypeDesc_Class const * const type_desc__class =
 			static_cast <Cpp::TypeDesc_Class*> (member->type_desc.ptr ());
 
 		declaration_state.type_specifier_parser.setClass (type_desc__class->class_);
 	    }
 	} break;
-	case Cpp_ElaboratedTypeSpecifier::_Enum: {
+	case Cpp_ElaboratedTypeSpecifier::t_Enum: {
 //	    Cpp_ElaboratedTypeSpecifier_Enum const * const elaborated_type_specifier__enum =
 //		    static_cast <Cpp_ElaboratedTypeSpecifier_Enum const *> (elaborated_type_specifier);
 
 	    // TODO
 	    abortIfReached ();
 	} break;
-	case Cpp_ElaboratedTypeSpecifier::_Typename: {
+	case Cpp_ElaboratedTypeSpecifier::t_Typename: {
 //	    Cpp_ElaboratedTypeSpecifier_Typename const * const elaborated_type_specifier__typename =
 //		    static_cast <Cpp_ElaboratedTypeSpecifier_Typename const *> (elaborated_type_specifier);
 
 	    // TODO
 	    abortIfReached ();
 	} break;
-	case Cpp_ElaboratedTypeSpecifier::_TypenameTemplate: {
+	case Cpp_ElaboratedTypeSpecifier::t_TypenameTemplate: {
 //	    Cpp_ElaboratedTypeSpecifier_TypenameTemplate const * const elaborated_type_specifier__typename_template =
 //		    static_cast <Cpp_ElaboratedTypeSpecifier_TypenameTemplate const *> (elaborated_type_specifier);
 
@@ -2880,7 +2880,7 @@ cpp_simple_type_specifier__template_id_jump (ParserElement * const _simple_type_
     Cpp_SimpleTypeSpecifier * const simple_type_specifier =
 	    static_cast <Cpp_SimpleTypeSpecifier*> (_simple_type_specifier);
 
-    abortIf (simple_type_specifier->simple_type_specifier_type != Cpp_SimpleTypeSpecifier::_TypeName);
+    abortIf (simple_type_specifier->simple_type_specifier_type != Cpp_SimpleTypeSpecifier::t_TypeName);
     Cpp_SimpleTypeSpecifier_TypeName * const simple_type_specifier__type_name =
 	    static_cast <Cpp_SimpleTypeSpecifier_TypeName*> (simple_type_specifier);
 
@@ -2903,7 +2903,7 @@ cpp_SimpleTypeSpecifier_match_func (Cpp_SimpleTypeSpecifier * const simple_type_
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (simple_type_specifier->simple_type_specifier_type) {
-	case Cpp_SimpleTypeSpecifier::_TypeName: {
+	case Cpp_SimpleTypeSpecifier::t_TypeName: {
 	    Cpp_SimpleTypeSpecifier_TypeName const * const simple_type_specifier__nested_type =
 		    static_cast <Cpp_SimpleTypeSpecifier_TypeName const *> (simple_type_specifier);
 
@@ -2911,7 +2911,7 @@ cpp_SimpleTypeSpecifier_match_func (Cpp_SimpleTypeSpecifier * const simple_type_
 		    simple_type_specifier__nested_type->typeName;
 
 	    switch (type_name->type_name_type) {
-		case Cpp_TypeName::_ClassName: {
+		case Cpp_TypeName::t_ClassName: {
 		    Cpp_TypeName_ClassName const * const type_name__class_name =
 			    static_cast <Cpp_TypeName_ClassName const *> (type_name);
 
@@ -2919,7 +2919,7 @@ cpp_SimpleTypeSpecifier_match_func (Cpp_SimpleTypeSpecifier * const simple_type_
 			    type_name__class_name->className;
 
 		    switch (class_name->class_name_type) {
-			case Cpp_ClassName::_ClassNameIdentifier: {
+			case Cpp_ClassName::t_ClassNameIdentifier: {
 #if 0
 			    Cpp_ClassName_ClassNameIdentifier const * const class_name__class_name_identifier =
 				    static_cast <Cpp_ClassName_ClassNameIdentifier const *> (class_name);
@@ -2992,7 +2992,7 @@ cpp_accept_template_type_specifier (CppParser_Impl        * const self,
 							GenericList::StealAppend);
 #endif
 
-    if (template_instance->getType () != Cpp::TemplateInstance::_Class) {
+    if (template_instance->getType () != Cpp::TemplateInstance::t_Class) {
 	errf->print (_func_name).print (": not a class template").pendl ();
 	return false;
     }
@@ -3008,7 +3008,7 @@ cpp_accept_template_type_specifier (CppParser_Impl        * const self,
     abortIf (member == NULL);
     abortIf (!member->isTemplate ());
 
-    if (member->type_desc->getType () != Cpp::TypeDesc::_Class) {
+    if (member->type_desc->getType () != Cpp::TypeDesc::t_Class) {
 	errf->print (_func_name).print (": not a class template");
 	abortIfReached ();
     }
@@ -3041,42 +3041,42 @@ cpp_accept_simple_type_specifier (Cpp_SimpleTypeSpecifier * const simple_type_sp
     DeclarationState &declaration_state = self->declaration_states.getLast ();
 
     switch (simple_type_specifier->simple_type_specifier_type) {
-	case Cpp_SimpleTypeSpecifier::_Void: {
+	case Cpp_SimpleTypeSpecifier::t_Void: {
 	    declaration_state.type_specifier_parser.setBasicType_Void ();
 	} break;
-	case Cpp_SimpleTypeSpecifier::_Bool: {
+	case Cpp_SimpleTypeSpecifier::t_Bool: {
 	    declaration_state.type_specifier_parser.setBasicType_Bool ();
 	} break;
-	case Cpp_SimpleTypeSpecifier::_Int: {
+	case Cpp_SimpleTypeSpecifier::t_Int: {
 	    declaration_state.type_specifier_parser.setBasicType_Int ();
 	} break;
-	case Cpp_SimpleTypeSpecifier::_Char: {
+	case Cpp_SimpleTypeSpecifier::t_Char: {
 	    declaration_state.type_specifier_parser.setBasicType_Char ();
 	} break;
-	case Cpp_SimpleTypeSpecifier::_Unsigned: {
+	case Cpp_SimpleTypeSpecifier::t_Unsigned: {
 	    declaration_state.type_specifier_parser.setBasicType_Unsigned ();
 	} break;
-	case Cpp_SimpleTypeSpecifier::_Long: {
+	case Cpp_SimpleTypeSpecifier::t_Long: {
 	    declaration_state.type_specifier_parser.setBasicType_Long ();
 	} break;
-	case Cpp_SimpleTypeSpecifier::_Float: {
+	case Cpp_SimpleTypeSpecifier::t_Float: {
 	    declaration_state.type_specifier_parser.setBasicType_Float ();
 	} break;
-	case Cpp_SimpleTypeSpecifier::_Double: {
+	case Cpp_SimpleTypeSpecifier::t_Double: {
 	    declaration_state.type_specifier_parser.setBasicType_Double ();
 	} break;
-	case Cpp_SimpleTypeSpecifier::_Short: {
+	case Cpp_SimpleTypeSpecifier::t_Short: {
 	    // TODO
 	    abortIfReached ();
 	} break;
-	case Cpp_SimpleTypeSpecifier::_WcharT: {
+	case Cpp_SimpleTypeSpecifier::t_WcharT: {
 	    // TODO
 	    abortIfReached ();
 	} break;
-	case Cpp_SimpleTypeSpecifier::_Signed: {
+	case Cpp_SimpleTypeSpecifier::t_Signed: {
 	    declaration_state.type_specifier_parser.setBasicType_Signed ();
 	} break;
-	case Cpp_SimpleTypeSpecifier::_TypeName: {
+	case Cpp_SimpleTypeSpecifier::t_TypeName: {
 #if 0
 	    if (type_category != Unknown) {
 		errf->print (_func_name).print (": more than one data type").pendl ();
@@ -3090,7 +3090,7 @@ cpp_accept_simple_type_specifier (Cpp_SimpleTypeSpecifier * const simple_type_sp
 	    Cpp_TypeName * const type_name =
 		    simple_type_specifier__nested_type->typeName;
 	    switch (type_name->type_name_type) {
-		case Cpp_TypeName::_ClassName: {
+		case Cpp_TypeName::t_ClassName: {
 		    Cpp_TypeName_ClassName * const type_name__class_name =
 			    static_cast <Cpp_TypeName_ClassName*> (type_name);
 
@@ -3098,7 +3098,7 @@ cpp_accept_simple_type_specifier (Cpp_SimpleTypeSpecifier * const simple_type_sp
 			    type_name__class_name->className;
 
 		    switch (class_name->class_name_type) {
-			case Cpp_ClassName::_ClassNameIdentifier: {
+			case Cpp_ClassName::t_ClassNameIdentifier: {
 			    Cpp_ClassName_ClassNameIdentifier * const class_name__class_name_identifier =
 				    static_cast <Cpp_ClassName_ClassNameIdentifier*> (class_name);
 
@@ -3124,7 +3124,7 @@ cpp_accept_simple_type_specifier (Cpp_SimpleTypeSpecifier * const simple_type_sp
 			    declaration_state.type_specifier_parser.setClass (type_desc__class->class_,
 									      true /* simple_type_specifier_used */);
 			} break;
-			case Cpp_ClassName::_TemplateId: {
+			case Cpp_ClassName::t_TemplateId: {
 			    Cpp_ClassName_TemplateId * const class_name__template_id =
 				    static_cast <Cpp_ClassName_TemplateId*> (class_name);
 
@@ -3139,12 +3139,12 @@ cpp_accept_simple_type_specifier (Cpp_SimpleTypeSpecifier * const simple_type_sp
 			    abortIfReached ();
 		    }
 		} break;
-		case Cpp_TypeName::_EnumName: {
+		case Cpp_TypeName::t_EnumName: {
 		    errf->print ("--- ENUM-NAME").pendl ();
 		    // TODO
 		    abortIfReached ();
 		} break;
-		case Cpp_TypeName::_TypedefName: {
+		case Cpp_TypeName::t_TypedefName: {
 		    Cpp_TypeName_TypedefName * const type_name__typedef_name =
 			    static_cast <Cpp_TypeName_TypedefName*> (type_name);
 
@@ -3161,7 +3161,7 @@ cpp_accept_simple_type_specifier (Cpp_SimpleTypeSpecifier * const simple_type_sp
 		    abortIfReached ();
 	    }
 	} break;
-	case Cpp_SimpleTypeSpecifier::_TemplateId: {
+	case Cpp_SimpleTypeSpecifier::t_TemplateId: {
 	    Cpp_SimpleTypeSpecifier_TemplateId * const simple_type_specifier__template_id =
 		    static_cast <Cpp_SimpleTypeSpecifier_TemplateId*> (simple_type_specifier);
 
@@ -3189,7 +3189,7 @@ namespace {
 	static char const * const _func_name = "Scruffy.CppParser.TypeSpecifierParser.parseTypeSpecifier";
 
 	switch (type_specifier->type_specifier_type) {
-	    case Cpp_TypeSpecifier::_SimpleTypeSpecifier: {
+	    case Cpp_TypeSpecifier::t_SimpleTypeSpecifier: {
 		Cpp_TypeSpecifier_SimpleTypeSpecifier const * const type_specifier__simple_type_specifier =
 			static_cast <Cpp_TypeSpecifier_SimpleTypeSpecifier const *> (type_specifier);
 		Cpp_SimpleTypeSpecifier const * const simple_type_specifier =
@@ -3197,7 +3197,7 @@ namespace {
 
 		parseSimpleTypeSpecifier (simple_type_specifier);
 	    } break;
-	    case Cpp_TypeSpecifier::_ClassSpecifier: {
+	    case Cpp_TypeSpecifier::t_ClassSpecifier: {
 		if (gotType ()) {
 		    errf->print (_func_name).print (": more than one data type").pendl ();
 		    abortIfReached ();
@@ -3215,7 +3215,7 @@ namespace {
 		class_ = declaration_state.class_;
 		type_category = Class;
 	    } break;
-	    case Cpp_TypeSpecifier::_EnumSpecifier: {
+	    case Cpp_TypeSpecifier::t_EnumSpecifier: {
 		if (gotType ()) {
 		    errf->print (_func_name).print (": more than one data type").pendl ();
 		    abortIfReached ();
@@ -3231,7 +3231,7 @@ namespace {
 		enum_ = declaration_state.enum_;
 		type_category = Enum;
 	    } break;
-	    case Cpp_TypeSpecifier::_ElaboratedTypeSpecifier: {
+	    case Cpp_TypeSpecifier::t_ElaboratedTypeSpecifier: {
 		if (gotType ()) {
 		    errf->print (_func_name).print (": more than one data type").pendl ();
 		    abortIfReached ();
@@ -3245,7 +3245,7 @@ namespace {
 		abortIf (elaborated_type_specifier == NULL);
 
 		switch (elaborated_type_specifier->elaborated_type_specifier_type) {
-		    case Cpp_ElaboratedTypeSpecifier::_Class: {
+		    case Cpp_ElaboratedTypeSpecifier::t_Class: {
 //#error TODO cpp_parser
 #if 0
 			Cpp_ElaboratedTypeSpecifier_Class const * const elaborated_type_specifier__class =
@@ -3254,7 +3254,7 @@ namespace {
 			ConstMemoryDesc identifier_mem = elaborated_type_specifier__class->identifier->any_token->token;
 			Cpp::Member * const member = cpp_parser.lookupType (identifier_mem);
 			if (member != NULL) {
-			    abortIf (member->getType () != Cpp::Member::_Type);
+			    abortIf (member->getType () != Cpp::Member::t_Type);
 
 			    Cpp::Member_Type const * const member__type =
 				    static_cast <Cpp::Member_Type const *> (member);
@@ -3266,7 +3266,7 @@ namespace {
 
 			    abortIf (member->type_desc.isNull ());
 			    switch (member->type_desc->getType ()) {
-				case Cpp::TypeDesc::_Class: {
+				case Cpp::TypeDesc::t_Class: {
 				    Cpp::TypeDesc_Class const * const type_desc__class =
 					    static_cast <Cpp::TypeDesc_Class const *> (member->type_desc.ptr ());
 
@@ -3275,7 +3275,7 @@ namespace {
 				    class_ = type_desc__class->class_;
 				    type_category = Class;
 				} break;
-				case Cpp::TypeDesc::_Dependent: {
+				case Cpp::TypeDesc::t_Dependent: {
 				    // TODO
 				    abortIfReached ();
 				} break;
@@ -3293,7 +3293,7 @@ namespace {
 			    cpp_parser.setDeclarationTypeDesc (declaration_state, member->type_desc);
 
 			    abortIf (member->type_desc.isNull () ||
-				     member->type_desc->getType () != Cpp::TypeDesc::_Class);
+				     member->type_desc->getType () != Cpp::TypeDesc::t_Class);
 			    Cpp::TypeDesc_Class const * const type_desc__class =
 				    static_cast <Cpp::TypeDesc_Class*> (member->type_desc.ptr ());
 
@@ -3302,21 +3302,21 @@ namespace {
 			}
 #endif
 		    } break;
-		    case Cpp_ElaboratedTypeSpecifier::_Enum: {
+		    case Cpp_ElaboratedTypeSpecifier::t_Enum: {
 //			Cpp_ElaboratedTypeSpecifier_Enum const * const elaborated_type_specifier__enum =
 //				static_cast <Cpp_ElaboratedTypeSpecifier_Enum const *> (elaborated_type_specifier);
 
 			// TODO
 			abortIfReached ();
 		    } break;
-		    case Cpp_ElaboratedTypeSpecifier::_Typename: {
+		    case Cpp_ElaboratedTypeSpecifier::t_Typename: {
 //			Cpp_ElaboratedTypeSpecifier_Typename const * const elaborated_type_specifier__typename =
 //				static_cast <Cpp_ElaboratedTypeSpecifier_Typename const *> (elaborated_type_specifier);
 
 			// TODO
 			abortIfReached ();
 		    } break;
-		    case Cpp_ElaboratedTypeSpecifier::_TypenameTemplate: {
+		    case Cpp_ElaboratedTypeSpecifier::t_TypenameTemplate: {
 //			Cpp_ElaboratedTypeSpecifier_TypenameTemplate const * const elaborated_type_specifier__typename_template =
 //				static_cast <Cpp_ElaboratedTypeSpecifier_TypenameTemplate const *> (elaborated_type_specifier);
 
@@ -3327,14 +3327,14 @@ namespace {
 			break;
 		}
 	    } break;
-	    case Cpp_TypeSpecifier::_CvQualifier: {
+	    case Cpp_TypeSpecifier::t_CvQualifier: {
 		Cpp_TypeSpecifier_CvQualifier const * const type_specifier__cv_qualifier =
 			static_cast <Cpp_TypeSpecifier_CvQualifier const *> (type_specifier);
 		Cpp_CvQualifier const * const cv_qualifier =
 			type_specifier__cv_qualifier->cvQualifier;
 
 		switch (cv_qualifier->cv_qualifier_type) {
-		    case Cpp_CvQualifier::_Const: {
+		    case Cpp_CvQualifier::t_Const: {
 			if (is_const) {
 			    errf->print (_func_name).print (": duplicate \"const\"").pendl ();
 			    abortIfReached ();
@@ -3342,7 +3342,7 @@ namespace {
 
 			is_const = true;
 		    } break;
-		    case Cpp_CvQualifier::_Volatile: {
+		    case Cpp_CvQualifier::t_Volatile: {
 			if (is_volatile) {
 			    errf->print (_func_name).print (": duplicate \"volatile\"").pendl ();
 			    abortIfReached ();
@@ -3365,7 +3365,7 @@ namespace {
 	static char const * const _func_name = "Scruffy.CppParser.TypeSpecifierParser.parseSimpleTypeSpecifier";
 
 	switch (simple_type_specifier->simple_type_specifier_type) {
-	    case Cpp_SimpleTypeSpecifier::_Void: {
+	    case Cpp_SimpleTypeSpecifier::t_Void: {
 		if (type_category != Unknown) {
 		    errf->print (_func_name).print (": more than one data type").pendl ();
 		    abortIfReached ();
@@ -3374,7 +3374,7 @@ namespace {
 		type_category = BasicType;
 		basic_type = Cpp::TypeDesc_BasicType::Void;
 	    } break;
-	    case Cpp_SimpleTypeSpecifier::_Bool: {
+	    case Cpp_SimpleTypeSpecifier::t_Bool: {
 		if (type_category != Unknown) {
 		    errf->print (_func_name).print (": more than one data type").pendl ();
 		    abortIfReached ();
@@ -3383,7 +3383,7 @@ namespace {
 		type_category = BasicType;
 		basic_type = Cpp::TypeDesc_BasicType::Bool;
 	    } break;
-	    case Cpp_SimpleTypeSpecifier::_Int: {
+	    case Cpp_SimpleTypeSpecifier::t_Int: {
 		if (type_category != Unknown &&
 		    type_category != BasicType)
 		{
@@ -3417,7 +3417,7 @@ namespace {
 
 		has_int = true;
 	    } break;
-	    case Cpp_SimpleTypeSpecifier::_Char: {
+	    case Cpp_SimpleTypeSpecifier::t_Char: {
 		if (type_category != Unknown &&
 		    type_category != BasicType)
 		{
@@ -3448,7 +3448,7 @@ namespace {
 		    basic_type = Cpp::TypeDesc_BasicType::Char;
 		}
 	    } break;
-	    case Cpp_SimpleTypeSpecifier::_Unsigned: {
+	    case Cpp_SimpleTypeSpecifier::t_Unsigned: {
 		if (type_category != Unknown &&
 		    type_category != BasicType)
 		{
@@ -3487,7 +3487,7 @@ namespace {
 
 		has_unsigned = true;
 	    } break;
-	    case Cpp_SimpleTypeSpecifier::_Long: {
+	    case Cpp_SimpleTypeSpecifier::t_Long: {
 		if (type_category != Unknown &&
 		    type_category != BasicType)
 		{
@@ -3517,7 +3517,7 @@ namespace {
 		    basic_type = Cpp::TypeDesc_BasicType::LongInt;
 		}
 	    } break;
-	    case Cpp_SimpleTypeSpecifier::_Float: {
+	    case Cpp_SimpleTypeSpecifier::t_Float: {
 		if (type_category != Unknown) {
 		    errf->print (_func_name).print (": more than one data type").pendl ();
 		    abortIfReached ();
@@ -3526,7 +3526,7 @@ namespace {
 		type_category = BasicType;
 		basic_type = Cpp::TypeDesc_BasicType::Float;
 	    } break;
-	    case Cpp_SimpleTypeSpecifier::_Double: {
+	    case Cpp_SimpleTypeSpecifier::t_Double: {
 		if (type_category != Unknown &&
 		    type_category != BasicType)
 		{
@@ -3554,15 +3554,15 @@ namespace {
 		    basic_type = Cpp::TypeDesc_BasicType::Double;
 		}
 	    } break;
-	    case Cpp_SimpleTypeSpecifier::_Short: {
+	    case Cpp_SimpleTypeSpecifier::t_Short: {
 		// TODO
 		abortIfReached ();
 	    } break;
-	    case Cpp_SimpleTypeSpecifier::_WcharT: {
+	    case Cpp_SimpleTypeSpecifier::t_WcharT: {
 		// TODO
 		abortIfReached ();
 	    } break;
-	    case Cpp_SimpleTypeSpecifier::_Signed: {
+	    case Cpp_SimpleTypeSpecifier::t_Signed: {
 		if (type_category != Unknown &&
 		    type_category != BasicType)
 		{
@@ -3601,7 +3601,7 @@ namespace {
 
 		has_signed = true;
 	    } break;
-	    case Cpp_SimpleTypeSpecifier::_TypeName: {
+	    case Cpp_SimpleTypeSpecifier::t_TypeName: {
 		if (type_category != Unknown) {
 		    errf->print (_func_name).print (": more than one data type").pendl ();
 		    abortIfReached ();
@@ -3613,7 +3613,7 @@ namespace {
 		Cpp_TypeName const * const type_name =
 			simple_type_specifier__nested_type->typeName;
 		switch (type_name->type_name_type) {
-		    case Cpp_TypeName::_ClassName: {
+		    case Cpp_TypeName::t_ClassName: {
 			Cpp_TypeName_ClassName const * const type_name__class_name =
 				static_cast <Cpp_TypeName_ClassName const *> (type_name);
 
@@ -3621,7 +3621,7 @@ namespace {
 				type_name__class_name->className;
 
 			switch (class_name->class_name_type) {
-			    case Cpp_ClassName::_ClassNameIdentifier: {
+			    case Cpp_ClassName::t_ClassNameIdentifier: {
 				Cpp_ClassName_ClassNameIdentifier const * const class_name__class_name_identifier =
 					static_cast <Cpp_ClassName_ClassNameIdentifier const *> (class_name);
 
@@ -3637,7 +3637,7 @@ namespace {
 
 				simple_type_specifier_used = type_desc__class->simple_type_specifier_used;
 			    } break;
-			    case Cpp_ClassName::_TemplateId: {
+			    case Cpp_ClassName::t_TemplateId: {
 				// TODO
 				abortIfReached ();
 			    } break;
@@ -3645,12 +3645,12 @@ namespace {
 				abortIfReached ();
 			}
 		    } break;
-		    case Cpp_TypeName::_EnumName: {
+		    case Cpp_TypeName::t_EnumName: {
 			errf->print ("--- ENUM-NAME").pendl ();
 			// TODO
 			abortIfReached ();
 		    } break;
-		    case Cpp_TypeName::_TypedefName: {
+		    case Cpp_TypeName::t_TypedefName: {
 			Cpp_TypeName_TypedefName const * const type_name__typedef_name =
 				static_cast <Cpp_TypeName_TypedefName const *> (type_name);
 
@@ -3668,7 +3668,7 @@ namespace {
 			abortIfReached ();
 		}
 	    } break;
-	    case Cpp_SimpleTypeSpecifier::_TemplateId: {
+	    case Cpp_SimpleTypeSpecifier::t_TemplateId: {
 		if (type_category != Unknown) {
 		    errf->print (_func_name).print (": more than one data type").pendl ();
 		    abortIfReached ();
@@ -3838,14 +3838,14 @@ cpp_parser_parse_decl_specifier_seq (CppParser_Impl             * const self,
 	)
 
 	switch (decl_specifier->decl_specifier_type) {
-	    case Cpp_DeclSpecifier::_StorageClassSpecifier: {
+	    case Cpp_DeclSpecifier::t_StorageClassSpecifier: {
 		Cpp_DeclSpecifier_StorageClassSpecifier const * const decl_specifier__storage_class_specifier =
 			static_cast <Cpp_DeclSpecifier_StorageClassSpecifier const *> (decl_specifier);
 		Cpp_StorageClassSpecifier const * const storage_class_specifier =
 			decl_specifier__storage_class_specifier->storageClassSpecifier;
 
 		switch (storage_class_specifier->storage_class_specifier_type) {
-		    case Cpp_StorageClassSpecifier::_Auto: {
+		    case Cpp_StorageClassSpecifier::t_Auto: {
 			if (is_auto) {
 			    errf->print (_func_name).print (": duplicate \"auto\"").pendl ();
 			    abortIfReached ();
@@ -3853,7 +3853,7 @@ cpp_parser_parse_decl_specifier_seq (CppParser_Impl             * const self,
 
 			is_auto = true;
 		    } break;
-		    case Cpp_StorageClassSpecifier::_Register: {
+		    case Cpp_StorageClassSpecifier::t_Register: {
 			if (is_register) {
 			    errf->print (_func_name).print (": duplicate \"register\"").pendl ();
 			    abortIfReached ();
@@ -3861,7 +3861,7 @@ cpp_parser_parse_decl_specifier_seq (CppParser_Impl             * const self,
 
 			is_register = true;
 		    } break;
-		    case Cpp_StorageClassSpecifier::_Static: {
+		    case Cpp_StorageClassSpecifier::t_Static: {
 			if (is_static) {
 			    errf->print (_func_name).print (": duplicate \"static\"").pendl ();
 			    abortIfReached ();
@@ -3869,7 +3869,7 @@ cpp_parser_parse_decl_specifier_seq (CppParser_Impl             * const self,
 
 			is_static = true;
 		    } break;
-		    case Cpp_StorageClassSpecifier::_Extern: {
+		    case Cpp_StorageClassSpecifier::t_Extern: {
 			if (is_extern) {
 			    errf->print (_func_name).print (": duplicate \"extern\"").pendl ();
 			    abortIfReached ();
@@ -3877,7 +3877,7 @@ cpp_parser_parse_decl_specifier_seq (CppParser_Impl             * const self,
 
 			is_extern = true;
 		    } break;
-		    case Cpp_StorageClassSpecifier::_Mutable: {
+		    case Cpp_StorageClassSpecifier::t_Mutable: {
 			if (is_mutable) {
 			    errf->print (_func_name).print (": duplicate \"mutable\"").pendl ();
 			    abortIfReached ();
@@ -3889,7 +3889,7 @@ cpp_parser_parse_decl_specifier_seq (CppParser_Impl             * const self,
 			abortIfReached ();
 		}
 	    } break;
-	    case Cpp_DeclSpecifier::_TypeSpecifier: {
+	    case Cpp_DeclSpecifier::t_TypeSpecifier: {
 		Cpp_DeclSpecifier_TypeSpecifier const * const decl_specifier__type_specifier =
 			static_cast <Cpp_DeclSpecifier_TypeSpecifier const *> (decl_specifier);
 		Cpp_TypeSpecifier const * const type_specifier =
@@ -3897,14 +3897,14 @@ cpp_parser_parse_decl_specifier_seq (CppParser_Impl             * const self,
 
 		type_specifier_parser.parseTypeSpecifier (type_specifier, declaration_state);
 	    } break;
-	    case Cpp_DeclSpecifier::_FunctionSpecifier: {
+	    case Cpp_DeclSpecifier::t_FunctionSpecifier: {
 		Cpp_DeclSpecifier_FunctionSpecifier const * const decl_specifier__function_specifier =
 			static_cast <Cpp_DeclSpecifier_FunctionSpecifier const *> (decl_specifier);
 		Cpp_FunctionSpecifier const * const function_specifier =
 			decl_specifier__function_specifier->functionSpecifier;
 
 		switch (function_specifier->function_specifier_type) {
-		    case Cpp_FunctionSpecifier::_Inline: {
+		    case Cpp_FunctionSpecifier::t_Inline: {
 			if (is_inline) {
 			    errf->print (_func_name).print (": duplicate \"inline\"").pendl ();
 			    abortIfReached ();
@@ -3912,7 +3912,7 @@ cpp_parser_parse_decl_specifier_seq (CppParser_Impl             * const self,
 
 			is_inline = true;
 		    } break;
-		    case Cpp_FunctionSpecifier::_Virtual: {
+		    case Cpp_FunctionSpecifier::t_Virtual: {
 			if (is_virtual) {
 			    errf->print (_func_name).print (": duplicate \"virtual\"").pendl ();
 			    abortIfReached ();
@@ -3920,7 +3920,7 @@ cpp_parser_parse_decl_specifier_seq (CppParser_Impl             * const self,
 
 			is_virtual = true;
 		    } break;
-		    case Cpp_FunctionSpecifier::_Explicit: {
+		    case Cpp_FunctionSpecifier::t_Explicit: {
 			if (is_explicit) {
 			    errf->print (_func_name).print (": duplicate \"explicit\"").pendl ();
 			    abortIfReached ();
@@ -3932,7 +3932,7 @@ cpp_parser_parse_decl_specifier_seq (CppParser_Impl             * const self,
 			abortIfReached ();
 		}
 	    } break;
-	    case Cpp_DeclSpecifier::_Friend: {
+	    case Cpp_DeclSpecifier::t_Friend: {
 		if (is_friend) {
 		    errf->print (_func_name).print (": duplicate \"friend\"").pendl ();
 		    abortIfReached ();
@@ -3940,7 +3940,7 @@ cpp_parser_parse_decl_specifier_seq (CppParser_Impl             * const self,
 
 		is_friend = true;
 	    } break;
-	    case Cpp_DeclSpecifier::_Typedef: {
+	    case Cpp_DeclSpecifier::t_Typedef: {
 		if (is_typedef) {
 		    errf->print (_func_name).print (": duplicate \"typedef\"").pendl ();
 		    abortIfReached ();
@@ -4039,24 +4039,24 @@ cpp_accept_decl_specifier__storage_class_specifier (Cpp_DeclSpecifier * const de
 
     DeclarationState &declaration_state = self->declaration_states.getLast ();
 
-    abortIf (decl_specifier->decl_specifier_type != Cpp_DeclSpecifier::_StorageClassSpecifier);
+    abortIf (decl_specifier->decl_specifier_type != Cpp_DeclSpecifier::t_StorageClassSpecifier);
     Cpp_DeclSpecifier_StorageClassSpecifier * const decl_specifier__storage_class_specifier =
 	    static_cast <Cpp_DeclSpecifier_StorageClassSpecifier*> (decl_specifier);
 
     switch (decl_specifier__storage_class_specifier->storageClassSpecifier->storage_class_specifier_type) {
-	case Cpp_StorageClassSpecifier::_Auto: {
+	case Cpp_StorageClassSpecifier::t_Auto: {
 	    declaration_state.type_specifier_parser.setAuto ();
 	} break;
-	case Cpp_StorageClassSpecifier::_Register: {
+	case Cpp_StorageClassSpecifier::t_Register: {
 	    declaration_state.type_specifier_parser.setRegister ();
 	} break;
-	case Cpp_StorageClassSpecifier::_Static: {
+	case Cpp_StorageClassSpecifier::t_Static: {
 	    declaration_state.type_specifier_parser.setStatic ();
 	} break;
-	case Cpp_StorageClassSpecifier::_Extern: {
+	case Cpp_StorageClassSpecifier::t_Extern: {
 	    declaration_state.type_specifier_parser.setExtern ();
 	} break;
-	case Cpp_StorageClassSpecifier::_Mutable: {
+	case Cpp_StorageClassSpecifier::t_Mutable: {
 	    declaration_state.type_specifier_parser.setMutable ();
 	} break;
 	default:
@@ -4075,18 +4075,18 @@ cpp_accept_decl_specifier__function_specifier (Cpp_DeclSpecifier * const decl_sp
 
     DeclarationState &declaration_state = self->declaration_states.getLast ();
 
-    abortIf (decl_specifier->decl_specifier_type != Cpp_DeclSpecifier::_FunctionSpecifier);
+    abortIf (decl_specifier->decl_specifier_type != Cpp_DeclSpecifier::t_FunctionSpecifier);
     Cpp_DeclSpecifier_FunctionSpecifier * const decl_specifier__function_specifier =
 	    static_cast <Cpp_DeclSpecifier_FunctionSpecifier*> (decl_specifier);
 
     switch (decl_specifier__function_specifier->functionSpecifier->function_specifier_type) {
-	case Cpp_FunctionSpecifier::_Inline: {
+	case Cpp_FunctionSpecifier::t_Inline: {
 	    declaration_state.type_specifier_parser.setInline ();
 	} break;
-	case Cpp_FunctionSpecifier::_Virtual: {
+	case Cpp_FunctionSpecifier::t_Virtual: {
 	    declaration_state.type_specifier_parser.setVirtual ();
 	} break;
-	case Cpp_FunctionSpecifier::_Explicit: {
+	case Cpp_FunctionSpecifier::t_Explicit: {
 	    declaration_state.type_specifier_parser.setExplicit ();
 	} break;
 	default:
@@ -4133,7 +4133,7 @@ cpp_DeclSpecifier_match_func (Cpp_DeclSpecifier * const /* decl_specifier_ */,
 // This is wrong: works for constructors, but doesn't work for "int (*a) ()".
 
     switch (decl_specifier_->decl_specifier_type) {
-	case Cpp_DeclSpecifier::_StorageClassSpecifier: {
+	case Cpp_DeclSpecifier::t_StorageClassSpecifier: {
 	    Cpp_DeclSpecifier_StorageClassSpecifier const * const decl_specifier =
 		    static_cast <Cpp_DeclSpecifier_StorageClassSpecifier const *> (decl_specifier_);
 
@@ -4143,7 +4143,7 @@ cpp_DeclSpecifier_match_func (Cpp_DeclSpecifier * const /* decl_specifier_ */,
 		return false;
 	    }
 	} break;
-	case Cpp_DeclSpecifier::_TypeSpecifier: {
+	case Cpp_DeclSpecifier::t_TypeSpecifier: {
 	    Cpp_DeclSpecifier_TypeSpecifier const * const decl_specifier =
 		    static_cast <Cpp_DeclSpecifier_TypeSpecifier const *> (decl_specifier_);
 
@@ -4153,7 +4153,7 @@ cpp_DeclSpecifier_match_func (Cpp_DeclSpecifier * const /* decl_specifier_ */,
 		return false;
 	    }
 	} break;
-	case Cpp_DeclSpecifier::_FunctionSpecifier: {
+	case Cpp_DeclSpecifier::t_FunctionSpecifier: {
 	    Cpp_DeclSpecifier_FunctionSpecifier const * const decl_specifier =
 		    static_cast <Cpp_DeclSpecifier_FunctionSpecifier const *> (decl_specifier_);
 
@@ -4163,7 +4163,7 @@ cpp_DeclSpecifier_match_func (Cpp_DeclSpecifier * const /* decl_specifier_ */,
 		return false;
 	    }
 	} break;
-	case Cpp_DeclSpecifier::_Friend: {
+	case Cpp_DeclSpecifier::t_Friend: {
 	    Cpp_DeclSpecifier_Friend const * const decl_specifier =
 		    static_cast <Cpp_DeclSpecifier_Friend const *> (decl_specifier_);
 
@@ -4173,7 +4173,7 @@ cpp_DeclSpecifier_match_func (Cpp_DeclSpecifier * const /* decl_specifier_ */,
 		return false;
 	    }
 	} break;
-	case Cpp_DeclSpecifier::_Typedef: {
+	case Cpp_DeclSpecifier::t_Typedef: {
 	    Cpp_DeclSpecifier_Typedef const * const decl_specifier =
 		    static_cast <Cpp_DeclSpecifier_Typedef const *> (decl_specifier_);
 
@@ -4271,130 +4271,130 @@ cpp_parser_name_for_operator_function_id (Cpp_OperatorFunctionId const * const o
     name->is_operator = true;
 
     switch (operator_function_id->_operator->operator_type) {
-	case Cpp_Operator::_New: {
+	case Cpp_Operator::t_New: {
 	    name->operator_type = Cpp::Name::OperatorType::New;
 	} break;
-	case Cpp_Operator::_Delete: {
+	case Cpp_Operator::t_Delete: {
 	    name->operator_type = Cpp::Name::OperatorType::Delete;
 	} break;
-	case Cpp_Operator::_NewArray: {
+	case Cpp_Operator::t_NewArray: {
 	    name->operator_type = Cpp::Name::OperatorType::NewArray;
 	} break;
-	case Cpp_Operator::_DeleteArray: {
+	case Cpp_Operator::t_DeleteArray: {
 	    name->operator_type = Cpp::Name::OperatorType::DeleteArray;
 	} break;
-	case Cpp_Operator::_Plus: {
+	case Cpp_Operator::t_Plus: {
 	    name->operator_type = Cpp::Name::OperatorType::Plus;
 	} break;
-	case Cpp_Operator::_Minus: {
+	case Cpp_Operator::t_Minus: {
 	    name->operator_type = Cpp::Name::OperatorType::Minus;
 	} break;
-	case Cpp_Operator::_Multiply: {
+	case Cpp_Operator::t_Multiply: {
 	    name->operator_type = Cpp::Name::OperatorType::Multiply;
 	} break;
-	case Cpp_Operator::_Divide: {
+	case Cpp_Operator::t_Divide: {
 	    name->operator_type = Cpp::Name::OperatorType::Divide;
 	} break;
-	case Cpp_Operator::_Remainder: {
+	case Cpp_Operator::t_Remainder: {
 	    name->operator_type = Cpp::Name::OperatorType::Remainder;
 	} break;
-	case Cpp_Operator::_ExclusiveOr: {
+	case Cpp_Operator::t_ExclusiveOr: {
 	    name->operator_type = Cpp::Name::OperatorType::ExclusiveOr;
 	} break;
-	case Cpp_Operator::_And: {
+	case Cpp_Operator::t_And: {
 	    name->operator_type = Cpp::Name::OperatorType::And;
 	} break;
-	case Cpp_Operator::_InclusiveOr: {
+	case Cpp_Operator::t_InclusiveOr: {
 	    name->operator_type = Cpp::Name::OperatorType::InclusiveOr;
 	} break;
-	case Cpp_Operator::_Inversion: {
+	case Cpp_Operator::t_Inversion: {
 	    name->operator_type = Cpp::Name::OperatorType::Inversion;
 	} break;
-	case Cpp_Operator::_Not: {
+	case Cpp_Operator::t_Not: {
 	    name->operator_type = Cpp::Name::OperatorType::Not;
 	} break;
-	case Cpp_Operator::_Set: {
+	case Cpp_Operator::t_Set: {
 	    name->operator_type = Cpp::Name::OperatorType::Set;
 	} break;
-	case Cpp_Operator::_Less: {
+	case Cpp_Operator::t_Less: {
 	    name->operator_type = Cpp::Name::OperatorType::Less;
 	} break;
-	case Cpp_Operator::_Greater: {
+	case Cpp_Operator::t_Greater: {
 	    name->operator_type = Cpp::Name::OperatorType::Greater;
 	} break;
-	case Cpp_Operator::_PlusSet: {
+	case Cpp_Operator::t_PlusSet: {
 	    name->operator_type = Cpp::Name::OperatorType::PlusSet;
 	} break;
-	case Cpp_Operator::_MinusSet: {
+	case Cpp_Operator::t_MinusSet: {
 	    name->operator_type = Cpp::Name::OperatorType::MinusSet;
 	} break;
-	case Cpp_Operator::_MultiplySet: {
+	case Cpp_Operator::t_MultiplySet: {
 	    name->operator_type = Cpp::Name::OperatorType::MultiplySet;
 	} break;
-	case Cpp_Operator::_DivideSet: {
+	case Cpp_Operator::t_DivideSet: {
 	    name->operator_type = Cpp::Name::OperatorType::DivideSet;
 	} break;
-	case Cpp_Operator::_RemainderSet: {
+	case Cpp_Operator::t_RemainderSet: {
 	    name->operator_type = Cpp::Name::OperatorType::RemainderSet;
 	} break;
-	case Cpp_Operator::_ExclusiveOrSet: {
+	case Cpp_Operator::t_ExclusiveOrSet: {
 	    name->operator_type = Cpp::Name::OperatorType::ExclusiveOrSet;
 	} break;
-	case Cpp_Operator::_AndSet: {
+	case Cpp_Operator::t_AndSet: {
 	    name->operator_type = Cpp::Name::OperatorType::AndSet;
 	} break;
-	case Cpp_Operator::_InclusiveOrSet: {
+	case Cpp_Operator::t_InclusiveOrSet: {
 	    name->operator_type = Cpp::Name::OperatorType::InclusiveOrSet;
 	} break;
-	case Cpp_Operator::_LeftShift: {
+	case Cpp_Operator::t_LeftShift: {
 	    name->operator_type = Cpp::Name::OperatorType::LeftShift;
 	} break;
-	case Cpp_Operator::_RightShift: {
+	case Cpp_Operator::t_RightShift: {
 	    name->operator_type = Cpp::Name::OperatorType::RightShift;
 	} break;
-	case Cpp_Operator::_RightShiftSet: {
+	case Cpp_Operator::t_RightShiftSet: {
 	    name->operator_type = Cpp::Name::OperatorType::RightShiftSet;
 	} break;
-	case Cpp_Operator::_LeftShiftSet: {
+	case Cpp_Operator::t_LeftShiftSet: {
 	    name->operator_type = Cpp::Name::OperatorType::LeftShiftSet;
 	} break;
-	case Cpp_Operator::_Equal: {
+	case Cpp_Operator::t_Equal: {
 	    name->operator_type = Cpp::Name::OperatorType::Equal;
 	} break;
-	case Cpp_Operator::_NotEqual: {
+	case Cpp_Operator::t_NotEqual: {
 	    name->operator_type = Cpp::Name::OperatorType::NotEqual;
 	} break;
-	case Cpp_Operator::_LessOrEqual: {
+	case Cpp_Operator::t_LessOrEqual: {
 	    name->operator_type = Cpp::Name::OperatorType::LessOrEqual;
 	} break;
-	case Cpp_Operator::_GreaterOrEqual: {
+	case Cpp_Operator::t_GreaterOrEqual: {
 	    name->operator_type = Cpp::Name::OperatorType::GreaterOrEqual;
 	} break;
-	case Cpp_Operator::_LogicalAnd: {
+	case Cpp_Operator::t_LogicalAnd: {
 	    name->operator_type = Cpp::Name::OperatorType::LogicalAnd;
 	} break;
-	case Cpp_Operator::_LogicalOr: {
+	case Cpp_Operator::t_LogicalOr: {
 	    name->operator_type = Cpp::Name::OperatorType::LogicalOr;
 	} break;
-	case Cpp_Operator::_Increment: {
+	case Cpp_Operator::t_Increment: {
 	    name->operator_type = Cpp::Name::OperatorType::Increment;
 	} break;
-	case Cpp_Operator::_Decrement: {
+	case Cpp_Operator::t_Decrement: {
 	    name->operator_type = Cpp::Name::OperatorType::Decrement;
 	} break;
-	case Cpp_Operator::_Comma: {
+	case Cpp_Operator::t_Comma: {
 	    name->operator_type = Cpp::Name::OperatorType::Comma;
 	} break;
-	case Cpp_Operator::_MemberDereference: {
+	case Cpp_Operator::t_MemberDereference: {
 	    name->operator_type = Cpp::Name::OperatorType::MemberDereference;
 	} break;
-	case Cpp_Operator::_Dereference: {
+	case Cpp_Operator::t_Dereference: {
 	    name->operator_type = Cpp::Name::OperatorType::Dereference;
 	} break;
-	case Cpp_Operator::_FunctionCall: {
+	case Cpp_Operator::t_FunctionCall: {
 	    name->operator_type = Cpp::Name::OperatorType::FunctionCall;
 	} break;
-	case Cpp_Operator::_Subscripting: {
+	case Cpp_Operator::t_Subscripting: {
 	    name->operator_type = Cpp::Name::OperatorType::Subscripting;
 	} break;
 	default:
@@ -4431,13 +4431,13 @@ static Ref<Cpp::Name>
 cpp_parser_parse_unqualified_id (Cpp_UnqualifiedId const * const unqualified_id)
 {
     switch (unqualified_id->unqualified_id_type) {
-	case Cpp_UnqualifiedId::_Identifier: {
+	case Cpp_UnqualifiedId::t_Identifier: {
 	    Cpp_UnqualifiedId_Identifier const * const unqualified_id__identifier =
 		    static_cast <Cpp_UnqualifiedId_Identifier const *> (unqualified_id);
 
 	    return cpp_parser_name_for_identifier (unqualified_id__identifier->identifier);
 	} break;
-	case Cpp_UnqualifiedId::_OperatorFunction: {
+	case Cpp_UnqualifiedId::t_OperatorFunction: {
 	    Cpp_UnqualifiedId_OperatorFunction const * const unqualified_id__operator_function =
 		    static_cast <Cpp_UnqualifiedId_OperatorFunction const *> (unqualified_id);
 	    Cpp_OperatorFunctionId const * const operator_function_id =
@@ -4445,7 +4445,7 @@ cpp_parser_parse_unqualified_id (Cpp_UnqualifiedId const * const unqualified_id)
 
 	    return cpp_parser_name_for_operator_function_id (operator_function_id);
 	} break;
-	case Cpp_UnqualifiedId::_ConversionFunction: {
+	case Cpp_UnqualifiedId::t_ConversionFunction: {
 //			    Cpp_UnqualifiedId_ConversionFunction const * const unqualified_id__conversion_function =
 //				    static_cast <Cpp_UnqualifiedId_ConversionFunction const *> (unqualified_id);
 //			    Cpp_ConversionFunctionId const * const conversion_function_id =
@@ -4460,7 +4460,7 @@ cpp_parser_parse_unqualified_id (Cpp_UnqualifiedId const * const unqualified_id)
 //	    name->is_operator = true;
 //	    name->is_conversion_operator = true;
 	} break;
-	case Cpp_UnqualifiedId::_Destructor: {
+	case Cpp_UnqualifiedId::t_Destructor: {
 //			    Cpp_UnqualifiedId_Destructor const * const unqualified_id__destructor =
 //				    static_cast <Cpp_UnqualifiedId_Destructor const *> (unqualified_id);
 
@@ -4472,7 +4472,7 @@ cpp_parser_parse_unqualified_id (Cpp_UnqualifiedId const * const unqualified_id)
 
 //	    name->is_destructor = true;
 	} break;
-	case Cpp_UnqualifiedId::_Template: {
+	case Cpp_UnqualifiedId::t_Template: {
 	    Cpp_UnqualifiedId_Template const * const unqualified_id__template =
 		    static_cast <Cpp_UnqualifiedId_Template const *> (unqualified_id);
 
@@ -4493,7 +4493,7 @@ static Ref<Cpp::Name>
 cpp_parser_parse_qualified_id (Cpp_QualifiedId const * const qualified_id)
 {
     switch (qualified_id->qualified_id_type) {
-	case Cpp_QualifiedId::_NestedNameSpecifier: {
+	case Cpp_QualifiedId::t_NestedNameSpecifier: {
 	    Cpp_QualifiedId_NestedNameSpecifier const * const qualified_id__nested_name_specifier =
 		    static_cast <Cpp_QualifiedId_NestedNameSpecifier const *> (qualified_id);
 
@@ -4501,19 +4501,19 @@ cpp_parser_parse_qualified_id (Cpp_QualifiedId const * const qualified_id)
 
 	    return cpp_parser_parse_unqualified_id (qualified_id__nested_name_specifier->unqualifiedId);
 	} break;
-	case Cpp_QualifiedId::_Identifier: {
+	case Cpp_QualifiedId::t_Identifier: {
 	    Cpp_QualifiedId_Identifier const * const qualified_id__identifier =
 		    static_cast <Cpp_QualifiedId_Identifier const *> (qualified_id);
 
 	    return cpp_parser_name_for_identifier (qualified_id__identifier->identifier);
 	} break;
-	case Cpp_QualifiedId::_OperatorFunction: {
+	case Cpp_QualifiedId::t_OperatorFunction: {
 	    Cpp_QualifiedId_OperatorFunction const * const qualified_id__operator_function =
 		    static_cast <Cpp_QualifiedId_OperatorFunction const *> (qualified_id);
 
 	    return cpp_parser_name_for_operator_function_id (qualified_id__operator_function->operatorFunctionId);
 	} break;
-	case Cpp_QualifiedId::_Template: {
+	case Cpp_QualifiedId::t_Template: {
 	    Cpp_QualifiedId_Template const * const qualified_id__template =
 		    static_cast <Cpp_QualifiedId_Template const *> (qualified_id);
 
@@ -4531,7 +4531,7 @@ static Ref<Cpp::Name>
 cpp_parser_parse_id_expression (Cpp_IdExpression const * const id_expression)
 {
     switch (id_expression->id_expression_type) {
-	case Cpp_IdExpression::_UnqualifiedId: {
+	case Cpp_IdExpression::t_UnqualifiedId: {
 	    Cpp_IdExpression_UnqualifiedId const * const id_expression__unqualified_id =
 		    static_cast <Cpp_IdExpression_UnqualifiedId const *> (id_expression);
 	    Cpp_UnqualifiedId const * const unqualified_id =
@@ -4539,7 +4539,7 @@ cpp_parser_parse_id_expression (Cpp_IdExpression const * const id_expression)
 
 	    return cpp_parser_parse_unqualified_id (unqualified_id);
 	} break;
-	case Cpp_IdExpression::_QualifiedId: {
+	case Cpp_IdExpression::t_QualifiedId: {
 	    Cpp_IdExpression_QualifiedId const * const id_expression__qualified_id =
 		    static_cast <Cpp_IdExpression_QualifiedId const *> (id_expression);
 	    Cpp_QualifiedId const * const qualified_id =
@@ -4591,7 +4591,7 @@ cpp_parser_do_parse_direct_declarator (CppParser_Impl       * const self,
     DeclarationState &declaration_state = self->declaration_states.getLast ();
 
     switch (direct_declarator->direct_declarator_type) {
-	case Cpp_DirectDeclarator::_Identifier: {
+	case Cpp_DirectDeclarator::t_Identifier: {
 	    DEBUG (
 		errf->print ("--- IDENTIFIER").pendl ();
 	    )
@@ -4628,7 +4628,7 @@ cpp_parser_do_parse_direct_declarator (CppParser_Impl       * const self,
 	    }
 #endif
 	} break;
-	case Cpp_DirectDeclarator::_Function: {
+	case Cpp_DirectDeclarator::t_Function: {
 	    DEBUG (
 		errf->print ("--- FUNCTION").pendl ();
 	    )
@@ -4685,7 +4685,7 @@ cpp_parser_do_parse_direct_declarator (CppParser_Impl       * const self,
 	  // 'saved_state' is not valid anymore.
 #endif
 	} break;
-	case Cpp_DirectDeclarator::_Array: {
+	case Cpp_DirectDeclarator::t_Array: {
 	    DEBUG (
 		errf->print ("--- ARRAY").pendl ();
 	    )
@@ -4712,7 +4712,7 @@ cpp_parser_do_parse_direct_declarator (CppParser_Impl       * const self,
 						       data);
 	    }
 	} break;
-	case Cpp_DirectDeclarator::_Declarator: {
+	case Cpp_DirectDeclarator::t_Declarator: {
 	    Cpp_DirectDeclarator_Declarator const * const direct_declarator__declarator =
 		    static_cast <Cpp_DirectDeclarator_Declarator const *> (direct_declarator);
 
@@ -4768,7 +4768,7 @@ cpp_parser_do_parse_declarator (CppParser_Impl  * const self,
 	for (;;) {
 	    Bool done = false;
 	    switch (cur_declarator->declarator_type) {
-		case Cpp_Declarator::_DirectDeclarator: {
+		case Cpp_Declarator::t_DirectDeclarator: {
 		    DEBUG (
 			errf->print (_func_name)
 			     .print (": declarator: DirectDeclarator").pendl ();
@@ -4780,7 +4780,7 @@ cpp_parser_do_parse_declarator (CppParser_Impl  * const self,
 		    direct_declarator = declarator__direct_declarator->directDeclarator;
 		    done = true;
 		} break;
-		case Cpp_Declarator::_PtrOperator: {
+		case Cpp_Declarator::t_PtrOperator: {
 		    DEBUG (
 			errf->print (_func_name)
 			     .print (": declarator: PtrOperator").pendl ();
@@ -4798,7 +4798,7 @@ cpp_parser_do_parse_declarator (CppParser_Impl  * const self,
 
 		    Cpp_PtrOperator const *ptr_operator = declarator__ptr_operator->ptrOperator;
 		    switch (ptr_operator->ptr_operator_type) {
-			case Cpp_PtrOperator::_Pointer: {
+			case Cpp_PtrOperator::t_Pointer: {
 			    DEBUG (
 				errf->print (_func_name)
 				     .print (": ptr-operator: Pointer").pendl ();
@@ -4816,7 +4816,7 @@ cpp_parser_do_parse_declarator (CppParser_Impl  * const self,
 				Cpp_CvQualifier const *cv_qualifier = cur_cv_qualifier_seq->cvQualifier;
 				abortIf (cv_qualifier == NULL);
 				switch (cv_qualifier->cv_qualifier_type) {
-				    case Cpp_CvQualifier::_Const: {
+				    case Cpp_CvQualifier::t_Const: {
 					if (type_atom__pointer->is_const) {
 					    errf->print (_func_name)
 						 .print (": duplicate \"const\"").pendl ();
@@ -4825,7 +4825,7 @@ cpp_parser_do_parse_declarator (CppParser_Impl  * const self,
 
 					type_atom__pointer->is_const = true;
 				    } break;
-				    case Cpp_CvQualifier::_Volatile: {
+				    case Cpp_CvQualifier::t_Volatile: {
 					if (type_atom__pointer->is_volatile) {
 					    errf->print (_func_name)
 						 .print (": duplicate \"volatile\"").pendl ();
@@ -4842,7 +4842,7 @@ cpp_parser_do_parse_declarator (CppParser_Impl  * const self,
 				cur_cv_qualifier_seq = cur_cv_qualifier_seq->cvQualifierSeq;
 			    }
 			} break;
-			case Cpp_PtrOperator::_Reference: {
+			case Cpp_PtrOperator::t_Reference: {
 			    DEBUG (
 				errf->print (_func_name)
 				     .print (": ptr-operator: Reference").pendl ();
@@ -4850,7 +4850,7 @@ cpp_parser_do_parse_declarator (CppParser_Impl  * const self,
 
 			    declarator_state->is_reference = true;
 			} break;
-			case Cpp_PtrOperator::_PointerToMember: {
+			case Cpp_PtrOperator::t_PointerToMember: {
 			    DEBUG (
 				errf->print (_func_name)
 				     .print (": ptr-operator: PointerToMember").pendl ();
@@ -4868,7 +4868,7 @@ cpp_parser_do_parse_declarator (CppParser_Impl  * const self,
 				Cpp_CvQualifier const *cv_qualifier = cur_cv_qualifier_seq->cvQualifier;
 				abortIf (cv_qualifier == NULL);
 				switch (cv_qualifier->cv_qualifier_type) {
-				    case Cpp_CvQualifier::_Const: {
+				    case Cpp_CvQualifier::t_Const: {
 					if (type_atom__pointer_to_member->is_const) {
 					    errf->print (_func_name)
 						 .print (": duplicate \"const\"").pendl ();
@@ -4877,7 +4877,7 @@ cpp_parser_do_parse_declarator (CppParser_Impl  * const self,
 
 					type_atom__pointer_to_member->is_const = true;
 				    } break;
-				    case Cpp_CvQualifier::_Volatile: {
+				    case Cpp_CvQualifier::t_Volatile: {
 					if (type_atom__pointer_to_member->is_volatile) {
 					    errf->print (_func_name)
 						 .print (": duplicate \"volatile\"").pendl ();
@@ -4999,8 +4999,8 @@ cpp_Scruffy_Declarator_match_func (Cpp_Declarator * const declarator,
 	    if (!declaration_state.type_desc.isNull ()) {
 		errf->print (
 			"\n"
-			"\tTypeDesc::_Class:     ").print (
-				declaration_state.type_desc->getType () == Cpp::TypeDesc::_Class ? "true" : "false").print ("\n"
+			"\tTypeDesc::t_Class:     ").print (
+				declaration_state.type_desc->getType () == Cpp::TypeDesc::t_Class ? "true" : "false").print ("\n"
 			"\tsimple_type_specifier_used: ").print (
 				declaration_state.type_desc->simple_type_specifier_used ? "true" : "false").print ("\n"
 			"\tis_template:          ").print (declaration_state.type_desc->is_template ? "true" : "false").print ("\n"
@@ -5015,7 +5015,7 @@ cpp_Scruffy_Declarator_match_func (Cpp_Declarator * const declarator,
 	  )
 
 	    if (!declaration_state.type_desc.isNull ()                            &&
-		 declaration_state.type_desc->getType () == Cpp::TypeDesc::_Class &&
+		 declaration_state.type_desc->getType () == Cpp::TypeDesc::t_Class &&
 		 declaration_state.type_desc->simple_type_specifier_used          &&
 		!declaration_state.type_desc->is_template                         &&
 		!declaration_state.type_desc->is_reference                        &&
@@ -5034,7 +5034,7 @@ cpp_Scruffy_Declarator_match_func (Cpp_Declarator * const declarator,
 				     .print ("is_reference: ").print (declarator_state->type_desc->is_reference ? "true" : "false").pendl ();
 		    )
 
-		    if ( declarator_state->type_desc->getType () == Cpp::TypeDesc::_Function &&
+		    if ( declarator_state->type_desc->getType () == Cpp::TypeDesc::t_Function &&
 			 declarator_state->type_desc->type_atoms.isEmpty () &&
 			!declarator_state->type_desc->is_reference)
 		    {
@@ -5307,7 +5307,7 @@ cpp_do_declarator_match (Cpp_Declarator * const declarator,
 	    member = member__type;
 	} else
 #if 0
-	if (declarator_state->type_desc->getType () != Cpp::TypeDesc::_Function ||
+	if (declarator_state->type_desc->getType () != Cpp::TypeDesc::t_Function ||
 	    declarator_state->type_desc->is_reference                           ||
 	    !declarator_state->type_desc->type_atoms.isEmpty ())
 	{
@@ -5559,7 +5559,7 @@ public:
 	// TODO "is_function"
 #if 0
 // Wrong, but there should be a check.
-	if (declaration_desc->member->type_desc->getType () == Cpp::TypeDesc::_Function) {
+	if (declaration_desc->member->type_desc->getType () == Cpp::TypeDesc::t_Function) {
 	    errf->print ("Function type-id").pendl ();
 	    abortIfReached ();
 	}
@@ -5725,21 +5725,21 @@ cpp_accept_class_identifier (Cpp_ClassHead * const class_head,
 
     ConstMemoryDesc identifier;
     switch (class_head->class_head_type) {
-	case Cpp_ClassHead::_Simple: {
+	case Cpp_ClassHead::t_Simple: {
 	    Cpp_ClassHead_Simple const * const class_head__simple =
 		    static_cast <Cpp_ClassHead_Simple const *> (class_head);
 
 	    if (class_head__simple->identifier != NULL)
 		identifier = class_head__simple->identifier->any_token->token;
 	} break;
-	case Cpp_ClassHead::_NestedNameSpecifier: {
+	case Cpp_ClassHead::t_NestedNameSpecifier: {
 	    Cpp_ClassHead_NestedNameSpecifier const * const class_head__nested_name_specifier =
 		    static_cast <Cpp_ClassHead_NestedNameSpecifier const *> (class_head);
 
 	    abortIf (class_head__nested_name_specifier->identifier == NULL);
 	    identifier = class_head__nested_name_specifier->identifier->any_token->token;
 	} break;
-	case Cpp_ClassHead::_TemplateId: {
+	case Cpp_ClassHead::t_TemplateId: {
 	    // TODO templates
 	    abortIfReached ();
 	} break;
@@ -5804,7 +5804,7 @@ cpp_accept_class_identifier (Cpp_ClassHead * const class_head,
 // Checked below
 
 	    if (!member.isNull ()) {
-		if (member->getType () != Cpp::Member::_Type) {
+		if (member->getType () != Cpp::Member::t_Type) {
 		    errf->print ("Redeclaring as a different kind of symbol").pendl ();
 		    abortIfReached ();
 		}
@@ -5830,10 +5830,10 @@ cpp_accept_class_identifier (Cpp_ClassHead * const class_head,
     Ref<Cpp::TypeDesc_Class> type_desc__class;
     if (!member.isNull ()) {
 	// The member has to refer to a class definition.
-	if (member->getType () != Cpp::Member::_Type                           ||
+	if (member->getType () != Cpp::Member::t_Type                           ||
 	    static_cast <Cpp::Member_Type const *> (member.ptr ())->is_typedef ||
 	    member->type_desc.isNull ()                                        ||
-	    member->type_desc->getType () != Cpp::TypeDesc::_Class             ||
+	    member->type_desc->getType () != Cpp::TypeDesc::t_Class             ||
 	    !member->type_desc->type_atoms.isEmpty ()                          ||
 	    member->type_desc->is_reference)
 	{
@@ -6182,7 +6182,7 @@ cpp_accept_type_template_parameter (Cpp_TypeParameter * const _type_parameter,
 
     ConstMemoryDesc identifier;
     switch (_type_parameter->type_parameter_type) {
-	case Cpp_TypeParameter::_Class_Default: {
+	case Cpp_TypeParameter::t_Class_Default: {
 	    Cpp_TypeParameter_Class_Default const * const type_parameter =
 		    static_cast <Cpp_TypeParameter_Class_Default const *> (_type_parameter);
 
@@ -6191,14 +6191,14 @@ cpp_accept_type_template_parameter (Cpp_TypeParameter * const _type_parameter,
 
 	    // TODO Default parameter!
 	} break;
-	case Cpp_TypeParameter::_Class: {
+	case Cpp_TypeParameter::t_Class: {
 	    Cpp_TypeParameter_Class const * const type_parameter =
 		    static_cast <Cpp_TypeParameter_Class const *> (_type_parameter);
 
 	    if (type_parameter->identifier != NULL)
 		identifier = type_parameter->identifier->any_token->token;
 	} break;
-	case Cpp_TypeParameter::_Typename_Default: {
+	case Cpp_TypeParameter::t_Typename_Default: {
 	    Cpp_TypeParameter_Typename_Default const * const type_parameter =
 		    static_cast <Cpp_TypeParameter_Typename_Default const *> (_type_parameter);
 
@@ -6207,14 +6207,14 @@ cpp_accept_type_template_parameter (Cpp_TypeParameter * const _type_parameter,
 
 	    // TODO Default parameter!
 	} break;
-	case Cpp_TypeParameter::_Typename: {
+	case Cpp_TypeParameter::t_Typename: {
 	    Cpp_TypeParameter_Typename const * const type_parameter =
 		    static_cast <Cpp_TypeParameter_Typename const *> (_type_parameter);
 
 	    if (type_parameter->identifier != NULL)
 		identifier = type_parameter->identifier->any_token->token;
 	} break;
-	case Cpp_TypeParameter::_Template_Default: {
+	case Cpp_TypeParameter::t_Template_Default: {
 	    Cpp_TypeParameter_Template_Default const * const type_parameter =
 		    static_cast <Cpp_TypeParameter_Template_Default const *> (_type_parameter);
 
@@ -6240,7 +6240,7 @@ cpp_accept_type_template_parameter (Cpp_TypeParameter * const _type_parameter,
 
 	    // TODO Default parameter!
 	} break;
-	case Cpp_TypeParameter::_Template: {
+	case Cpp_TypeParameter::t_Template: {
 	    Cpp_TypeParameter_Template const * const type_parameter =
 		    static_cast <Cpp_TypeParameter_Template const *> (_type_parameter);
 
@@ -6404,7 +6404,7 @@ cpp_accept_template_id (Cpp_TemplateId * const template_id,
     abortIf (!member->isTemplate ());
 
     switch (member->getType ()) {
-	case Cpp::Member::_Type: {
+	case Cpp::Member::t_Type: {
 	    if (!member->type_desc->isClass ())
 		abortIfReached ();
 
@@ -6437,7 +6437,7 @@ cpp_accept_template_id (Cpp_TemplateId * const template_id,
 
 	    template_id->user_obj = static_cast <Cpp::TemplateInstance*> (class_template_instance);
 	} break;
-	case Cpp::Member::_Function: {
+	case Cpp::Member::t_Function: {
 	    Cpp::Member_Function * const member__function =
 		    static_cast <Cpp::Member_Function*> (member);
 
@@ -6494,7 +6494,7 @@ cpp_accept_template_argument (Cpp_TemplateArgument * const template_argument,
     CppParser_Impl::TemplateIdState &template_id_state = self->template_id_states.getLast ();
 
     switch (template_argument->template_argument_type) {
-	case Cpp_TemplateArgument::_AssignmentExpression: {
+	case Cpp_TemplateArgument::t_AssignmentExpression: {
 	    abortIf (self->expression_states.isEmpty ());
 	    CppParser_Impl::ExpressionState &expression_state =
 		    self->expression_states.getLast ();
@@ -6510,7 +6510,7 @@ cpp_accept_template_argument (Cpp_TemplateArgument * const template_argument,
 		    createLastElementCancellable (template_id_state.template_arguments),
 		    template_id_state.checkpoint_key);
 	} break;
-	case Cpp_TemplateArgument::_TypeId: {
+	case Cpp_TemplateArgument::t_TypeId: {
 	    abortIf (self->typeid_states.isEmpty ());
 	    CppParser_Impl::TypeidState &typeid_state =
 		    self->typeid_states.getLast ();
@@ -6526,7 +6526,7 @@ cpp_accept_template_argument (Cpp_TemplateArgument * const template_argument,
 		    createLastElementCancellable (template_id_state.template_arguments),
 		    template_id_state.checkpoint_key);
 	} break;
-	case Cpp_TemplateArgument::_IdExpression: {
+	case Cpp_TemplateArgument::t_IdExpression: {
 	    CppParser_Impl::IdState &id_expression_state = self->id_states.getLast ();
 
 	    Ref<Cpp::TemplateArgument> template_argument__type =
@@ -6562,7 +6562,7 @@ cpp_begin_function_definition (CppElement    * const /* cpp_element */,
 	abortIf (declaration_state.member.isNull () ||
 		 declaration_state.member->type_desc.isNull ());
 
-	if (declaration_state.member->getType () != Cpp::Member::_Function) {
+	if (declaration_state.member->getType () != Cpp::Member::t_Function) {
 	    errf->print ("Not a function").pendl ();
 	    abortIfReached ();
 	}
@@ -6741,7 +6741,7 @@ cpp_accept_function_declarator (Cpp_DirectDeclarator    * const direct_declarato
 
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
-    abortIf (direct_declarator->direct_declarator_type != Cpp_DirectDeclarator::_Function);
+    abortIf (direct_declarator->direct_declarator_type != Cpp_DirectDeclarator::t_Function);
     Cpp_DirectDeclarator_Function * const direct_declarator__function =
 	    static_cast <Cpp_DirectDeclarator_Function*> (direct_declarator);
 
@@ -6809,9 +6809,9 @@ cpp_MemInitializer_accept_func (Cpp_MemInitializer * const _mem_initializer,
     if (_mem_initializer == NULL)
 	return true;
 
-    if (_mem_initializer->mem_initializer_type != Cpp_MemInitializer::_Default) {
+    if (_mem_initializer->mem_initializer_type != Cpp_MemInitializer::t_Default) {
       // "class-prematch" mode
-	abortIf (_mem_initializer->mem_initializer_type != Cpp_MemInitializer::_ClassPrematch);
+	abortIf (_mem_initializer->mem_initializer_type != Cpp_MemInitializer::t_ClassPrematch);
 	return true;
     }
 
@@ -6828,10 +6828,10 @@ cpp_MemInitializer_accept_func (Cpp_MemInitializer * const _mem_initializer,
 	// TODO Name
 
 	switch (mem_initializer_id->mem_initializer_id_type) {
-	    case Cpp_MemInitializerId::_ClassName: {
+	    case Cpp_MemInitializerId::t_ClassName: {
 		cpp_mem_initializer = grab (new Cpp::MemInitializer_Base);
 	    } break;
-	    case Cpp_MemInitializerId::_Identifier: {
+	    case Cpp_MemInitializerId::t_Identifier: {
 		cpp_mem_initializer = grab (new Cpp::MemInitializer_Data);
 	    } break;
 	    default:
@@ -6883,19 +6883,19 @@ cpp_BaseSpecifier_accept_func (Cpp_BaseSpecifier * const base_specifier,
     // TODO 'virtual', access rights
 
     switch (base_specifier->base_specifier_type) {
-	case Cpp_BaseSpecifier::_Base: {
+	case Cpp_BaseSpecifier::t_Base: {
 	    Cpp_BaseSpecifier_Base const * const base_specifier__base =
 		    static_cast <Cpp_BaseSpecifier_Base const *> (base_specifier);
 
 	    parent_entry->type_desc__class = getTypeForClassName (base_specifier__base->className);
 	} break;
-	case Cpp_BaseSpecifier::_Virtual: {
+	case Cpp_BaseSpecifier::t_Virtual: {
 	    Cpp_BaseSpecifier_Virtual const * const base_specifier__virtual =
 		    static_cast <Cpp_BaseSpecifier_Virtual const *> (base_specifier);
 
 	    parent_entry->type_desc__class = getTypeForClassName (base_specifier__virtual->className);
 	} break;
-	case Cpp_BaseSpecifier::_AccessSpecifier: {
+	case Cpp_BaseSpecifier::t_AccessSpecifier: {
 	    Cpp_BaseSpecifier_AccessSpecifier const * const base_specifier__access_specifier =
 		    static_cast <Cpp_BaseSpecifier_AccessSpecifier const *> (base_specifier);
 
@@ -6954,7 +6954,7 @@ cpp_LabeledStatement_accept_func (Cpp_LabeledStatement * const labeled_statement
     CppParser_Impl::StatementState &target_statement_state = self->statement_states.last->previous->data;
 
     switch (labeled_statement->labeled_statement_type) {
-	case Cpp_LabeledStatement::_Label: {
+	case Cpp_LabeledStatement::t_Label: {
 	    Cpp_LabeledStatement_Label const * const labeled_statement__label =
 		    static_cast <Cpp_LabeledStatement_Label const *> (labeled_statement);
 
@@ -6966,14 +6966,14 @@ cpp_LabeledStatement_accept_func (Cpp_LabeledStatement * const labeled_statement
 
 	    self->acceptStatement (target_statement_state, statement__label);
 	} break;
-	case Cpp_LabeledStatement::_Case: {
+	case Cpp_LabeledStatement::t_Case: {
 //	    Cpp_LabeledStatement_Case const * const labeled_statement__label =
 //		    static_cast <Cpp_LabeledStatement_Case const *> (labeled_statement);
 
 	    // TODO
 	    abortIfReached ();
 	} break;
-	case Cpp_LabeledStatement::_Default: {
+	case Cpp_LabeledStatement::t_Default: {
 //	    Cpp_LabeledStatement_Default const * const labeled_statement__default =
 //		    static_cast <Cpp_LabeledStatement_Default const *> (labeled_statement);
 
@@ -7240,7 +7240,7 @@ cpp_accept_for_init_statement (Cpp_ForInitStatement * const for_init_statement,
     CppParser_Impl::ForInitStatementState &for_init_statement_state = self->for_init_statement_states.last->data;
 
     switch (for_init_statement->for_init_statement_type) {
-	case Cpp_ForInitStatement::_Declaration: {
+	case Cpp_ForInitStatement::t_Declaration: {
 	    DeclarationState &declaration_state = self->declaration_states.getLast ();
 
 	    if (declaration_state.member.isNull ())
@@ -7251,13 +7251,13 @@ cpp_accept_for_init_statement (Cpp_ForInitStatement * const for_init_statement,
 		    grab (new Cancellable_Ref<Cpp::Member> (for_init_statement_state.member)),
 		    for_init_statement_state.checkpoint_key);
 	} break;
-	case Cpp_ForInitStatement::_Expression: {
+	case Cpp_ForInitStatement::t_Expression: {
 	    abortIf (self->statement_states.isEmpty ());
 	    CppParser_Impl::StatementState &statement_state = self->statement_states.last->data;
 
 	    if (!statement_state.statements.isEmpty ()) {
 		Cpp::Statement &statement = *statement_state.statements.last->data;
-		abortIf (statement.getType () != Cpp::Statement::_Expression);
+		abortIf (statement.getType () != Cpp::Statement::t_Expression);
 
 		Cpp::Statement_Expression &statement__expression =
 			static_cast <Cpp::Statement_Expression&> (statement);
@@ -7302,7 +7302,7 @@ cpp_accept_initializer (Cpp_Initializer * const cpp_initializer,
 
     Ref<Cpp::Initializer> _initializer;
     switch (cpp_initializer->initializer_type) {
-	case Cpp_Initializer::_InitializerClause: {
+	case Cpp_Initializer::t_InitializerClause: {
 	    Cpp_Initializer_InitializerClause const * const initializer__initializer_clause =
 		    static_cast <Cpp_Initializer_InitializerClause const *> (cpp_initializer);
 
@@ -7311,7 +7311,7 @@ cpp_accept_initializer (Cpp_Initializer * const cpp_initializer,
 	    abortIf (initializer_clause == NULL);
 
 	    switch (initializer_clause->initializer_clause_type) {
-		case Cpp_InitializerClause::_Expression: {
+		case Cpp_InitializerClause::t_Expression: {
 		    Ref<Cpp::Initializer_Assignment> initializer = grab (new Cpp::Initializer_Assignment);
 		    _initializer = initializer;
 
@@ -7320,7 +7320,7 @@ cpp_accept_initializer (Cpp_Initializer * const cpp_initializer,
 
 		    initializer->expression = expression_state.expressions.last->data.expression;
 		} break;
-		case Cpp_InitializerClause::_InitializerList: {
+		case Cpp_InitializerClause::t_InitializerList: {
 		    Ref<Cpp::Initializer_InitializerList> initializer = grab (new Cpp::Initializer_InitializerList);
 		    _initializer = initializer;
 
@@ -7344,7 +7344,7 @@ cpp_accept_initializer (Cpp_Initializer * const cpp_initializer,
 		    abortIfReached ();
 	    }
 	} break;
-	case Cpp_Initializer::_ExpressionList: {
+	case Cpp_Initializer::t_ExpressionList: {
 	    Ref<Cpp::Initializer_Constructor> initializer = grab (new Cpp::Initializer_Constructor);
 	    _initializer = initializer;
 
@@ -7395,7 +7395,7 @@ cpp_accept_init_declarator_initializer (Cpp_InitDeclarator * const /* init_decla
     }
 
     switch (declaration_state.member->getType ()) {
-	case Cpp::Member::_Object: {
+	case Cpp::Member::t_Object: {
 	    Cpp::Member_Object * const member__object =
 		    static_cast <Cpp::Member_Object*> (declaration_state.member.ptr ());
 
@@ -7404,7 +7404,7 @@ cpp_accept_init_declarator_initializer (Cpp_InitDeclarator * const /* init_decla
 		    grab (new Cancellable_Ref<Cpp::Initializer> (member__object->initializer)),
 		    declaration_state.checkpoint_key);
 	} break;
-	case Cpp::Member::_DependentObject: {
+	case Cpp::Member::t_DependentObject: {
 	    Cpp::Member_DependentObject * const member__dependent_object =
 		    static_cast <Cpp::Member_DependentObject*> (declaration_state.member.ptr ());
 
@@ -7450,7 +7450,7 @@ cpp_accept_parameter_declaration_declarator_assignment (Cpp_ParameterDeclaration
     initializer->expression = expression_state.expressions.last->data.expression;
 
     switch (declaration_state.member->getType ()) {
-	case Cpp::Member::_Object: {
+	case Cpp::Member::t_Object: {
 	    Cpp::Member_Object * const member__object =
 		    static_cast <Cpp::Member_Object*> (declaration_state.member.ptr ());
 
@@ -7459,7 +7459,7 @@ cpp_accept_parameter_declaration_declarator_assignment (Cpp_ParameterDeclaration
 		    grab (new Cancellable_Ref<Cpp::Initializer> (member__object->initializer)),
 		    declaration_state.checkpoint_key);
 	} break;
-	case Cpp::Member::_DependentObject: {
+	case Cpp::Member::t_DependentObject: {
 	    Cpp::Member_DependentObject * const member__dependent_object =
 		    static_cast <Cpp::Member_DependentObject*> (declaration_state.member.ptr ());
 
@@ -7494,10 +7494,10 @@ cpp_accept_condition (Cpp_Condition * const condition,
     abortIf (expression.isNull ());
 
     switch (condition->condition_type) {
-	case Cpp_Condition::_Expression: {
+	case Cpp_Condition::t_Expression: {
 	    condition_state.expression = expression;
 	} break;
-	case Cpp_Condition::_Declarator: {
+	case Cpp_Condition::t_Declarator: {
 	    abortIf (condition_state.member.isNull ());
 	    condition_state.expression = expression;
 	} break;
@@ -7537,13 +7537,13 @@ cpp_accept_selection_statement (Cpp_SelectionStatement * const selection_stateme
 	initializer->expression = condition_state.expression;
 
 	switch (condition_state.member->getType ()) {
-	    case Cpp::Member::_Object: {
+	    case Cpp::Member::t_Object: {
 		Cpp::Member_Object * const member__object =
 			static_cast <Cpp::Member_Object*> (condition_state.member.ptr ());
 
 		member__object->initializer = initializer;
 	    } break;
-	    case Cpp::Member::_DependentObject: {
+	    case Cpp::Member::t_DependentObject: {
 		Cpp::Member_DependentObject * const member__dependent_object =
 			static_cast <Cpp::Member_DependentObject*> (condition_state.member.ptr ());
 
@@ -7569,8 +7569,8 @@ cpp_accept_selection_statement (Cpp_SelectionStatement * const selection_stateme
 
     Ref<Cpp::Statement> new_statement;
     switch (selection_statement->selection_statement_type) {
-	case Cpp_SelectionStatement::_IfElse:
-	case Cpp_SelectionStatement::_If: {
+	case Cpp_SelectionStatement::t_IfElse:
+	case Cpp_SelectionStatement::t_If: {
 	    Ref<Cpp::Statement_If> statement = grab (new Cpp::Statement_If);
 
 	    statement->condition = condition;
@@ -7585,7 +7585,7 @@ cpp_accept_selection_statement (Cpp_SelectionStatement * const selection_stateme
 
 	    new_statement = statement;
 	} break;
-	case Cpp_SelectionStatement::_Switch: {
+	case Cpp_SelectionStatement::t_Switch: {
 	    // TODO
 	    abortIfReached ();
 	} break;
@@ -7619,7 +7619,7 @@ cpp_accept_iteration_statement (Cpp_IterationStatement * const iteration_stateme
 
     Ref<Cpp::Statement> statement;
     switch (iteration_statement->iteration_statement_type) {
-	case Cpp_IterationStatement::_While: {
+	case Cpp_IterationStatement::t_While: {
 	    abortIf (self->condition_states.isEmpty ());
 	    CppParser_Impl::ConditionState &condition_state = self->condition_states.last->data;
 
@@ -7636,13 +7636,13 @@ cpp_accept_iteration_statement (Cpp_IterationStatement * const iteration_stateme
 		initializer->expression = condition_state.expression;
 
 		switch (condition_state.member->getType ()) {
-		    case Cpp::Member::_Object: {
+		    case Cpp::Member::t_Object: {
 			Cpp::Member_Object * const member__object =
 				static_cast <Cpp::Member_Object*> (condition_state.member.ptr ());
 
 			member__object->initializer = initializer;
 		    } break;
-		    case Cpp::Member::_DependentObject: {
+		    case Cpp::Member::t_DependentObject: {
 			Cpp::Member_DependentObject * const member__dependent_object =
 				static_cast <Cpp::Member_DependentObject*> (condition_state.member.ptr ());
 
@@ -7679,7 +7679,7 @@ cpp_accept_iteration_statement (Cpp_IterationStatement * const iteration_stateme
 		statement = statement__while;
 	    }
 	} break;
-	case Cpp_IterationStatement::_DoWhile: {
+	case Cpp_IterationStatement::t_DoWhile: {
 	    abortIf (self->expression_states.isEmpty ());
 	    CppParser_Impl::ExpressionState &expression_state = self->expression_states.last->data;
 
@@ -7693,7 +7693,7 @@ cpp_accept_iteration_statement (Cpp_IterationStatement * const iteration_stateme
 
 	    statement = statement__do_while;
 	} break;
-	case Cpp_IterationStatement::_For: {
+	case Cpp_IterationStatement::t_For: {
 	    abortIf (self->for_init_statement_states.isEmpty ());
 	    CppParser_Impl::ForInitStatementState &for_init_statement_state = self->for_init_statement_states.last->data;
 
@@ -7754,13 +7754,13 @@ cpp_accept_iteration_statement (Cpp_IterationStatement * const iteration_stateme
 		initializer->expression = condition_state.expression;
 
 		switch (condition_state.member->getType ()) {
-		    case Cpp::Member::_Object: {
+		    case Cpp::Member::t_Object: {
 			Cpp::Member_Object * const member__object =
 				static_cast <Cpp::Member_Object*> (condition_state.member.ptr ());
 
 			member__object->initializer = initializer;
 		    } break;
-		    case Cpp::Member::_DependentObject: {
+		    case Cpp::Member::t_DependentObject: {
 			Cpp::Member_DependentObject * const member__dependent_object =
 				static_cast <Cpp::Member_DependentObject*> (condition_state.member.ptr ());
 
@@ -7841,15 +7841,15 @@ cpp_SelectionStatement_accept_func (Cpp_SelectionStatement * const selection_sta
 
     Ref<Cpp::Statement> statement;
     switch (selection_statement->selection_statement_type) {
-	case Cpp_SelectionStatement::_IfElse: {
+	case Cpp_SelectionStatement::t_IfElse: {
 	    statement = grab (new Cpp::Statement_If);
 	    // TODO
 	} break;
-	case Cpp_SelectionStatement::_If: {
+	case Cpp_SelectionStatement::t_If: {
 	    statement = grab (new Cpp::Statement_If);
 	    // TODO
 	} break;
-	case Cpp_SelectionStatement::_Switch: {
+	case Cpp_SelectionStatement::t_Switch: {
 	    statement = grab (new Cpp::Statement_Switch);
 	    // TODO
 	} break;
@@ -7889,15 +7889,15 @@ cpp_IterationStatement_accept_func (Cpp_IterationStatement * const iteration_sta
 
     Ref<Cpp::Statement> statement;
     switch (iteration_statement->iteration_statement_type) {
-	case Cpp_IterationStatement::_While: {
+	case Cpp_IterationStatement::t_While: {
 	    statement = grab (new Cpp::Statement_While);
 	    // TODO
 	} break;
-	case Cpp_IterationStatement::_DoWhile: {
+	case Cpp_IterationStatement::t_DoWhile: {
 	    statement = grab (new Cpp::Statement_DoWhile);
 	    // TODO
 	} break;
-	case Cpp_IterationStatement::_For: {
+	case Cpp_IterationStatement::t_For: {
 	    statement = grab (new Cpp::Statement_For);
 	    // TODO
 	} break;
@@ -7938,17 +7938,17 @@ cpp_JumpStatement_accept_func (Cpp_JumpStatement * const jump_statement,
 
     Ref<Cpp::Statement> statement;
     switch (jump_statement->jump_statement_type) {
-	case Cpp_JumpStatement::_Break: {
+	case Cpp_JumpStatement::t_Break: {
 	    statement = grab (new Cpp::Statement_Break);
 	} break;
-	case Cpp_JumpStatement::_Continue: {
+	case Cpp_JumpStatement::t_Continue: {
 	    statement = grab (new Cpp::Statement_Continue);
 	} break;
-	case Cpp_JumpStatement::_Return: {
+	case Cpp_JumpStatement::t_Return: {
 	    statement = grab (new Cpp::Statement_Return);
 	    // TODO expression
 	} break;
-	case Cpp_JumpStatement::_Goto: {
+	case Cpp_JumpStatement::t_Goto: {
 	    statement = grab (new Cpp::Statement_Goto);
 	    // TODO label
 	} break;
@@ -8130,7 +8130,7 @@ cpp_accept_primary_expression (Cpp_PrimaryExpression * const primary_expression,
     CppParser_Impl::ExpressionState &expression_state = self->expression_states.last->data;
 
     switch (primary_expression->primary_expression_type) {
-	case Cpp_PrimaryExpression::_Literal: {
+	case Cpp_PrimaryExpression::t_Literal: {
 	    Ref<Cpp::Expression_Literal> expression =
 		    grab (new Cpp::Expression_Literal);
 
@@ -8138,16 +8138,16 @@ cpp_accept_primary_expression (Cpp_PrimaryExpression * const primary_expression,
 
 	    cpp_accept_expression (*self, expression_state, expression);
 	} break;
-	case Cpp_PrimaryExpression::_This: {
+	case Cpp_PrimaryExpression::t_This: {
 	    Ref<Cpp::Expression_This> expression =
 		    grab (new Cpp::Expression_This);
 
 	    cpp_accept_expression (*self, expression_state, expression);
 	} break;
-	case Cpp_PrimaryExpression::_Braces: {
+	case Cpp_PrimaryExpression::t_Braces: {
 	  // Nothing to do
 	} break;
-	case Cpp_PrimaryExpression::_IdExpression: {
+	case Cpp_PrimaryExpression::t_IdExpression: {
 	    Ref<Cpp::Expression_Id> expression =
 		    grab (new Cpp::Expression_Id);
 
@@ -8421,7 +8421,7 @@ cpp_accept_postfix_expression (Cpp_PostfixExpression * const postfix_expression,
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (postfix_expression->postfix_expression_type) {
-	case Cpp_PostfixExpression::_Subscripting: {
+	case Cpp_PostfixExpression::t_Subscripting: {
 	    Ref<Cpp::Expression> subexpression;
 	    Ref<Cpp::Expression> subscript;
 //	    Cpp::Expression_Subscripting &expression =
@@ -8434,7 +8434,7 @@ cpp_accept_postfix_expression (Cpp_PostfixExpression * const postfix_expression,
 	    expression.subscript = subscript;
 #endif
 	} break;
-	case Cpp_PostfixExpression::_FunctionCall: {
+	case Cpp_PostfixExpression::t_FunctionCall: {
 	    Ref<Cpp::Expression> expression =
 		    grab (new Cpp::Expression_Generic (Cpp::Expression::Operation::FunctionCall));
 
@@ -8464,7 +8464,7 @@ cpp_accept_postfix_expression (Cpp_PostfixExpression * const postfix_expression,
 
 	    cpp_accept_expression (*self, target_expression_state, expression);
 	} break;
-	case Cpp_PostfixExpression::_TypeConversion: {
+	case Cpp_PostfixExpression::t_TypeConversion: {
 	    Cpp_PostfixExpression_TypeConversion const * const postfix_expression__type_conversion =
 		    static_cast <Cpp_PostfixExpression_TypeConversion const *> (postfix_expression);
 
@@ -8503,19 +8503,19 @@ cpp_accept_postfix_expression (Cpp_PostfixExpression * const postfix_expression,
 
 	    cpp_accept_expression (*self, target_expression_state, expression);
 	} break;
-	case Cpp_PostfixExpression::_TypenameTypeConversion: {
+	case Cpp_PostfixExpression::t_TypenameTypeConversion: {
 	    // TODO
 	    DEBUG (
 		errf->print ("--- POSTFIX TYPENAME TYPE CONVERSION").pendl ();
 	    )
 	} break;
-	case Cpp_PostfixExpression::_TemplateTypeConversion: {
+	case Cpp_PostfixExpression::t_TemplateTypeConversion: {
 	    // TODO
 	    DEBUG (
 		errf->print ("--- POSTFIX TEMPLATE TYPE CONVERSION").pendl ();
 	    )
 	} break;
-	case Cpp_PostfixExpression::_DotMemberAccess: {
+	case Cpp_PostfixExpression::t_DotMemberAccess: {
 	    Cpp_PostfixExpression_DotMemberAccess const * const postfix_expression__dot_member_access =
 		    static_cast <Cpp_PostfixExpression_DotMemberAccess const *> (postfix_expression);
 
@@ -8550,7 +8550,7 @@ cpp_accept_postfix_expression (Cpp_PostfixExpression * const postfix_expression,
 
 	    cpp_accept_expression (*self, target_expression_state, expression);
 	} break;
-	case Cpp_PostfixExpression::_ArrowMemberAccess: {
+	case Cpp_PostfixExpression::t_ArrowMemberAccess: {
 	    Cpp_PostfixExpression_ArrowMemberAccess const * const postfix_expression__arrow_member_access =
 		    static_cast <Cpp_PostfixExpression_ArrowMemberAccess const *> (postfix_expression);
 
@@ -8585,43 +8585,43 @@ cpp_accept_postfix_expression (Cpp_PostfixExpression * const postfix_expression,
 
 	    cpp_accept_expression (*self, target_expression_state, expression);
 	} break;
-	case Cpp_PostfixExpression::_DotPseudoDestructorCall: {
+	case Cpp_PostfixExpression::t_DotPseudoDestructorCall: {
 	    // TODO
 	    DEBUG (
 		errf->print ("--- POSTFIX DOT PSEUDO DESTRUCTOR CALL").pendl ();
 	    )
 	} break;
-	case Cpp_PostfixExpression::_ArrowPseudoDestructorCall: {
+	case Cpp_PostfixExpression::t_ArrowPseudoDestructorCall: {
 	    // TODO
 	    DEBUG (
 		errf->print ("--- POSTFIX ARROW PSEUDO DESTRUCTOR CALL").pendl ();
 	    )
 	} break;
-	case Cpp_PostfixExpression::_PostfixIncrement: {
+	case Cpp_PostfixExpression::t_PostfixIncrement: {
 	    cpp_accept_lr_postfix_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::PostfixIncrement> (*self);
 	} break;
-	case Cpp_PostfixExpression::_PostfixDecrement: {
+	case Cpp_PostfixExpression::t_PostfixDecrement: {
 	    cpp_accept_lr_postfix_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::PostfixDecrement> (*self);
 	} break;
-	case Cpp_PostfixExpression::_DynamicCast: {
+	case Cpp_PostfixExpression::t_DynamicCast: {
 	    cpp_accept_cast_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::DynamicCast> (*self);
 	} break;
-	case Cpp_PostfixExpression::_StaticCast: {
+	case Cpp_PostfixExpression::t_StaticCast: {
 	    cpp_accept_cast_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::StaticCast> (*self);
 	} break;
-	case Cpp_PostfixExpression::_ReinterpretCast: {
+	case Cpp_PostfixExpression::t_ReinterpretCast: {
 	    cpp_accept_cast_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::ReinterpretCast> (*self);
 	} break;
-	case Cpp_PostfixExpression::_ConstCast: {
+	case Cpp_PostfixExpression::t_ConstCast: {
 	    cpp_accept_cast_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::ConstCast> (*self);
 	} break;
-	case Cpp_PostfixExpression::_TypeidExpression: {
+	case Cpp_PostfixExpression::t_TypeidExpression: {
 	    cpp_accept_unary_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::TypeidExpression> (*self);
 	} break;
-	case Cpp_PostfixExpression::_TypeidTypeid: {
+	case Cpp_PostfixExpression::t_TypeidTypeid: {
 	    cpp_accept_unary_typeid_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::TypeidType> (*self);
 	} break;
-	case Cpp_PostfixExpression::_Expression: {
+	case Cpp_PostfixExpression::t_Expression: {
 	    // Nothing to do
 	    return true;
 	} break;
@@ -8655,13 +8655,13 @@ cpp_accept_unary_expression (Cpp_UnaryExpression * const unary_expression,
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (unary_expression->unary_expression_type) {
-	case Cpp_UnaryExpression::_PrefixIncrement: {
+	case Cpp_UnaryExpression::t_PrefixIncrement: {
 	    cpp_accept_unary_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::PrefixIncrement> (*self);
 	} break;
-	case Cpp_UnaryExpression::_PrefixDecrement: {
+	case Cpp_UnaryExpression::t_PrefixDecrement: {
 	    cpp_accept_unary_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::PrefixDecrement> (*self);
 	} break;
-	case Cpp_UnaryExpression::_UnaryOperator: {
+	case Cpp_UnaryExpression::t_UnaryOperator: {
 	    Cpp_UnaryExpression_UnaryOperator const * const unary_expression__unary_operator =
 		    static_cast <Cpp_UnaryExpression_UnaryOperator const *> (unary_expression);
 
@@ -8669,32 +8669,32 @@ cpp_accept_unary_expression (Cpp_UnaryExpression * const unary_expression,
 		    unary_expression__unary_operator->unaryOperator;
 
 	    switch (unary_operator->unary_operator_type) {
-		case Cpp_UnaryOperator::_Indirection: {
+		case Cpp_UnaryOperator::t_Indirection: {
 		    cpp_accept_unary_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::Indirection> (*self);
 		} break;
-		case Cpp_UnaryOperator::_PointerTo: {
+		case Cpp_UnaryOperator::t_PointerTo: {
 		    cpp_accept_unary_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::PointerTo> (*self);
 		} break;
-		case Cpp_UnaryOperator::_UnaryPlus: {
+		case Cpp_UnaryOperator::t_UnaryPlus: {
 		    cpp_accept_unary_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::UnaryPlus> (*self);
 		} break;
-		case Cpp_UnaryOperator::_UnaryMinus: {
+		case Cpp_UnaryOperator::t_UnaryMinus: {
 		    cpp_accept_unary_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::UnaryMinus> (*self);
 		} break;
-		case Cpp_UnaryOperator::_LogicalNegation: {
+		case Cpp_UnaryOperator::t_LogicalNegation: {
 		    cpp_accept_unary_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::LogicalNegation> (*self);
 		} break;
-		case Cpp_UnaryOperator::_OnesComplement: {
+		case Cpp_UnaryOperator::t_OnesComplement: {
 		    cpp_accept_unary_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::OnesComplement> (*self);
 		} break;
 		default:
 		    abortIfReached ();
 	    }
 	} break;
-	case Cpp_UnaryExpression::_SizeofExpression: {
+	case Cpp_UnaryExpression::t_SizeofExpression: {
 	    cpp_accept_unary_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::SizeofExpression> (*self);
 	} break;
-	case Cpp_UnaryExpression::_SizeofTypeid: {
+	case Cpp_UnaryExpression::t_SizeofTypeid: {
 	    cpp_accept_unary_typeid_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::SizeofType> (*self);
 	} break;
 	default:
@@ -8717,7 +8717,7 @@ cpp_accept_cast_expression (Cpp_CastExpression * const cast_expression,
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (cast_expression->cast_expression_type) {
-	case Cpp_CastExpression::_Cast: {
+	case Cpp_CastExpression::t_Cast: {
 	    cpp_accept_cast_expression<Cpp::Expression_Generic, Cpp::Expression::Operation::Cast> (*self);
 	} break;
 	default:
@@ -8740,13 +8740,13 @@ cpp_accept_multiplicative_expression (Cpp_MultiplicativeExpression * const multi
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (multiplicative_expression->multiplicative_expression_type) {
-	case Cpp_MultiplicativeExpression::_Multiplication: {
+	case Cpp_MultiplicativeExpression::t_Multiplication: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Multiplication> (self);
 	} break;
-	case Cpp_MultiplicativeExpression::_Division: {
+	case Cpp_MultiplicativeExpression::t_Division: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Division> (self);
 	} break;
-	case Cpp_MultiplicativeExpression::_Remainder: {
+	case Cpp_MultiplicativeExpression::t_Remainder: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Remainder> (self);
 	} break;
 	default:
@@ -8767,10 +8767,10 @@ cpp_accept_additive_expression (Cpp_AdditiveExpression * const additive_expressi
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (additive_expression->additive_expression_type) {
-	case Cpp_AdditiveExpression::_Addition: {
+	case Cpp_AdditiveExpression::t_Addition: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Addition> (self);
 	} break;
-	case Cpp_AdditiveExpression::_Subtraction: {
+	case Cpp_AdditiveExpression::t_Subtraction: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Subtraction> (self);
 	} break;
 	default:
@@ -8791,10 +8791,10 @@ cpp_accept_shift_expression (Cpp_ShiftExpression * const shift_expression,
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (shift_expression->shift_expression_type) {
-	case Cpp_ShiftExpression::_LeftShift: {
+	case Cpp_ShiftExpression::t_LeftShift: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::LeftShift> (self);
 	} break;
-	case Cpp_ShiftExpression::_RightShift: {
+	case Cpp_ShiftExpression::t_RightShift: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::RightShift> (self);
 	} break;
 	default:
@@ -8815,16 +8815,16 @@ cpp_accept_relational_expression (Cpp_RelationalExpression * const relational_ex
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (relational_expression->relational_expression_type) {
-	case Cpp_RelationalExpression::_Less: {
+	case Cpp_RelationalExpression::t_Less: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Less> (self);
 	} break;
-	case Cpp_RelationalExpression::_Greater: {
+	case Cpp_RelationalExpression::t_Greater: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Greater> (self);
 	} break;
-	case Cpp_RelationalExpression::_LessOrEqual: {
+	case Cpp_RelationalExpression::t_LessOrEqual: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::LessOrEqual> (self);
 	} break;
-	case Cpp_RelationalExpression::_GreaterOrEqual: {
+	case Cpp_RelationalExpression::t_GreaterOrEqual: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::GreaterOrEqual> (self);
 	} break;
 	default:
@@ -8845,10 +8845,10 @@ cpp_accept_equality_expression (Cpp_EqualityExpression * const equality_expressi
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (equality_expression->equality_expression_type) {
-	case Cpp_EqualityExpression::_Equal: {
+	case Cpp_EqualityExpression::t_Equal: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Equal> (self);
 	} break;
-	case Cpp_EqualityExpression::_NotEqual: {
+	case Cpp_EqualityExpression::t_NotEqual: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::NotEqual> (self);
 	} break;
 	default:
@@ -8869,7 +8869,7 @@ cpp_accept_and_expression (Cpp_AndExpression * const and_expression,
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (and_expression->and_expression_type) {
-	case Cpp_AndExpression::_BitwiseAnd: {
+	case Cpp_AndExpression::t_BitwiseAnd: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::BitwiseAnd> (self);
 	} break;
 	default:
@@ -8890,7 +8890,7 @@ cpp_accept_exclusive_or_expression (Cpp_ExclusiveOrExpression * const exclusive_
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (exclusive_or_expression->exclusive_or_expression_type) {
-	case Cpp_ExclusiveOrExpression::_BitwiseExclusiveOr: {
+	case Cpp_ExclusiveOrExpression::t_BitwiseExclusiveOr: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::BitwiseExclusiveOr> (self);
 	} break;
 	default:
@@ -8911,7 +8911,7 @@ cpp_accept_inclusive_or_expression (Cpp_InclusiveOrExpression * const inclusive_
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (inclusive_or_expression->inclusive_or_expression_type) {
-	case Cpp_InclusiveOrExpression::_BitwiseInclusiveOr: {
+	case Cpp_InclusiveOrExpression::t_BitwiseInclusiveOr: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::BitwiseInclusiveOr> (self);
 	} break;
 	default:
@@ -8932,7 +8932,7 @@ cpp_accept_logical_and_expression (Cpp_LogicalAndExpression * const logical_and_
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (logical_and_expression->logical_and_expression_type) {
-	case Cpp_LogicalAndExpression::_LogicalAnd: {
+	case Cpp_LogicalAndExpression::t_LogicalAnd: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::LogicalAnd> (self);
 	} break;
 	default:
@@ -8953,7 +8953,7 @@ cpp_accept_logical_or_expression (Cpp_LogicalOrExpression * const logical_or_exp
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (logical_or_expression->logical_or_expression_type) {
-	case Cpp_LogicalOrExpression::_LogicalOr: {
+	case Cpp_LogicalOrExpression::t_LogicalOr: {
 	    cpp_accept_binary_lr_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::LogicalOr> (self);
 	} break;
 	default:
@@ -8974,7 +8974,7 @@ cpp_accept_assignment_expression (Cpp_AssignmentExpression * const assignment_ex
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (assignment_expression->assignment_expression_type) {
-	case Cpp_AssignmentExpression::_Assignment: {
+	case Cpp_AssignmentExpression::t_Assignment: {
 	    Cpp_AssignmentExpression_Assignment const * const assignment_expression__assignment =
 		    static_cast <Cpp_AssignmentExpression_Assignment const *> (assignment_expression);
 
@@ -8982,37 +8982,37 @@ cpp_accept_assignment_expression (Cpp_AssignmentExpression * const assignment_ex
 		    assignment_expression__assignment->assignmentOperator;
 
 	    switch (assignment_operator->assignment_operator_type) {
-		case Cpp_AssignmentOperator::_Generic: {
+		case Cpp_AssignmentOperator::t_Generic: {
 		    cpp_accept_binary_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Assignment> (self);
 		} break;
-		case Cpp_AssignmentOperator::_Multiplication: {
+		case Cpp_AssignmentOperator::t_Multiplication: {
 		    cpp_accept_binary_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Assignment_Multiplication> (self);
 		} break;
-		case Cpp_AssignmentOperator::_Division: {
+		case Cpp_AssignmentOperator::t_Division: {
 		    cpp_accept_binary_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Assignment_Division> (self);
 		} break;
-		case Cpp_AssignmentOperator::_Remainder: {
+		case Cpp_AssignmentOperator::t_Remainder: {
 		    cpp_accept_binary_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Assignment_Remainder> (self);
 		} break;
-		case Cpp_AssignmentOperator::_Addition: {
+		case Cpp_AssignmentOperator::t_Addition: {
 		    cpp_accept_binary_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Assignment_Addition> (self);
 		} break;
-		case Cpp_AssignmentOperator::_Subtraction: {
+		case Cpp_AssignmentOperator::t_Subtraction: {
 		    cpp_accept_binary_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Assignment_Subtraction> (self);
 		} break;
-		case Cpp_AssignmentOperator::_LeftShift: {
+		case Cpp_AssignmentOperator::t_LeftShift: {
 		    cpp_accept_binary_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Assignment_LeftShift> (self);
 		} break;
-		case Cpp_AssignmentOperator::_RightShift: {
+		case Cpp_AssignmentOperator::t_RightShift: {
 		    cpp_accept_binary_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Assignment_RightShift> (self);
 		} break;
-		case Cpp_AssignmentOperator::_BitwiseAnd: {
+		case Cpp_AssignmentOperator::t_BitwiseAnd: {
 		    cpp_accept_binary_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Assignment_BitwiseAnd> (self);
 		} break;
-		case Cpp_AssignmentOperator::_BitwiseExclusiveOr: {
+		case Cpp_AssignmentOperator::t_BitwiseExclusiveOr: {
 		    cpp_accept_binary_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Assignment_BitwiseExclusiveOr> (self);
 		} break;
-		case Cpp_AssignmentOperator::_BitwiseInclusiveOr: {
+		case Cpp_AssignmentOperator::t_BitwiseInclusiveOr: {
 		    cpp_accept_binary_expression <Cpp::Expression_Generic, Cpp::Expression::Operation::Assignment_BitwiseInclusiveOr> (self);
 		} break;
 		default:
@@ -9052,7 +9052,7 @@ cpp_accept_comma_expression (Cpp_Expression * const expression,
     CppParser_Impl * const self = static_cast <CppParser_Impl*> (_self);
 
     switch (expression->expression_type) {
-	case Cpp_Expression::_Comma: {
+	case Cpp_Expression::t_Comma: {
 	    Ref<Cpp::Expression> expression__comma =
 		    grab (new Cpp::Expression_Generic (Cpp::Expression::Operation::Comma));
 
@@ -9164,7 +9164,7 @@ cpp_TypedefName_match_func (Cpp_TypedefName * const typedef_name,
 	return false;
     }
 
-    if (member->getType () != Cpp::Member::_Type ||
+    if (member->getType () != Cpp::Member::t_Type ||
 	!static_cast <Cpp::Member_Type*> (member.ptr ())->is_typedef)
     {
 	return false;
@@ -9211,7 +9211,7 @@ cpp_ClassNameIdentifier_match_func (Cpp_ClassNameIdentifier * const class_name_i
 	return false;
 
     abortIf (member->type_desc.isNull ());
-    if (member->type_desc->getType () == Cpp::TypeDesc::_Class) {
+    if (member->type_desc->getType () == Cpp::TypeDesc::t_Class) {
 	Cpp::TypeDesc_Class * const type_desc__class =
 		static_cast <Cpp::TypeDesc_Class*> (member->type_desc.ptr ());
 

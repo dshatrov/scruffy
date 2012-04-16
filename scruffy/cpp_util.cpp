@@ -32,11 +32,11 @@ do_dumpContainerInfo (Container const &container,
 		      bool      const  dump_parent)
 {
     switch (container.getType ()) {
-	case Container::_Namespace: {
+	case Container::t_Namespace: {
 	    Namespace const &namespace_ = static_cast <Namespace const &> (container);
 	    errf->print ("namespace ").print (namespace_.getPrimaryName ());
 	} break;
-	case Container::_Class: {
+	case Container::t_Class: {
 	    Class const &class_ = static_cast <Class const &> (container);
 	    errf->print ("class");
 	    if (!class_.name.isNull ())
@@ -66,22 +66,22 @@ void
 dumpMemberInfo (Member const * const member /* non-null */)
 {
     switch (member->getType ()) {
-	case Member::_Type: {
+	case Member::t_Type: {
 	    errf->print ("_Type");
 	} break;
-	case Member::_Object: {
+	case Member::t_Object: {
 	    errf->print ("_Object");
 	} break;
-	case Member::_Function: {
+	case Member::t_Function: {
 	    errf->print ("_Function");
 	} break;
-	case Member::_TypeTemplateParameter: {
+	case Member::t_TypeTemplateParameter: {
 	    errf->print ("_TypeTemplateParameter");
 	} break;
-	case Member::_DependentType: {
+	case Member::t_DependentType: {
 	    errf->print ("_DependentType");
 	} break;
-	case Member::_DependentObject: {
+	case Member::t_DependentObject: {
 	    errf->print ("_DependentObject");
 	} break;
 	default:

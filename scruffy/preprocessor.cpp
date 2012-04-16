@@ -690,11 +690,11 @@ evaluateCond_expression (CppPreprocessor * const self,
     static char const * const _func_name = "Scruffy.CppPreprocessor.evaluateCond_expression";
 
     switch (element->cpp_cond_element_type) {
-	case CppCondElement::_PrimaryExpression: {
+	case CppCondElement::t_PrimaryExpression: {
 //	    errf->print ("--- primary-expression").pendl ();
 	    CppCond_PrimaryExpression *_expr = static_cast <CppCond_PrimaryExpression*> (element);
 	    switch (_expr->primary_expression_type) {
-		case CppCond_PrimaryExpression::_Literal: {
+		case CppCond_PrimaryExpression::t_Literal: {
 		    CppCond_PrimaryExpression_Literal *expr =
 			    static_cast <CppCond_PrimaryExpression_Literal*> (_expr);
 		    Literal *literal = static_cast <Literal*> (expr->literal->any_token->user_obj);
@@ -736,7 +736,7 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    abortIfReached ();
 		    return CondValue ((unsigned long) 0);
 		} break;
-		case CppCond_PrimaryExpression::_Braces: {
+		case CppCond_PrimaryExpression::t_Braces: {
 		    CppCond_PrimaryExpression_Braces *expr =
 			    static_cast <CppCond_PrimaryExpression_Braces*> (_expr);
 		    return evaluateCond_expression (self, expr->expression);
@@ -745,36 +745,36 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    abortIfReached ();
 	    }
 	} break;
-	case CppCondElement::_UnaryExpression: {
+	case CppCondElement::t_UnaryExpression: {
 //	    errf->print ("--- unary-expression").pendl ();
 	    CppCond_UnaryExpression *_expr = static_cast <CppCond_UnaryExpression*> (element);
 	    switch (_expr->unary_expression_type) {
-		case CppCond_UnaryExpression::_Expression: {
+		case CppCond_UnaryExpression::t_Expression: {
 		    CppCond_UnaryExpression_Expression *expr =
 			    static_cast <CppCond_UnaryExpression_Expression*> (_expr);
 		    return evaluateCond_expression (self, expr->expression);
 		} break;
-		case CppCond_UnaryExpression::_UnaryOperator: {
+		case CppCond_UnaryExpression::t_UnaryOperator: {
 		    CppCond_UnaryExpression_UnaryOperator *expr =
 			    static_cast <CppCond_UnaryExpression_UnaryOperator*> (_expr);
 		    switch (expr->unaryOperator->unary_operator_type) {
-			case CppCond_UnaryOperator::_Plus: {
+			case CppCond_UnaryOperator::t_Plus: {
 			    return CondValue::unaryPlus (evaluateCond_expression (self, expr->expression));
 			} break;
-			case CppCond_UnaryOperator::_Minus: {
+			case CppCond_UnaryOperator::t_Minus: {
 			    return CondValue::unaryMinus (evaluateCond_expression (self, expr->expression));
 			} break;
-			case CppCond_UnaryOperator::_Not: {
+			case CppCond_UnaryOperator::t_Not: {
 			    return CondValue::unaryNot (evaluateCond_expression (self, expr->expression));
 			} break;
-			case CppCond_UnaryOperator::_Inversion: {
+			case CppCond_UnaryOperator::t_Inversion: {
 			    return CondValue::unaryInversion (evaluateCond_expression (self, expr->expression));
 			} break;
 			default:
 			    abortIfReached ();
 		    }
 		} break;
-		case CppCond_UnaryExpression::_Defined: {
+		case CppCond_UnaryExpression::t_Defined: {
 		    CppCond_UnaryExpression_Defined * const expr =
 			    static_cast <CppCond_UnaryExpression_Defined*> (_expr);
 
@@ -787,7 +787,7 @@ evaluateCond_expression (CppPreprocessor * const self,
 
 		    return 0ul;
 		} break;
-		case CppCond_UnaryExpression::_DefinedBraces: {
+		case CppCond_UnaryExpression::t_DefinedBraces: {
 		    CppCond_UnaryExpression_DefinedBraces * const expr =
 			    static_cast <CppCond_UnaryExpression_DefinedBraces*> (_expr);
 
@@ -804,28 +804,28 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    abortIfReached ();
 	    }
 	} break;
-	case CppCondElement::_MultiplicativeExpression: {
+	case CppCondElement::t_MultiplicativeExpression: {
 //	    errf->print ("--- multiplicative-expression").pendl ();
 	    CppCond_MultiplicativeExpression *_expr = static_cast <CppCond_MultiplicativeExpression*> (element);
 	    switch (_expr->multiplicative_expression_type) {
-		case CppCond_MultiplicativeExpression::_Expression: {
+		case CppCond_MultiplicativeExpression::t_Expression: {
 		    CppCond_MultiplicativeExpression_Expression *expr =
 			    static_cast <CppCond_MultiplicativeExpression_Expression*> (_expr);
 		    return evaluateCond_expression (self, expr->expression);
 		} break;
-		case CppCond_MultiplicativeExpression::_Multiply: {
+		case CppCond_MultiplicativeExpression::t_Multiply: {
 		    CppCond_MultiplicativeExpression_Multiply *expr =
 			    static_cast <CppCond_MultiplicativeExpression_Multiply*> (_expr);
 		    return CondValue::multiplicativeMultiply (evaluateCond_expression (self, expr->left),
 							      evaluateCond_expression (self, expr->right));
 		} break;
-		case CppCond_MultiplicativeExpression::_Divide: {
+		case CppCond_MultiplicativeExpression::t_Divide: {
 		    CppCond_MultiplicativeExpression_Divide *expr =
 			    static_cast <CppCond_MultiplicativeExpression_Divide*> (_expr);
 		    return CondValue::multiplicativeDivide (evaluateCond_expression (self, expr->left),
 							    evaluateCond_expression (self, expr->right));
 		} break;
-		case CppCond_MultiplicativeExpression::_Remainder: {
+		case CppCond_MultiplicativeExpression::t_Remainder: {
 		    CppCond_MultiplicativeExpression_Remainder *expr =
 			    static_cast <CppCond_MultiplicativeExpression_Remainder*> (_expr);
 		    return CondValue::multiplicativeRemainder (evaluateCond_expression (self, expr->left),
@@ -835,22 +835,22 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    abortIfReached ();
 	    }
 	} break;
-	case CppCondElement::_AdditiveExpression: {
+	case CppCondElement::t_AdditiveExpression: {
 //	    errf->print ("--- additive-expression").pendl ();
 	    CppCond_AdditiveExpression *_expr = static_cast <CppCond_AdditiveExpression*> (element);
 	    switch (_expr->additive_expression_type) {
-		case CppCond_AdditiveExpression::_Expression: {
+		case CppCond_AdditiveExpression::t_Expression: {
 		    CppCond_AdditiveExpression_Expression *expr =
 			    static_cast <CppCond_AdditiveExpression_Expression*> (_expr);
 		    return evaluateCond_expression (self, expr->expression);
 		} break;
-		case CppCond_AdditiveExpression::_Plus: {
+		case CppCond_AdditiveExpression::t_Plus: {
 		    CppCond_AdditiveExpression_Plus *expr =
 			    static_cast <CppCond_AdditiveExpression_Plus*> (_expr);
 		    return CondValue::additivePlus (evaluateCond_expression (self, expr->left),
 						    evaluateCond_expression (self,expr->right));
 		} break;
-		case CppCond_AdditiveExpression::_Minus: {
+		case CppCond_AdditiveExpression::t_Minus: {
 		    CppCond_AdditiveExpression_Minus *expr =
 			    static_cast <CppCond_AdditiveExpression_Minus*> (_expr);
 		    return CondValue::additiveMinus (evaluateCond_expression (self, expr->left),
@@ -860,22 +860,22 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    abortIfReached ();
 	    }
 	} break;
-	case CppCondElement::_ShiftExpression: {
+	case CppCondElement::t_ShiftExpression: {
 //	    errf->print ("--- shift-expression").pendl ();
 	    CppCond_ShiftExpression *_expr = static_cast <CppCond_ShiftExpression*> (element);
 	    switch (_expr->shift_expression_type) {
-		case CppCond_ShiftExpression::_Expression: {
+		case CppCond_ShiftExpression::t_Expression: {
 		    CppCond_ShiftExpression_Expression *expr =
 			    static_cast <CppCond_ShiftExpression_Expression*> (_expr);
 		    return evaluateCond_expression (self, expr->expression);
 		} break;
-		case CppCond_ShiftExpression::_LeftShift: {
+		case CppCond_ShiftExpression::t_LeftShift: {
 		    CppCond_ShiftExpression_LeftShift *expr =
 			    static_cast <CppCond_ShiftExpression_LeftShift*> (_expr);
 		    return CondValue::shiftLeft (evaluateCond_expression (self, expr->left),
 						 evaluateCond_expression (self, expr->right));
 		} break;
-		case CppCond_ShiftExpression::_RightShift: {
+		case CppCond_ShiftExpression::t_RightShift: {
 		    CppCond_ShiftExpression_RightShift *expr =
 			    static_cast <CppCond_ShiftExpression_RightShift*> (_expr);
 		    return CondValue::shiftRight (evaluateCond_expression (self, expr->left),
@@ -885,34 +885,34 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    abortIfReached ();
 	    }
 	} break;
-	case CppCondElement::_RelationalExpression: {
+	case CppCondElement::t_RelationalExpression: {
 //	    errf->print ("--- relational-expression").pendl ();
 	    CppCond_RelationalExpression *_expr = static_cast <CppCond_RelationalExpression*> (element);
 	    switch (_expr->relational_expression_type) {
-		case CppCond_RelationalExpression::_Expression: {
+		case CppCond_RelationalExpression::t_Expression: {
 		    CppCond_RelationalExpression_Expression *expr =
 			    static_cast <CppCond_RelationalExpression_Expression*> (_expr);
 		    return evaluateCond_expression (self, expr->expression);
 		} break;
-		case CppCond_RelationalExpression::_Less: {
+		case CppCond_RelationalExpression::t_Less: {
 		    CppCond_RelationalExpression_Less *expr =
 			    static_cast <CppCond_RelationalExpression_Less*> (_expr);
 		    return CondValue::relationalLess (evaluateCond_expression (self, expr->left),
 						      evaluateCond_expression (self, expr->right));
 		} break;
-		case CppCond_RelationalExpression::_Greater: {
+		case CppCond_RelationalExpression::t_Greater: {
 		    CppCond_RelationalExpression_Greater *expr =
 			    static_cast <CppCond_RelationalExpression_Greater*> (_expr);
 		    return CondValue::relationalGreater (evaluateCond_expression (self, expr->left),
 							 evaluateCond_expression (self, expr->right));
 		} break;
-		case CppCond_RelationalExpression::_LessOrEqual: {
+		case CppCond_RelationalExpression::t_LessOrEqual: {
 		    CppCond_RelationalExpression_LessOrEqual *expr =
 			    static_cast <CppCond_RelationalExpression_LessOrEqual*> (_expr);
 		    return CondValue::relationalLessOrEqual (evaluateCond_expression (self, expr->left),
 							     evaluateCond_expression (self, expr->right));
 		} break;
-		case CppCond_RelationalExpression::_GreaterOrEqual: {
+		case CppCond_RelationalExpression::t_GreaterOrEqual: {
 		    CppCond_RelationalExpression_GreaterOrEqual *expr =
 			    static_cast <CppCond_RelationalExpression_GreaterOrEqual*> (_expr);
 		    return CondValue::relationalGreaterOrEqual (evaluateCond_expression (self, expr->left),
@@ -922,22 +922,22 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    abortIfReached ();
 	    }
 	} break;
-	case CppCondElement::_EqualityExpression: {
+	case CppCondElement::t_EqualityExpression: {
 //	    errf->print ("--- equality-expression").pendl ();
 	    CppCond_EqualityExpression *_expr = static_cast <CppCond_EqualityExpression*> (element);
 	    switch (_expr->equality_expression_type) {
-		case CppCond_EqualityExpression::_Expression: {
+		case CppCond_EqualityExpression::t_Expression: {
 		    CppCond_EqualityExpression_Expression *expr =
 			    static_cast <CppCond_EqualityExpression_Expression*> (_expr);
 		    return evaluateCond_expression (self, expr->expression);
 		} break;
-		case CppCond_EqualityExpression::_Equal: {
+		case CppCond_EqualityExpression::t_Equal: {
 		    CppCond_EqualityExpression_Equal *expr =
 			    static_cast <CppCond_EqualityExpression_Equal*> (_expr);
 		    return CondValue::equalityEqual (evaluateCond_expression (self, expr->left),
 						     evaluateCond_expression (self, expr->right));
 		} break;
-		case CppCond_EqualityExpression::_NotEqual: {
+		case CppCond_EqualityExpression::t_NotEqual: {
 		    CppCond_EqualityExpression_NotEqual *expr =
 			    static_cast <CppCond_EqualityExpression_NotEqual*> (_expr);
 		    return CondValue::equalityNotEqual (evaluateCond_expression (self, expr->left),
@@ -947,16 +947,16 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    abortIfReached ();
 	    }
 	} break;
-	case CppCondElement::_AndExpression: {
+	case CppCondElement::t_AndExpression: {
 //	    errf->print ("--- and-expression").pendl ();
 	    CppCond_AndExpression *_expr = static_cast <CppCond_AndExpression*> (element);
 	    switch (_expr->and_expression_type) {
-		case CppCond_AndExpression::_Expression: {
+		case CppCond_AndExpression::t_Expression: {
 		    CppCond_AndExpression_Expression *expr =
 			    static_cast <CppCond_AndExpression_Expression*> (_expr);
 		    return evaluateCond_expression (self, expr->expression);
 		} break;
-		case CppCond_AndExpression::_And: {
+		case CppCond_AndExpression::t_And: {
 		    CppCond_AndExpression_And *expr =
 			    static_cast <CppCond_AndExpression_And*> (_expr);
 		    return CondValue::bitwiseAnd (evaluateCond_expression (self, expr->left),
@@ -966,16 +966,16 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    abortIfReached ();
 	    }
 	} break;
-	case CppCondElement::_ExclusiveOrExpression: {
+	case CppCondElement::t_ExclusiveOrExpression: {
 //	    errf->print ("--- exclusive-or-expression").pendl ();
 	    CppCond_ExclusiveOrExpression *_expr = static_cast <CppCond_ExclusiveOrExpression*> (element);
 	    switch (_expr->exclusive_or_expression_type) {
-		case CppCond_ExclusiveOrExpression::_Expression: {
+		case CppCond_ExclusiveOrExpression::t_Expression: {
 		    CppCond_ExclusiveOrExpression_Expression *expr =
 			    static_cast <CppCond_ExclusiveOrExpression_Expression*> (_expr);
 		    return evaluateCond_expression (self, expr->expression);
 		} break;
-		case CppCond_ExclusiveOrExpression::_ExclusiveOr: {
+		case CppCond_ExclusiveOrExpression::t_ExclusiveOr: {
 		    CppCond_ExclusiveOrExpression_ExclusiveOr *expr =
 			    static_cast <CppCond_ExclusiveOrExpression_ExclusiveOr*> (_expr);
 		    return CondValue::exclusiveOr (evaluateCond_expression (self, expr->left),
@@ -985,16 +985,16 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    abortIfReached ();
 	    }
 	} break;
-	case CppCondElement::_InclusiveOrExpression: {
+	case CppCondElement::t_InclusiveOrExpression: {
 //	    errf->print ("--- inclusive-or-expression").pendl ();
 	    CppCond_InclusiveOrExpression *_expr = static_cast <CppCond_InclusiveOrExpression*> (element);
 	    switch (_expr->inclusive_or_expression_type) {
-		case CppCond_InclusiveOrExpression::_Expression: {
+		case CppCond_InclusiveOrExpression::t_Expression: {
 		    CppCond_InclusiveOrExpression_Expression *expr =
 			    static_cast <CppCond_InclusiveOrExpression_Expression*> (_expr);
 		    return evaluateCond_expression (self, expr->expression);
 		} break;
-		case CppCond_InclusiveOrExpression::_InclusiveOr: {
+		case CppCond_InclusiveOrExpression::t_InclusiveOr: {
 		    CppCond_InclusiveOrExpression_InclusiveOr *expr =
 			    static_cast <CppCond_InclusiveOrExpression_InclusiveOr*> (_expr);
 		    return CondValue::inclusiveOr (evaluateCond_expression (self, expr->left),
@@ -1004,16 +1004,16 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    abortIfReached ();
 	    }
 	} break;
-	case CppCondElement::_LogicalAndExpression: {
+	case CppCondElement::t_LogicalAndExpression: {
 //	    errf->print ("--- logical-and-expression").pendl ();
 	    CppCond_LogicalAndExpression *_expr = static_cast <CppCond_LogicalAndExpression*> (element);
 	    switch (_expr->logical_and_expression_type) {
-		case CppCond_LogicalAndExpression::_Expression: {
+		case CppCond_LogicalAndExpression::t_Expression: {
 		    CppCond_LogicalAndExpression_Expression *expr =
 			    static_cast <CppCond_LogicalAndExpression_Expression*> (_expr);
 		    return evaluateCond_expression (self, expr->expression);
 		} break;
-		case CppCond_LogicalAndExpression::_LogicalAnd: {
+		case CppCond_LogicalAndExpression::t_LogicalAnd: {
 		    CppCond_LogicalAndExpression_LogicalAnd *expr =
 			    static_cast <CppCond_LogicalAndExpression_LogicalAnd*> (_expr);
 		    return CondValue::logicalAnd (evaluateCond_expression (self, expr->left),
@@ -1023,16 +1023,16 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    abortIfReached ();
 	    }
 	} break;
-	case CppCondElement::_LogicalOrExpression: {
+	case CppCondElement::t_LogicalOrExpression: {
 //	    errf->print ("--- logical-or-expression").pendl ();
 	    CppCond_LogicalOrExpression *_expr = static_cast <CppCond_LogicalOrExpression*> (element);
 	    switch (_expr->logical_or_expression_type) {
-		case CppCond_LogicalOrExpression::_Expression: {
+		case CppCond_LogicalOrExpression::t_Expression: {
 		    CppCond_LogicalOrExpression_Expression *expr =
 			    static_cast <CppCond_LogicalOrExpression_Expression*> (_expr);
 		    return evaluateCond_expression (self, expr->expression);
 		} break;
-		case CppCond_LogicalOrExpression::_LogicalOr: {
+		case CppCond_LogicalOrExpression::t_LogicalOr: {
 		    CppCond_LogicalOrExpression_LogicalOr *expr =
 			    static_cast <CppCond_LogicalOrExpression_LogicalOr*> (_expr);
 		    return CondValue::logicalOr (evaluateCond_expression (self, expr->left),
@@ -1042,16 +1042,16 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    abortIfReached ();
 	    }
 	} break;
-	case CppCondElement::_ConditionalExpression: {
+	case CppCondElement::t_ConditionalExpression: {
 //	    errf->print ("--- conditional-expression").pendl ();
 	    CppCond_ConditionalExpression *_expr = static_cast <CppCond_ConditionalExpression*> (element);
 	    switch (_expr->conditional_expression_type) {
-		case CppCond_ConditionalExpression::_Expression: {
+		case CppCond_ConditionalExpression::t_Expression: {
 		    CppCond_ConditionalExpression_Expression *expr =
 			    static_cast <CppCond_ConditionalExpression_Expression*> (_expr);
 		    return evaluateCond_expression (self, expr->expression);
 		} break;
-		case CppCond_ConditionalExpression::_Conditional: {
+		case CppCond_ConditionalExpression::t_Conditional: {
 		    CppCond_ConditionalExpression_Conditional *expr =
 			    static_cast <CppCond_ConditionalExpression_Conditional*> (_expr);
 		    if (evaluateCond_expression (self, expr->conditionExpression).isTrue ())
