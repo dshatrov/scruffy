@@ -1,8 +1,11 @@
 COMMON_CFLAGS =				\
 	-ggdb				\
 	-Wno-long-long -Wall -Wextra	\
-	-rdynamic			\
 	$(THIS_CFLAGS)
+
+if !PLATFORM_WIN32
+    COMMON_CFLAGS += -rdynamic
+endif
 
 AM_CFLAGS = -std=gnu99 $(COMMON_CFLAGS)
 AM_CXXFLAGS = -std=gnu++0x $(COMMON_CFLAGS) #-fno-default-inline -fkeep-inline-functions
