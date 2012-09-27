@@ -680,7 +680,7 @@ protected:
 	: M::Referenced (),
 	  Cloneable<Member> (*this),
 	  SimplyReferenced (*this),
-	  self_type (self_type),
+	  self_type (member.self_type),
 	  category  (member.category),
 	  type_desc (member.type_desc->clone ()),
 	  name      (member.name->clone ())
@@ -871,7 +871,7 @@ private:
 	: M::Referenced (),
 	  Member (*this),
 	  name (member.name ? member.name->clone () : NULL),
-	  initializer (initializer)
+	  initializer (member.initializer)
     {
 	{
 	    List< Ref<ContainerName> >::DataIterator iter (member.nested_name);

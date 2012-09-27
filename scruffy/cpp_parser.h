@@ -41,6 +41,9 @@ public:
     Ref<Cpp::Namespace> getRootNamespace ();
 
     CppParser (ConstMemoryDesc const &default_variant = ConstMemoryDesc::forString ("default"));
+
+    // This prevents clang from trying to instantiate Ref<CppParser_Impl>::~Ref too early.
+    ~CppParser ();
 };
 
 }

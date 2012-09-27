@@ -9272,5 +9272,9 @@ CppParser::CppParser (ConstMemoryDesc const &default_variant)
     impl = grab (new CppParser_Impl (default_variant));
 }
 
+CppParser::~CppParser ()
+{
+}
+
 }
 
