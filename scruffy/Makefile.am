@@ -1,16 +1,16 @@
-COMMON_CFLAGS =				\
-	-ggdb				\
-	-Wno-long-long -Wall -Wextra	\
+COMMON_CFLAGS =			\
+	-ggdb			\
+	-Wno-long-long -Wall    \
 	$(THIS_CFLAGS)
 
 if !PLATFORM_WIN32
     COMMON_CFLAGS += -rdynamic
 endif
 
-AM_CFLAGS = -std=gnu99 $(COMMON_CFLAGS)
-AM_CXXFLAGS = -std=gnu++0x $(COMMON_CFLAGS) #-fno-default-inline -fkeep-inline-functions
+AM_CFLAGS   += -std=gnu99 $(COMMON_CFLAGS)
+AM_CXXFLAGS += $(COMMON_CFLAGS) #-fno-default-inline -fkeep-inline-functions
 
-INCLUDES = -I$(top_srcdir)
+INCLUDES = -I$(top_srcdir) -I$(top_builddir)
 
 PARGEN_GENFILES =		\
 	cpp_pargen.h		\
@@ -25,10 +25,10 @@ BUILT_SOURCES = cpp_pargen.h	\
 CLEANFILES = $(PARGEN_GENFILES)
 
 cpp_pargen.h: cpp.par
-	pargen --module-name scruffy --header-name cpp cpp.par
+	pargen --module-name scruffy --header-name cpp $(srcdir)/cpp.par
 
 cpp_cond_pargen.h: cpp_cond.par
-	pargen --module-name scruffy --header-name cpp_cond cpp_cond.par
+	pargen --module-name scruffy --header-name cpp_cond $(srcdir)/cpp_cond.par
 
 scruffy_private_headers =		\
 	cpp.h				\
