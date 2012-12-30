@@ -49,6 +49,12 @@ namespace Scruffy {
 namespace Scruffy_PreprocessorUtil_priv {}
 using namespace Scruffy_PreprocessorUtil_priv;
 
+static inline bool
+is_newline (Unichar const uc)
+{
+    return unicode_isNewline (uc) != FuzzyResult::No;
+}
+
 Ref<String>
 extractString (UnicharStream *unichar_stream,
 	       unsigned long  len)
@@ -502,7 +508,7 @@ matchWhitespace (UnicharStream *unichar_stream,
 	  // Odd codepath introduced to be able to use 'continue' operator
 	  // for the outer loop.
 
-	    if (isNewline (uc)) {
+	    if (is_newline (uc)) {
 		DEBUG (
 		    errf->print ("Scruffy.Preprocessor.matchWhitespace: "
 				 "newline").pendl ();
@@ -530,7 +536,7 @@ matchWhitespace (UnicharStream *unichar_stream,
 			     "next unichar: 0x").printHex ((Uint32) uc).pendl ();
 	    )
 
-	    if (isNewline (uc)) {
+	    if (is_newline (uc)) {
 		DEBUG (
 		    errf->print ("Scruffy.Preprocessor.matchWhitespace: "
 				 "backslash + newline").pendl ();
@@ -574,7 +580,7 @@ matchWhitespace (UnicharStream *unichar_stream,
 		    total_len ++;
 
 /* Multiline comments are removed early, hence newlines inside them are irrelevant
-		    if (isNewline (uc)) {
+		    if (is_newline (uc)) {
 			if (contains_newline != NULL)
 			    *contains_newline = true;
 		    }
@@ -589,7 +595,7 @@ matchWhitespace (UnicharStream *unichar_stream,
 			total_len ++;
 
 /* Multiline comments are removed early, hence newlines inside them are irrelevant
-			if (isNewline (uc)) {
+			if (is_newline (uc)) {
 			    if (contains_newline != NULL)
 				*contains_newline = true;
 			}
@@ -626,7 +632,7 @@ matchWhitespace (UnicharStream *unichar_stream,
 
 		    total_len ++;
 
-		    if (isNewline (uc)) {
+		    if (is_newline (uc)) {
 			if (contains_newline != NULL)
 			    *contains_newline = true;
 
@@ -1605,7 +1611,7 @@ matchHeaderName (UnicharStream *unichar_stream,
 	    break;
 	}
 
-	if (isNewline (uc))
+	if (is_newline (uc))
 	    return 0;
 
 	num_chars ++;

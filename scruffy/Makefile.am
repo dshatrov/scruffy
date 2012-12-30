@@ -17,12 +17,10 @@ PARGEN_GENFILES =		\
 	cpp_pargen.cpp		\
 	cpp_cond_pargen.h	\
 	cpp_cond_pargen.cpp
+CLEANFILES = $(PARGEN_GENFILES)
 
-#BUILT_SOURCES = $(PARGEN_GENFILES)
 BUILT_SOURCES = cpp_pargen.h	\
 		cpp_cond_pargen.h
-
-CLEANFILES = $(PARGEN_GENFILES)
 
 cpp_pargen.h: cpp.par
 	pargen --module-name scruffy --header-name cpp $(srcdir)/cpp.par
