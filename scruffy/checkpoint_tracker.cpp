@@ -17,9 +17,7 @@
 */
 
 
-#include <new>
-
-#include <mycpp/io.h>
+#include <libmary/libmary.h>
 
 #include <scruffy/checkpoint_tracker.h>
 
@@ -32,7 +30,7 @@
 #define CLASS_NAME "Scruffy.CheckpointTracker"
 
 
-using namespace MyCpp;
+using namespace M;
 
 namespace Scruffy {
 
@@ -44,12 +42,12 @@ CheckpointTracker::newCheckpoint ()
   )
 
     VStack::Level const vstack_level = checkpoint_vstack.getLevel ();
-    Checkpoint * const checkpoint = new (checkpoint_vstack.push_malign (sizeof (Checkpoint))) Checkpoint;
+    Checkpoint * const checkpoint = new (checkpoint_vstack.push_malign (sizeof (Checkpoint), alignof (Checkpoint))) Checkpoint;
     checkpoint->vstack_level = vstack_level;
     checkpoints.append (checkpoint);
 
     // TEST
-    abortIf (checkpoints.isEmpty ());
+    assert (!checkpoints.isEmpty ());
 
     DEBUG (
 	errf->print (_func_name).print (": checkpoint 0x").printHex ((Uint64) checkpoints.getLast ()).pendl ();
@@ -65,22 +63,22 @@ CheckpointTracker::cleanupBoundCancellables ()
     static char const * const _func_name = CLASS_NAME ".cleanupBoundCancellables";
   )
 
-    abortIf (checkpoints.isEmpty ());
+    assert (!checkpoints.isEmpty ());
     Checkpoint * const checkpoint = checkpoints.getLast ();
 
     List<CancellableEntry*>::DataIterator iter (checkpoint->bound_cancellables);
     while (!iter.done ()) {
 	CancellableEntry * &cancellable_entry = iter.next ();
 
-	abortIf (cancellable_entry->cancellable_entry_type != CancellableEntry::Sticky);
-	abortIf (cancellable_entry->bound_checkpoint != checkpoint);
+	assert (cancellable_entry->cancellable_entry_type == CancellableEntry::Sticky);
+	assert (cancellable_entry->bound_checkpoint == checkpoint);
 
 	DEBUG (
 	    errf->print (_func_name).print (": releasing bound cancellable: cancellable 0x"
 			 "").printHex ((Uint64) cancellable_entry->cancellable.ptr ()).pendl ();
 	)
 
-	List< Ref<CancellableEntry> >::Element *tmp_el = cancellable_entry->cancellables_el;
+	List< StRef<CancellableEntry> >::Element *tmp_el = cancellable_entry->cancellables_el;
 
 	cancellable_entry->release ();
 
@@ -98,8 +96,8 @@ CheckpointTracker::cancelCheckpoint ()
     static char const * const _func_name = CLASS_NAME ".cancelCheckpoint";
   )
 
-    abortIf (checkpoints.isEmpty () ||
-	     checkpoints.getLast () == checkpoints.getFirst ());
+    assert (!(checkpoints.isEmpty () ||
+	      checkpoints.getLast () == checkpoints.getFirst ()));
 
     DEBUG (
 	errf->print (_func_name).print (": checkpoint 0x").printHex ((Uint64) checkpoints.getLast ()).pendl ();
@@ -114,10 +112,10 @@ CheckpointTracker::cancelCheckpoint ()
 
     // Note: 'checkpoint->sticky_cancellables' list may be altered by calls to Cancellable::cancel().
     while (checkpoint->sticky_cancellables.first != NULL) {
-	List< Ref<CancellableEntry> >::Element * const cur_el = checkpoint->sticky_cancellables.first;
+	List< StRef<CancellableEntry> >::Element * const cur_el = checkpoint->sticky_cancellables.first;
 
-	Ref<CancellableEntry> &cancellable_entry = cur_el->data;
-	abortIf (cancellable_entry->cancellable_entry_type != CancellableEntry::Sticky);
+	StRef<CancellableEntry> &cancellable_entry = cur_el->data;
+	assert (cancellable_entry->cancellable_entry_type == CancellableEntry::Sticky);
 
 	DEBUG (
 	    errf->print (_func_name).print (": (sticky) calling Cancellable::cancel(), cancellable 0x"
@@ -136,13 +134,13 @@ CheckpointTracker::cancelCheckpoint ()
 
 	checkpoint->sticky_cancellables.remove (cur_el);
     }
-    abortIf (!checkpoint->sticky_cancellables.isEmpty ());
+    assert (checkpoint->sticky_cancellables.isEmpty ());
 
     // Note: 'checkpoint->cancellables' list may be altered by calls to Cancellable::cancel().
     while (checkpoint->cancellables.first != NULL) {
-	List< Ref<CancellableEntry> >::Element * const cur_el = checkpoint->cancellables.first;
+	List< StRef<CancellableEntry> >::Element * const cur_el = checkpoint->cancellables.first;
 
-	Ref<CancellableEntry> &cancellable_entry = cur_el->data;
+	StRef<CancellableEntry> &cancellable_entry = cur_el->data;
 
 	DEBUG (
 	    errf->print (_func_name).print (": calling Cancellable::cancel(), cancellable 0x"
@@ -156,7 +154,7 @@ CheckpointTracker::cancelCheckpoint ()
 
 	checkpoint->cancellables.remove (cur_el);
     }
-    abortIf (!checkpoint->cancellables.isEmpty ());
+    assert (checkpoint->cancellables.isEmpty ());
 
     {
 	Checkpoint * const tmp_checkpoint = checkpoints.getLast ();
@@ -177,8 +175,8 @@ CheckpointTracker::commitCheckpoint ()
     static char const * const _func_name = CLASS_NAME ".commitCheckpoint";
   )
 
-    abortIf (checkpoints.isEmpty () ||
-	     checkpoints.getLast () == checkpoints.getFirst ());
+    assert (!(checkpoints.isEmpty () ||
+	      checkpoints.getLast () == checkpoints.getFirst ()));
 
     Checkpoint * const checkpoint = checkpoints.getLast ();
 
@@ -199,9 +197,9 @@ CheckpointTracker::commitCheckpoint ()
 
     // Note: 'checkpoint->cancellables' list may be altered by calls to Cancellable::cancel().
     while (checkpoint->cancellables.first != NULL) {
-	List< Ref<CancellableEntry> >::Element * const cur_el = checkpoint->cancellables.first;
+	List< StRef<CancellableEntry> >::Element * const cur_el = checkpoint->cancellables.first;
 
-	Ref<CancellableEntry> &cancellable_entry = cur_el->data;
+	StRef<CancellableEntry> &cancellable_entry = cur_el->data;
 	if (cancellable_entry->cancellable_entry_type == CancellableEntry::Unconditional) {
 	    DEBUG (
 		errf->print (_func_name).print (": (unconditional) calling Cancellable::cancel(), cancellable 0x"
@@ -216,7 +214,7 @@ CheckpointTracker::commitCheckpoint ()
 
 	checkpoint->cancellables.remove (cur_el);
     }
-    abortIf (!checkpoint->cancellables.isEmpty ());
+    assert (checkpoint->cancellables.isEmpty ());
 
     if (!checkpoint->sticky_cancellables.isEmpty ()) {
 	Checkpoint * const prv_checkpoint = checkpoints.getPrevious (checkpoints.getLast ());
@@ -229,11 +227,11 @@ CheckpointTracker::commitCheckpoint ()
 						   GenericList::StealPrepend);
 
 	{
-	    List< Ref<CancellableEntry> >::Iterator iter (prv_checkpoint->sticky_cancellables);
+	    List< StRef<CancellableEntry> >::Iterator iter (prv_checkpoint->sticky_cancellables);
 	    while (!iter.done ()) {
-		List< Ref<CancellableEntry> >::Element &cur_el = iter.next ();
+		List< StRef<CancellableEntry> >::Element &cur_el = iter.next ();
 
-		Ref<CancellableEntry> &cancellable_entry = cur_el.data;
+		StRef<CancellableEntry> &cancellable_entry = cur_el.data;
 		cancellable_entry->checkpoint = prv_checkpoint;
 		cancellable_entry->cancellables_el = &cur_el;
 	    }
@@ -259,9 +257,9 @@ CheckpointTracker::addCancellable (Cancellable * const cancellable)
     static char const * const _func_name = CLASS_NAME ".addCancellable";
   )
 
-    abortIf (cancellable == NULL);
+    assert (cancellable);
 
-    abortIf (checkpoints.isEmpty ());
+    assert (!checkpoints.isEmpty ());
     Checkpoint * const checkpoint = checkpoints.getLast ();
 
     DEBUG (
@@ -270,7 +268,7 @@ CheckpointTracker::addCancellable (Cancellable * const cancellable)
 		     "").printHex ((Uint64) checkpoint).pendl ();
     )
 
-    Ref<CancellableEntry> cancellable_entry = grab (new CancellableEntry);
+    StRef<CancellableEntry> cancellable_entry = st_grab (new (std::nothrow) CancellableEntry);
     checkpoint->cancellables.prepend (cancellable_entry);
     cancellable_entry->checkpoint = checkpoint;
     cancellable_entry->cancellables_el = checkpoint->cancellables.first;
@@ -288,9 +286,9 @@ CheckpointTracker::addUnconditionalCancellable (Cancellable * const cancellable)
     static char const * const _func_name = CLASS_NAME ".addUnconditionalCancellable";
   )
 
-    abortIf (cancellable == NULL);
+    assert (cancellable);
 
-    abortIf (checkpoints.isEmpty ());
+    assert (!checkpoints.isEmpty ());
     Checkpoint * const checkpoint = checkpoints.getLast ();
 
     DEBUG (
@@ -299,7 +297,7 @@ CheckpointTracker::addUnconditionalCancellable (Cancellable * const cancellable)
 		     "").printHex ((Uint64) checkpoint).pendl ();
     )
 
-    Ref<CancellableEntry> cancellable_entry = grab (new CancellableEntry);
+    StRef<CancellableEntry> cancellable_entry = st_grab (new (std::nothrow) CancellableEntry);
     checkpoint->cancellables.prepend (cancellable_entry);
     cancellable_entry->checkpoint = checkpoint;
     cancellable_entry->cancellables_el = checkpoint->cancellables.first;
@@ -317,9 +315,9 @@ CheckpointTracker::addStickyCancellable (Cancellable * const cancellable)
     static char const * const _func_name = CLASS_NAME ".addStickyCancellable";
   )
 
-    abortIf (cancellable == NULL);
+    assert (cancellable);
 
-    abortIf (checkpoints.isEmpty ());
+    assert (!checkpoints.isEmpty ());
     Checkpoint * const checkpoint = checkpoints.getLast ();
 
     DEBUG (
@@ -328,7 +326,7 @@ CheckpointTracker::addStickyCancellable (Cancellable * const cancellable)
 		     "").printHex ((Uint64) checkpoint).pendl ();
     )
 
-    Ref<CancellableEntry> cancellable_entry = grab (new CancellableEntry);
+    StRef<CancellableEntry> cancellable_entry = st_grab (new (std::nothrow) CancellableEntry);
     checkpoint->sticky_cancellables.prepend (cancellable_entry);
     cancellable_entry->checkpoint = checkpoint;
     cancellable_entry->cancellables_el = checkpoint->sticky_cancellables.first;
@@ -347,10 +345,10 @@ CheckpointTracker::addBoundCancellable (Cancellable * const cancellable,
     static char const * const _func_name = CLASS_NAME ".addBoundCancellable";
   )
 
-    abortIf (cancellable == NULL ||
-	     checkpoint_key.checkpoint == NULL);
+    assert (!(cancellable == NULL ||
+	      checkpoint_key.checkpoint == NULL));
 
-    abortIf (checkpoints.isEmpty ());
+    assert (!checkpoints.isEmpty ());
     Checkpoint * const checkpoint = checkpoints.getLast ();
 
     DEBUG (
@@ -360,7 +358,7 @@ CheckpointTracker::addBoundCancellable (Cancellable * const cancellable,
 		     "").printHex ((Uint64) checkpoint_key.checkpoint).pendl ();
     )
 
-    Ref<CancellableEntry> cancellable_entry = grab (new CancellableEntry);
+    StRef<CancellableEntry> cancellable_entry = st_grab (new (std::nothrow) CancellableEntry);
     checkpoint->sticky_cancellables.prepend (cancellable_entry);
     cancellable_entry->checkpoint = checkpoint;
     cancellable_entry->cancellables_el = checkpoint->sticky_cancellables.first;
@@ -369,7 +367,7 @@ CheckpointTracker::addBoundCancellable (Cancellable * const cancellable,
     cancellable_entry->cancellable = cancellable;
 
     Checkpoint * const bound_checkpoint = checkpoint_key.checkpoint;
-    abortIf (bound_checkpoint == NULL);
+    assert (bound_checkpoint);
 
     cancellable_entry->bound_checkpoint = bound_checkpoint;
     cancellable_entry->bound_el =
@@ -385,8 +383,8 @@ CheckpointTracker::removeCancellable (CancellableKey const &cancellable_key)
     static char const * const _func_name = CLASS_NAME ".removeCancellable";
   )
 
-    abortIf (cancellable_key.cancellable_entry.isNull ());
-    Ref<CancellableEntry> const &cancellable_entry = cancellable_key.cancellable_entry;
+    assert (cancellable_key.cancellable_entry);
+    StRef<CancellableEntry> const &cancellable_entry = cancellable_key.cancellable_entry;
     if (!cancellable_entry->isValid ()) {
 	DEBUG (
 	    errf->print (_func_name).print (": invalid cancellable").pendl ();
@@ -431,7 +429,7 @@ CheckpointTracker::removeCancellable (CancellableKey const &cancellable_key)
 	    cancellable_entry->checkpoint->sticky_cancellables.remove (cancellable_entry->cancellables_el);
 	} break;
 	default:
-	    abortIfReached ();	       
+            unreachable ();
     }
 
     cancellable_entry->release ();
@@ -455,7 +453,7 @@ CheckpointTracker::CheckpointTracker ()
     : checkpoint_vstack (1 << 16 /* block_size */)
 {
     VStack::Level const vstack_level = checkpoint_vstack.getLevel ();
-    Checkpoint * const checkpoint = new (checkpoint_vstack.push_malign (sizeof (Checkpoint))) Checkpoint;
+    Checkpoint * const checkpoint = new (checkpoint_vstack.push_malign (sizeof (Checkpoint), alignof (Checkpoint))) Checkpoint;
     checkpoint->vstack_level = vstack_level;
     checkpoints.append (checkpoint);
 

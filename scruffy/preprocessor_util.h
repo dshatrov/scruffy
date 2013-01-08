@@ -17,143 +17,142 @@
 */
 
 
-#ifndef __SCRUFFY_PREPROCESSOR_UTIL_H__
-#define __SCRUFFY_PREPROCESSOR_UTIL_H__
+#ifndef SCRUFFY_PREPROCESSOR_UTIL__H__
+#define SCRUFFY_PREPROCESSOR_UTIL__H__
 
-#include <list>
 
-#include <mycpp/string.h>
-#include <mycpp/list.h>
-#include <mycpp/internal_exception.h>
+#include <libmary/libmary.h>
 
-#include <mylang/unichar_stream.h>
+#include <scruffy/unichar_stream.h>
 
 #include <scruffy/preprocessor_types.h>
 #include <scruffy/parsing_exception.h>
 
+
 namespace Scruffy {
 
-using namespace MyCpp;
+using namespace M;
 
-Ref<String> extractString (MyLang::UnicharStream *unichar_stream,
-			   unsigned long len)
-		    throw (InternalException,
-			   ParsingException);
+StRef<String> extractString (UnicharStream *unichar_stream,
+                             unsigned long len)
+                      throw (InternalException,
+                             ParsingException);
 
-unsigned long matchDigit (MyLang::UnicharStream *unichar_stream)
+unsigned long matchDigit (UnicharStream *unichar_stream)
 		   throw (InternalException,
 			  ParsingException);
 
-unsigned long matchOctalDigit (MyLang::UnicharStream *unichar_stream)
+unsigned long matchOctalDigit (UnicharStream *unichar_stream)
 			throw (InternalException,
 			       ParsingException);
 
-unsigned long matchHexadecimalDigit (MyLang::UnicharStream *unichar_stream)
+unsigned long matchHexadecimalDigit (UnicharStream *unichar_stream)
 			      throw (InternalException,
 				     ParsingException);
 
-unsigned long matchNondigit (MyLang::UnicharStream *unichar_stream)
+unsigned long matchNondigit (UnicharStream *unichar_stream)
 		      throw (InternalException,
 			     ParsingException);
 
-unsigned long matchWhitespace (MyLang::UnicharStream *unichar_stream,
+unsigned long matchWhitespace (UnicharStream *unichar_stream,
 			       bool *contains_newline)
 			throw (InternalException,
 			       ParsingException);
 
-unsigned long matchHeaderName (MyLang::UnicharStream *unichar_stream)
+unsigned long matchHeaderName (UnicharStream *unichar_stream)
 			throw (InternalException,
 			       ParsingException);
 
-unsigned long matchIdentifier (MyLang::UnicharStream *unichar_stream)
+unsigned long matchIdentifier (UnicharStream *unichar_stream)
 			throw (InternalException,
 			       ParsingException);
 
-unsigned long matchPpNumber (MyLang::UnicharStream *unichar_stream)
+unsigned long matchPpNumber (UnicharStream *unichar_stream)
 		      throw (InternalException,
 			     ParsingException);
 
-unsigned long matchSimpleEscapeSequence (MyLang::UnicharStream *unichar_stream)
+unsigned long matchSimpleEscapeSequence (UnicharStream *unichar_stream)
 				  throw (InternalException,
 					 ParsingException);
 
-unsigned long matchOctalEscapeSequence (MyLang::UnicharStream *unichar_stream)
+unsigned long matchOctalEscapeSequence (UnicharStream *unichar_stream)
 				 throw (InternalException,
 					ParsingException);
 
-unsigned long matchHexadecimalEscapeSequence (MyLang::UnicharStream *unichar_stream)
+unsigned long matchHexadecimalEscapeSequence (UnicharStream *unichar_stream)
 				       throw (InternalException,
 					      ParsingException);
 
-unsigned long matchEscapeSequence (MyLang::UnicharStream *unichar_stream)
+unsigned long matchEscapeSequence (UnicharStream *unichar_stream)
 			    throw (InternalException,
 				   ParsingException);
 
-unsigned long matchUniversalCharacterName (MyLang::UnicharStream *unichar_stream)
+unsigned long matchUniversalCharacterName (UnicharStream *unichar_stream)
 				    throw (InternalException,
 					   ParsingException);
 
-unsigned long matchCChar (MyLang::UnicharStream *unichar_stream)
+unsigned long matchCChar (UnicharStream *unichar_stream)
 		   throw (InternalException,
 			  ParsingException);
 
-unsigned long matchCCharSequence (MyLang::UnicharStream *unichar_stream)
+unsigned long matchCCharSequence (UnicharStream *unichar_stream)
 			   throw (InternalException,
 				  ParsingException);
 
-unsigned long matchCharacterLiteral (MyLang::UnicharStream *unichar_stream)
+unsigned long matchCharacterLiteral (UnicharStream *unichar_stream)
 			      throw (InternalException,
 				     ParsingException);
 
-unsigned long matchSChar (MyLang::UnicharStream *unichar_stream)
+unsigned long matchSChar (UnicharStream *unichar_stream)
 		   throw (InternalException,
 			  ParsingException);
 
-unsigned long matchSCharSequence (MyLang::UnicharStream *unichar_stream)
+unsigned long matchSCharSequence (UnicharStream *unichar_stream)
 			   throw (InternalException,
 				  ParsingException);
 
-unsigned long matchStringLiteral (MyLang::UnicharStream *unichar_stream)
+unsigned long matchStringLiteral (UnicharStream *unichar_stream)
 			   throw (InternalException,
 				  ParsingException);
 
-unsigned long matchPreprocessingOpOrPunc (MyLang::UnicharStream *unichar_stream)
+unsigned long matchPreprocessingOpOrPunc (UnicharStream *unichar_stream)
 				   throw (InternalException,
 					  ParsingException);
 
-Size matchHeaderName (MyLang::UnicharStream *unichar_stream,
+Size matchHeaderName (UnicharStream *unichar_stream,
 		      PpToken_HeaderName::HeaderNameType *ret_hn_type,
-		      Ref<String> *ret_header_name)
+		      StRef<String> *ret_header_name)
 	       throw (InternalException,
 		      ParsingException);
 
 // mt_throws ((InternalException, ParsingException))
-unsigned long matchPreprocessingToken (MyLang::UnicharStream *unichar_stream,
+unsigned long matchPreprocessingToken (UnicharStream *unichar_stream,
 				       PpTokenType *pp_token_type);
 
-bool compareReplacementLists (List< Ref<PpItem> > *left,
-			      List< Ref<PpItem> > *right);
+bool compareReplacementLists (List< StRef<PpItem> > *left,
+			      List< StRef<PpItem> > *right);
 
-Ref<String> ppItemsToString (List< Ref<PpItem> > *pp_items)
-		      throw (ParsingException,
-			     InternalException);
+StRef<String> ppItemsToString (List< StRef<PpItem> > *pp_items)
+                        throw (ParsingException,
+                               InternalException);
 
-Ref<String> spellPpItems (List< Ref<PpItem> > *pp_items)
-				 throw (InternalException,
-					ParsingException);
+StRef<String> spellPpItems (List< StRef<PpItem> > *pp_items)
+                     throw (InternalException,
+                            ParsingException);
 
-Ref<String> unescapeStringLiteral (String * mt_nonnull string);
+StRef<String> unescapeStringLiteral (String * mt_nonnull string);
 
-Ref<Token> ppTokenToToken (PpToken *pp_token)
-			   throw (ParsingException);
+StRef<Token> ppTokenToToken (PpToken *pp_token)
+                      throw (ParsingException);
 
-void ppTokensToTokens (List< Ref<PpToken> > *pp_tokens  /* non-null */,
-		       List< Ref<Token> >   *ret_tokens /* non-null */);
+void ppTokensToTokens (List< StRef<PpToken> > *pp_tokens  /* non-null */,
+		       List< StRef<Token> >   *ret_tokens /* non-null */);
 
-void ppItemsToTokens (List< Ref<PpItem> > *pp_items   /* non-null */,
-		      List< Ref<Token> >  *ret_tokens /* non-null */);
+void ppItemsToTokens (List< StRef<PpItem> > *pp_items   /* non-null */,
+		      List< StRef<Token> >  *ret_tokens /* non-null */);
 
 }
 
-#endif /* __SCRUFFY_PREPROCESSOR_UTIL_H__ */
+
+#endif /* SCRUFFY_PREPROCESSOR_UTIL__H__ */
 

@@ -17,61 +17,59 @@
 */
 
 
-#ifndef __SCRUFFY_PP_ITEM_STREAM_TOKEN_STREAM_H__
-#define __SCRUFFY_PP_ITEM_STREAM_TOKEN_STREAM_H__
+#ifndef SCRUFFY__PP_ITEM_STREAM_TOKEN_STREAM__H__
+#define SCRUFFY__PP_ITEM_STREAM_TOKEN_STREAM__H__
 
-#include <mylang/token_stream.h>
+
+#include <pargen/token_stream.h>
 
 #include <scruffy/pp_item_stream.h>
 
+
 namespace Scruffy {
 
-using namespace MyCpp;
+using namespace M;
 
-class PpItemStreamTokenStream : public MyLang::TokenStream
+class PpItemStreamTokenStream : public Pargen::TokenStream
 {
 protected:
 #if 0
-    class PositionMarker : public MyLang::TokenStream::PositionMarker
+    class PositionMarker : public Pargen::TokenStream::PositionMarker
     {
     public:
-	Ref<PpItemStream::PositionMarker> pp_pmark;
+	StRef<PpItemStream::PositionMarker> pp_pmark;
     };
 #endif
 
-    Ref<PpItemStream> pp_stream;
-    Ref<PpItemStream::PositionMarker> cur_pmark;
+    StRef<PpItemStream> pp_stream;
+    StRef<PpItemStream::PositionMarker> cur_pmark;
 
-    Ref<String> newline_replacement;
+    StRef<String> newline_replacement;
 
 public:
-  /* TokenStream interface */
+  mt_iface (Pargen::TokenStream)
 
-    ConstMemoryDesc getNextToken ()
-			   throw (InternalException);
+    mt_throws Result getNextToken (ConstMemory *ret_mem);
 
-    ConstMemoryDesc getNextToken (Ref<SimplyReferenced> *ret_user_obj,
-				  void **ret_user_ptr)
-			   throw (InternalException);
+    mt_throws Result getNextToken (ConstMemory          *ret_mem,
+                                   StRef<StReferenced>  *ret_user_obj,
+                                   void               **ret_user_ptr);
 
-    void getPosition (MyLang::TokenStream::PositionMarker *ret_pmark /* non-null */)
-	       throw (InternalException);
+    mt_throws Result getPosition (Pargen::TokenStream::PositionMarker *ret_pmark /* non-null */);
 
-    void setPosition (MyLang::TokenStream::PositionMarker const *pmark /* non-null */)
-	       throw (InternalException);
+    mt_throws Result setPosition (Pargen::TokenStream::PositionMarker const *pmark /* non-null */);
 
-    // TODO
-    MyLang::FilePosition getFilePosition ()
-				   throw (InternalException)
+    mt_throws Result getFilePosition (Pargen::FilePosition *ret_fpos)
     {
-	return MyLang::FilePosition ();
+        *ret_fpos = Pargen::FilePosition ();
+        return Result::Success;
     }
 
-  /* (End of TokenStream interface) */
+  mt_iface_end
 
-    void setNewlineReplacement (ConstMemoryDesc const &replacement)
+    void setNewlineReplacement (ConstMemory const &replacement)
     {
-	newline_replacement = grab (new String (replacement));
+	newline_replacement = st_grab (new (std::nothrow) String (replacement));
     }
 
     PpItemStreamTokenStream (PpItemStream *pp_stream);
@@ -79,5 +77,6 @@ public:
 
 }
 
-#endif /* __SCRUFFY_PP_ITEM_STREAM_TOKEN_STREAM_H__ */
+
+#endif /* SCRUFFY__PP_ITEM_STREAM_TOKEN_STREAM__H__ */
 

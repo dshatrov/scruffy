@@ -17,9 +17,12 @@
 */
 
 
-#include <mycpp/direct_array_file.h>
+#include <libmary/libmary.h>
 
 #include <pargen/parser.h>
+
+#include <scruffy/file_byte_stream.h>
+#include <scruffy/utf8_unichar_stream.h>
 
 #include <scruffy/preprocessor.h>
 #include <scruffy/preprocessor_util.h>
@@ -27,24 +30,22 @@
 //#include <scruffy/pp_item_stream_token_stream.h>
 #include <scruffy/cpp_cond_pargen.h>
 
-#include <mylang/file_byte_stream.h>
-#include <mylang/utf8_unichar_stream.h>
-
 #include <scruffy/unichar_pp_item_stream.h>
 #include <scruffy/list_pp_item_stream.h>
 #include <scruffy/phase3_item_stream.h>
 
+
 #define DEBUG(a) ;
 
-using namespace MyCpp;
-using namespace MyLang;
+
+using namespace M;
 using namespace Pargen;
 
 namespace Scruffy {
 
 bool
 cpp_cond_Literal_match_func (CppCond_Literal *literal,
-			     ParserControl *parser_control,
+			     ParserControl * /* parser_control */,
 			     void * /* _data */)
 {
     DEBUG (
@@ -52,7 +53,7 @@ cpp_cond_Literal_match_func (CppCond_Literal *literal,
     )
 
     Token *token = static_cast <Token*> (literal->any_token->user_obj);
-    abortIf (token == NULL);
+    assert (token);
 
     if (token->token_type == TokenLiteral) {
 	DEBUG (
@@ -71,15 +72,17 @@ cpp_cond_Literal_match_func (CppCond_Literal *literal,
 
 bool
 cpp_cond_Identifier_match_func (CppCond_Identifier *identifier,
-				ParserControl *parser_control,
+				ParserControl * /* parser_control */,
 				void * /* _data */)
 {
     DEBUG (
 	errf->print ("Scruffy.CppParser.cpp_cond_Identifier_match_func").pendl ();
     )
 
-    ConstMemoryDesc mem = identifier->any_token->token;
-    for (Size i = 0; i < mem.getLength (); i++) {
+    ConstMemory mem_ = identifier->any_token->token;
+    Byte const * const mem = mem_.mem();
+    Size const len = mem_.len();
+    for (Size i = 0; i < len; i++) {
 	if ((mem [i] >= 0x41 /* 'A' */ && mem [i] <= 0x5a /* 'Z' */) ||
 	    (mem [i] >= 0x61 /* 'a' */ && mem [i] <= 0x7a /* 'z' */) ||
 	    (mem [i] == 0x5f /* '_' */))
@@ -100,76 +103,74 @@ cpp_cond_Identifier_match_func (CppCond_Identifier *identifier,
 }
 
 /* TODO identifier-list? */
-Ref< List_< Ref<String>, SimplyReferenced > >
+StRef< List_< StRef<String>, StReferenced > >
 CppPreprocessor::extractMacroParameters (PpItemStream *pp_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (pp_stream == NULL)
-	abortIfReached ();
+    assert (pp_stream);
 
-    Ref< List_< Ref<String>, SimplyReferenced > > params = grab (new List_< Ref<String>, SimplyReferenced >);
+    StRef< List_< StRef<String>, StReferenced > > params = st_grab (new (std::nothrow) List_< StRef<String>, StReferenced >);
 
     for (;;) {
-	Ref<PpToken> pp_token;
+	StRef<PpToken> pp_token;
 	PpItemStream::PpItemResult pres = pp_stream->getNextPpToken (&pp_token);
 	if (pres != PpItemStream::PpItemNormal)
 	    throw ParsingException (pp_stream->getFpos (),
-				    String::forData ("pp-token expected"));
+				    st_grab (new (std::nothrow) String ("pp-token expected")));
 
 	if (pp_token->pp_token_type != PpTokenIdentifier)
 	    throw ParsingException (pp_token->fpos,
-				    String::forData ("identifier expected"));
+				    st_grab (new (std::nothrow) String ("identifier expected")));
 
 	params->append (pp_token->str, params->last);
 
 	pres = pp_stream->getNextPpToken (&pp_token);
 	if (pres != PpItemStream::PpItemNormal)
 	    throw ParsingException (pp_stream->getFpos (),
-				    String::forData ("pp-token expected"));
+				    st_grab (new (std::nothrow) String ("pp-token expected")));
 
-	if (compareStrings (pp_token->str->getData (), ",")) {
+	if (equal (pp_token->str->mem(), ",")) {
 	    /* No-op */
 	} else
-	if (compareStrings (pp_token->str->getData (), ")")) {
+	if (equal (pp_token->str->mem(), ")")) {
 	    break;
 	} else {
 	    throw ParsingException (pp_token->fpos,
-				    String::forData ("identifier, ',', or ')' expected"));
+				    st_grab (new (std::nothrow) String ("identifier, ',', or ')' expected")));
 	}
     }
 
     return params;
 }
 
-Ref< List_< Ref<PpItem>, SimplyReferenced > >
+StRef< List_< StRef<PpItem>, StReferenced > >
 CppPreprocessor::extractReplacementList (PpItemStream *pp_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (pp_stream == NULL)
-	abortIfReached ();
+    assert (pp_stream);
 
-    Ref<Whitespace> whsp;
+    StRef<Whitespace> whsp;
     pp_stream->getWhitespace (&whsp);
-    if (!whsp.isNull ()) {
+    if (whsp) {
 	if (whsp->has_newline)
 	    return NULL;
     }
 
-    Ref< List_< Ref<PpItem>, SimplyReferenced > > replacement_list = grab (new List_< Ref<PpItem>, SimplyReferenced >);
+    StRef< List_< StRef<PpItem>, StReferenced > > replacement_list = st_grab (new (std::nothrow) List_< StRef<PpItem>, StReferenced >);
 
     for (;;) {
-	Ref<PpToken> pp_token;
+	StRef<PpToken> pp_token;
 	PpItemStream::PpItemResult pres = pp_stream->getPpToken (&pp_token);
 	if (pres != PpItemStream::PpItemNormal)
 	    throw ParsingException (pp_stream->getFpos (),
-				    String::forData ("pp-token expected"));
+				    st_grab (new (std::nothrow) String ("pp-token expected")));
 
 	replacement_list->append (pp_token.ptr (), replacement_list->last);
 
 	pp_stream->getWhitespace (&whsp);
-	if (!whsp.isNull ()) {
+	if (whsp) {
 	    if (whsp->has_newline)
 		break;
 
@@ -204,7 +205,7 @@ public:
 		return ulong_value != 0;
 	}
 
-	abortIfReached ();
+        unreachable ();
 	return false;
     }
 
@@ -219,7 +220,7 @@ public:
 		return ulong_func (val.ulong_value);
 	}
 
-	abortIfReached ();
+        unreachable ();
 	return CondValue ((unsigned long) 0);
     }
 
@@ -245,7 +246,7 @@ public:
 		}
 	}
 
-	abortIfReached ();
+        unreachable ();
 	return CondValue ((unsigned long) 0);
     }
 
@@ -681,14 +682,26 @@ public:
     }
 };
 
+static long strToLong (char const *str)
+{
+    Int64 val = 0;
+    strToInt64 (str, &val, NULL);
+    return (long) val;
+}
+
+static unsigned long strToUlong (char const *str)
+{
+    Uint64 val = 0;
+    strToUint64 (str, &val, NULL);
+    return (unsigned long) val;
+}
+
 static CondValue
 evaluateCond_expression (CppPreprocessor * const self,
 			 CppCondElement  * const element)
     throw (ParsingException,
 	   InternalException)
 {
-    static char const * const _func_name = "Scruffy.CppPreprocessor.evaluateCond_expression";
-
     switch (element->cpp_cond_element_type) {
 	case CppCondElement::t_PrimaryExpression: {
 //	    errf->print ("--- primary-expression").pendl ();
@@ -700,9 +713,9 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    Literal *literal = static_cast <Literal*> (expr->literal->any_token->user_obj);
  		    switch (literal->literal_type) {
 			case LiteralInteger: {
-			    long long_value = strToLong (literal->str->getData ());
-			    abortIf (long_value < 0);
-			    unsigned long ulong_value = strToUlong (literal->str->getData ());
+			    long long_value = strToLong (literal->str->cstr());
+			    assert (long_value >= 0);
+			    unsigned long ulong_value = strToUlong (literal->str->cstr());
 			    if (ulong_value > (unsigned long) long_value)
 				return CondValue (ulong_value);
 			    else
@@ -710,30 +723,32 @@ evaluateCond_expression (CppPreprocessor * const self,
 			} break;
 			case LiteralCharacter: {
 			    // TODO
-			    abortIfReached ();
+			    unreachable ();
 			} break;
 			case LiteralFloating: {
 			    throw ParsingException (literal->fpos,
-						    String::forData ("floating literals are not allowed"
-								     "in preprocessor controlling expressions"));
+						    st_grab (new (std::nothrow) String (
+                                                            "floating literals are not allowed"
+                                                            "in preprocessor controlling expressions")));
 			} break;
 			case LiteralString: {
 			    throw ParsingException (literal->fpos,
-						    String::forData ("string literals are not allowed "
-								     "in preprocessor controlling expressions"));
+						    st_grab (new (std::nothrow) String (
+                                                            "string literals are not allowed "
+                                                            "in preprocessor controlling expressions")));
 			} break;
 			case LiteralBoolean: {
-			    if (compareStrings (literal->str->getData (), "true"))
+			    if (equal (literal->str->mem(), "true"))
 				return CondValue ((unsigned long) 1);
 			    else
-			    if (compareStrings (literal->str->getData (), "false"))
+			    if (equal (literal->str->mem(), "false"))
 				return CondValue ((unsigned long) 0);
 			    else
-				abortIfReached ();
+				unreachable ();
 			} break;
 		    }
 
-		    abortIfReached ();
+		    unreachable ();
 		    return CondValue ((unsigned long) 0);
 		} break;
 		case CppCond_PrimaryExpression::t_Braces: {
@@ -742,7 +757,7 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    return evaluateCond_expression (self, expr->expression);
 		} break;
 		default:
-		    abortIfReached ();
+		    unreachable ();
 	    }
 	} break;
 	case CppCondElement::t_UnaryExpression: {
@@ -771,17 +786,17 @@ evaluateCond_expression (CppPreprocessor * const self,
 			    return CondValue::unaryInversion (evaluateCond_expression (self, expr->expression));
 			} break;
 			default:
-			    abortIfReached ();
+			    unreachable ();
 		    }
 		} break;
 		case CppCond_UnaryExpression::t_Defined: {
 		    CppCond_UnaryExpression_Defined * const expr =
 			    static_cast <CppCond_UnaryExpression_Defined*> (_expr);
 
-		    MapBase< Ref<MacroDefinition> >::Entry mdef_entry =
+		    MapBase< StRef<MacroDefinition> >::Entry mdef_entry =
 			    self->macro_definitions.lookup (expr->identifier->any_token->token);
 		    if (!mdef_entry.isNull ()) {
-			errf->print (_func_name).print (": Defined: true").pendl ();
+			errs->println (_func, ": Defined: true");
 			return 1ul;
 		    }
 
@@ -791,17 +806,17 @@ evaluateCond_expression (CppPreprocessor * const self,
 		    CppCond_UnaryExpression_DefinedBraces * const expr =
 			    static_cast <CppCond_UnaryExpression_DefinedBraces*> (_expr);
 
-		    MapBase< Ref<MacroDefinition> >::Entry mdef_entry =
+		    MapBase< StRef<MacroDefinition> >::Entry mdef_entry =
 			    self->macro_definitions.lookup (expr->identifier->any_token->token);
 		    if (!mdef_entry.isNull ()) {
-			errf->print (_func_name).print (": DefinedBraces: true").pendl ();
+			errs->println (_func, ": DefinedBraces: true");
 			return 1ul;
 		    }
 
 		    return 0ul;
 		} break;
 		default:
-		    abortIfReached ();
+		    unreachable ();
 	    }
 	} break;
 	case CppCondElement::t_MultiplicativeExpression: {
@@ -832,7 +847,7 @@ evaluateCond_expression (CppPreprocessor * const self,
 							       evaluateCond_expression (self, expr->right));
 		} break;
 		default:
-		    abortIfReached ();
+		    unreachable ();
 	    }
 	} break;
 	case CppCondElement::t_AdditiveExpression: {
@@ -857,7 +872,7 @@ evaluateCond_expression (CppPreprocessor * const self,
 						     evaluateCond_expression (self, expr->right));
 		} break;
 		default:
-		    abortIfReached ();
+		    unreachable ();
 	    }
 	} break;
 	case CppCondElement::t_ShiftExpression: {
@@ -882,7 +897,7 @@ evaluateCond_expression (CppPreprocessor * const self,
 						  evaluateCond_expression (self, expr->right));
 		} break;
 		default:
-		    abortIfReached ();
+		    unreachable ();
 	    }
 	} break;
 	case CppCondElement::t_RelationalExpression: {
@@ -919,7 +934,7 @@ evaluateCond_expression (CppPreprocessor * const self,
 								evaluateCond_expression (self, expr->right));
 		} break;
 		default:
-		    abortIfReached ();
+		    unreachable ();
 	    }
 	} break;
 	case CppCondElement::t_EqualityExpression: {
@@ -944,7 +959,7 @@ evaluateCond_expression (CppPreprocessor * const self,
 							evaluateCond_expression (self, expr->right));
 		} break;
 		default:
-		    abortIfReached ();
+		    unreachable ();
 	    }
 	} break;
 	case CppCondElement::t_AndExpression: {
@@ -963,7 +978,7 @@ evaluateCond_expression (CppPreprocessor * const self,
 						  evaluateCond_expression (self, expr->right));
 		} break;
 		default:
-		    abortIfReached ();
+		    unreachable ();
 	    }
 	} break;
 	case CppCondElement::t_ExclusiveOrExpression: {
@@ -982,7 +997,7 @@ evaluateCond_expression (CppPreprocessor * const self,
 						   evaluateCond_expression (self, expr->right));
 		} break;
 		default:
-		    abortIfReached ();
+		    unreachable ();
 	    }
 	} break;
 	case CppCondElement::t_InclusiveOrExpression: {
@@ -1001,7 +1016,7 @@ evaluateCond_expression (CppPreprocessor * const self,
 						   evaluateCond_expression (self, expr->right));
 		} break;
 		default:
-		    abortIfReached ();
+		    unreachable ();
 	    }
 	} break;
 	case CppCondElement::t_LogicalAndExpression: {
@@ -1020,7 +1035,7 @@ evaluateCond_expression (CppPreprocessor * const self,
 						  evaluateCond_expression (self, expr->right));
 		} break;
 		default:
-		    abortIfReached ();
+		    unreachable ();
 	    }
 	} break;
 	case CppCondElement::t_LogicalOrExpression: {
@@ -1039,7 +1054,7 @@ evaluateCond_expression (CppPreprocessor * const self,
 						 evaluateCond_expression (self, expr->right));
 		} break;
 		default:
-		    abortIfReached ();
+		    unreachable ();
 	    }
 	} break;
 	case CppCondElement::t_ConditionalExpression: {
@@ -1060,14 +1075,14 @@ evaluateCond_expression (CppPreprocessor * const self,
 			return evaluateCond_expression (self, expr->elseExpression);
 		} break;
 		default:
-		    abortIfReached ();
+		    unreachable ();
 	    }
 	} break;
 	default:
-	    abortIfReached ();
+	    unreachable ();
     }
 
-    abortIfReached ();
+    unreachable ();
     return CondValue ((unsigned long) 0);
 }
 
@@ -1088,11 +1103,11 @@ evaluateCond (CppPreprocessor * const self,
 	    return val.ulong_value != 0;
 	} break;
 	default:
-	    abortIfReached ();
+            unreachable ();
     }
 
     // Unreachable
-    abortIfReached ();
+    unreachable ();
     return true;
 }
 
@@ -1102,7 +1117,7 @@ CppPreprocessor::do_translateIfDirective (PpItemStream *pp_stream,
     throw (ParsingException,
 	   InternalException)
 {
-    abortIf (pp_stream == NULL);
+    assert (pp_stream);
 
   // Translating all tokens up to a newline.
 
@@ -1110,36 +1125,33 @@ CppPreprocessor::do_translateIfDirective (PpItemStream *pp_stream,
 
     if (elif) {
 	if (if_stack.last == NULL)
-	    throw ParsingException (if_fpos, String::forData ("misplaced #elif"));
+	    throw ParsingException (if_fpos, st_grab (new (std::nothrow) String ("misplaced #elif")));
 
 	if (if_stack.last->data.state == IfStackEntry::Else)
-	    throw ParsingException (if_fpos, String::forData ("#elif after #else"));
+	    throw ParsingException (if_fpos, st_grab (new (std::nothrow) String ("#elif after #else")));
     }
 
-    List< Ref<PpItem> > pp_items;
+    List< StRef<PpItem> > pp_items;
     {
 	bool defined_guard = false;
 	for (;;) {
-	    Ref<Whitespace> whsp;
+	    StRef<Whitespace> whsp;
 
 	    pp_stream->getWhitespace (&whsp);
-	    if (!whsp.isNull ()) {
+	    if (whsp) {
 		if (whsp->has_newline)
 		    break;
 
 		pp_items.append (whsp.ptr ());
 	    }
 
-	    Ref<PpToken> pp_token;
+	    StRef<PpToken> pp_token;
 	    pp_stream->getPpToken (&pp_token);
-	    if (pp_token.isNull ())
+	    if (!pp_token)
 		break;
 
 	    // Parameter for 'defined' should be protected from macro expansion.
-	    if (compareByteArrayToString (pp_token->str->getMemoryDesc (),
-					  "defined")
-			== ComparisonEqual)
-	    {
+	    if (equal (pp_token->str->mem(), "defined")) {
 		defined_guard = true;
 		pp_items.append (pp_token);
 	    } else {
@@ -1148,10 +1160,7 @@ CppPreprocessor::do_translateIfDirective (PpItemStream *pp_stream,
 		else
 		    pp_items.append (pp_token);
 
-		if (compareByteArrayToString (pp_token->str->getMemoryDesc (),
-					      "(")
-			    != ComparisonEqual)
-		{
+		if (!equal (pp_token->str->mem(), "(")) {
 		    defined_guard = false;
 		}
 	    }
@@ -1160,13 +1169,13 @@ CppPreprocessor::do_translateIfDirective (PpItemStream *pp_stream,
 
     {
       // Converting identifiers into zeroes.
-	List< Ref<PpItem> >::Iterator pp_item_iter (pp_items);
+	List< StRef<PpItem> >::Iterator pp_item_iter (pp_items);
 	bool defined_guard = false;
 	while (!pp_item_iter.done ()) {
-	    List< Ref<PpItem> >::Element &cur_el = pp_item_iter.next ();
+	    List< StRef<PpItem> >::Element &cur_el = pp_item_iter.next ();
 	    // Note that we hold a reference to pp_item because we should
 	    // be able to replace 'cur_el.data' with a different PpItem.
-	    Ref<PpItem> pp_item = cur_el.data;
+	    StRef<PpItem> pp_item = cur_el.data;
 
 	    if (pp_item->type == PpItemPpToken) {
 		PpToken *pp_token = static_cast <PpToken*> (pp_item.ptr ());
@@ -1179,24 +1188,25 @@ CppPreprocessor::do_translateIfDirective (PpItemStream *pp_stream,
 			// so a more complex check is necessary: we should protect the next
 			// token from substitution, or, if the next token is an opening brace,
 			// then we should protect the one after the brace.
-			if (compareByteArrayToString (pp_token->str->getMemoryDesc (),
-						      "defined") == ComparisonEqual)
-			{
+			if (equal (pp_token->str->mem(), "defined")) {
 			    defined_guard = true;
 			    defined_keyword = true;
 			} else {
 			    if (!defined_guard) {
-				cur_el.data = grab (new PpToken (PpTokenPpNumber,
-								 String::forData ("0"),
-								 NULL /* macro_ban */,
-								 pp_token->fpos));
-			    }
+				cur_el.data =
+                                        st_grab (new (std::nothrow) PpToken (
+                                                PpTokenPpNumber,
+                                                st_grab (new (std::nothrow) String ("0")),
+                                                NULL /* macro_ban */,
+                                                pp_token->fpos));
+                            }
 			}
 		    } break;
 		    case PpTokenStringLiteral: {
 			throw ParsingException (if_fpos,
-						String::forData ("string literals are not allowed "
-								 "in preprocessor control expressions"));
+						st_grab (new (std::nothrow) String (
+                                                        "string literals are not allowed "
+                                                        "in preprocessor control expressions")));
 		    } break;
 		    default: {
 		      // No-op
@@ -1204,7 +1214,7 @@ CppPreprocessor::do_translateIfDirective (PpItemStream *pp_stream,
 		}
 
 		if (!defined_keyword) {
-		    if (compareByteArrayToString (pp_token->str->getMemoryDesc (), "(") != ComparisonEqual)
+		    if (!equal (pp_token->str->mem(), "("))
 			defined_guard = false;
 		}
 	    }
@@ -1218,13 +1228,13 @@ CppPreprocessor::do_translateIfDirective (PpItemStream *pp_stream,
 						new PpItemStreamTokenStream (tmp_pp_stream)));
 #endif
 
-    List< Ref<Token> > token_list;
+    List< StRef<Token> > token_list;
     ppItemsToTokens (&pp_items, &token_list);
 
-    Ref<TokenStream> token_stream =
-	    grab (new ListTokenStream (&token_list));
+    StRef<ListTokenStream> token_stream =
+	    st_grab (new (std::nothrow) ListTokenStream (&token_list));
 
-    Ref<Grammar> grammar = create_cpp_cond_grammar ();
+    StRef<Grammar> grammar = create_cpp_cond_grammar ();
     optimizeGrammar (grammar);
 
     ParserElement *cpp_element = NULL;
@@ -1233,7 +1243,7 @@ CppPreprocessor::do_translateIfDirective (PpItemStream *pp_stream,
 	   NULL /* user_data */,
 	   grammar,
 	   &cpp_element,
-	   ConstMemoryDesc::forString ("default"),
+	   "default",
 	   Pargen::createDefaultParserConfig (),
 	   false /* debug_dump */);
 
@@ -1248,10 +1258,18 @@ CppPreprocessor::do_translateIfDirective (PpItemStream *pp_stream,
     }
 #endif
 
-    if (cpp_element == NULL ||
-	token_stream->getNextToken ().getLength () > 0)
     {
-	throw ParsingException (if_fpos, String::forData ("condition parsing error"));
+        ConstMemory token;
+        if (cpp_element) {
+            if (!token_stream->getNextToken (&token))
+                throw ParsingException (if_fpos, st_grab (new (std::nothrow) String ("condition parsing error (tail)")));
+        }
+
+        if (cpp_element == NULL ||
+            token.len() > 0)
+        {
+            throw ParsingException (if_fpos, st_grab (new (std::nothrow) String ("condition parsing error")));
+        }
     }
 
     if (if_skipping) {
@@ -1265,7 +1283,7 @@ CppPreprocessor::do_translateIfDirective (PpItemStream *pp_stream,
     if (elif) {
       // #elif
 	if (if_stack.last->data.match_type == IfStackEntry::Skipping) {
-	    abortIf (!if_skipping);
+	    assert (if_skipping);
 	    if_stack.last->data.state = IfStackEntry::Elif;
 	    return;
 	}
@@ -1296,7 +1314,7 @@ CppPreprocessor::do_translateIfDirective (PpItemStream *pp_stream,
     } else {
       // #elif
 	if (match) {
-	    abortIf (if_stack.last->data.match_type != IfStackEntry::NoMatch);
+	    assert (if_stack.last->data.match_type == IfStackEntry::NoMatch);
 	    if_stack.last->data.match_type = IfStackEntry::Match;
 	}
 
@@ -1317,11 +1335,10 @@ CppPreprocessor::translateElifDirective (PpItemStream *pp_stream)
     throw (ParsingException,
 	   InternalException)
 {
-    abortIf (pp_stream == NULL);
+    assert (pp_stream);
 
     do_translateIfDirective (pp_stream, true /* elif */);
 }
-
 
 void
 CppPreprocessor::do_translateIfdefDirective (PpItemStream *pp_stream,
@@ -1329,31 +1346,30 @@ CppPreprocessor::do_translateIfdefDirective (PpItemStream *pp_stream,
     throw (InternalException,
 	   ParsingException)
 {
-    if (pp_stream == NULL)
-	abortIfReached ();
+    assert (pp_stream);
 
-    Ref<PpToken> pp_token;
+    StRef<PpToken> pp_token;
     PpItemStream::PpItemResult pres = pp_stream->getNextPpToken (&pp_token);
     if (pres != PpItemStream::PpItemNormal)
 	throw ParsingException (pp_stream->getFpos (),
-				String::forData ("pp-token expected"));
+				st_grab (new (std::nothrow) String ("pp-token expected")));
 
-    Ref<Whitespace> whsp;
+    StRef<Whitespace> whsp;
     pres = pp_stream->getWhitespace (&whsp);
     if (pres != PpItemStream::PpItemNormal)
 	throw ParsingException (pp_stream->getFpos (),
-				String::forData ("newline expected"));
+				st_grab (new (std::nothrow) String ("newline expected")));
 
     if (!whsp->has_newline)
 	throw ParsingException (whsp->fpos,
-				String::forData ("newline expected"));
+				st_grab (new (std::nothrow) String ("newline expected")));
 
     if (if_skipping) {
 	if_stack.append (IfStackEntry (IfStackEntry::If, IfStackEntry::Skipping));
 	return;
     }
 
-    bool match = !macro_definitions.lookup (pp_token->str->getMemoryDesc ()).isNull ();
+    bool match = !macro_definitions.lookup (pp_token->str->mem()).isNull ();
     if (inverse)
 	match = !match;
 
@@ -1386,33 +1402,32 @@ CppPreprocessor::translateElseDirective (PpItemStream *pp_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (pp_stream == NULL)
-	abortIfReached ();
+    assert (pp_stream);
 
     FilePosition else_fpos = pp_stream->getFpos ();
 
-    Ref<Whitespace> whsp;
+    StRef<Whitespace> whsp;
     pp_stream->getWhitespace (&whsp);
-    if (whsp.isNull ())
+    if (!whsp)
 	throw ParsingException (pp_stream->getFpos (),
-				String::forData ("newline expected"));
+				st_grab (new (std::nothrow) String ("newline expected")));
 
     if (!whsp->has_newline)
 	throw ParsingException (whsp->fpos,
-				String::forData ("newline expected"));
+				st_grab (new (std::nothrow) String ("newline expected")));
 
     if (if_stack.isEmpty ())
 	throw ParsingException (else_fpos,
-				String::forData ("misplaced #else"));
+				st_grab (new (std::nothrow) String ("misplaced #else")));
 
     if (if_stack.last->data.state == IfStackEntry::Else)
 	throw ParsingException (else_fpos,
-				String::forData ("#else after #else"));
+				st_grab (new (std::nothrow) String ("#else after #else")));
 
     if_stack.last->data.state = IfStackEntry::Else;
 
     if (if_stack.last->data.match_type == IfStackEntry::Skipping) {
-	abortIf (!if_skipping);
+	assert (if_skipping);
 	return;
     }
 
@@ -1424,7 +1439,7 @@ CppPreprocessor::translateElseDirective (PpItemStream *pp_stream)
 	return;
     }
 
-    abortIf (if_stack.last->data.match_type != IfStackEntry::NoMatch);
+    assert (if_stack.last->data.match_type == IfStackEntry::NoMatch);
 
     if_stack.last->data.match_type = IfStackEntry::Match;
     if_skipping = false;
@@ -1435,23 +1450,22 @@ CppPreprocessor::translateEndifDirective (PpItemStream *pp_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (pp_stream == NULL)
-	abortIfReached ();
+    assert (pp_stream);
 
     FilePosition endif_fpos = pp_stream->getFpos ();
 
-    Ref<Whitespace> whsp;
+    StRef<Whitespace> whsp;
     pp_stream->getWhitespace (&whsp);
-    if (whsp.isNull () ||
+    if (!whsp ||
 	!whsp->has_newline)
     {
 	throw ParsingException (whsp->fpos,
-				String::forData ("newline expected"));
+				st_grab (new (std::nothrow) String ("newline expected")));
     }
 
     if (if_stack.isEmpty ()) {
 	throw ParsingException (endif_fpos,
-				String::forData ("misplaced #endif"));
+				st_grab (new (std::nothrow) String ("misplaced #endif")));
     }
 
     if_stack.remove (if_stack.last);
@@ -1466,34 +1480,31 @@ CppPreprocessor::translateEndifDirective (PpItemStream *pp_stream)
 }
 
 static bool
-checkIdentifierUniqueness (List< Ref<String> > *identifiers)
+checkIdentifierUniqueness (List< StRef<String> > *identifiers)
 {
     if (identifiers == NULL)
 	return true;
 
-    List< Ref<String> >::Element *cur_to_check = identifiers->first;
+    List< StRef<String> >::Element *cur_to_check = identifiers->first;
     while (cur_to_check != NULL) {
-	List< Ref<String> >::Element *next_to_check = cur_to_check->next;
+	List< StRef<String> >::Element *next_to_check = cur_to_check->next;
 
-	List< Ref<String> >::Element *cur = cur_to_check->next;
+	List< StRef<String> >::Element *cur = cur_to_check->next;
 	while (cur != NULL) {
-	    if (cur_to_check->data.isNull () ||
+	    if (!cur_to_check->data ||
 		cur_to_check->data->isNullString ())
 	    {
-		if (cur->data.isNull () ||
+		if (!cur->data ||
 		    cur->data->isNullString ())
 		{
 		    return false;
 		}
 	    } else {
-		if (!cur->data.isNull () &&
+		if (cur->data &&
 		    !cur->data->isNullString ())
 		{
-		    if (compareStrings (cur_to_check->data->getData (),
-					cur->data->getData ()))
-		    {
+		    if (equal (cur_to_check->data->mem(), cur->data->mem()))
 			return false;
-		    }
 		}
 	    }
 
@@ -1511,7 +1522,7 @@ CppPreprocessor::translateIncludeDirective (PpItemStream *pp_stream)
     throw (ParsingException,
 	   InternalException)
 {
-    abortIf (pp_stream == NULL);
+    assert (pp_stream);
 
     DEBUG (
 	errf->print ("Scurffy.CppPreprocessor.translateIncludeDirective").pendl ();
@@ -1521,73 +1532,73 @@ CppPreprocessor::translateIncludeDirective (PpItemStream *pp_stream)
 
     const char *no_header_name_exc_str = "header-name expected";
 
-    Ref<Whitespace> whsp;
+    StRef<Whitespace> whsp;
     pp_stream->getWhitespace (&whsp);
-    if (!whsp.isNull () &&
+    if (whsp &&
 	whsp->has_newline)
     {
-	throw ParsingException (fpos, String::forData (no_header_name_exc_str));
+	throw ParsingException (fpos, st_grab (new (std::nothrow) String (no_header_name_exc_str)));
     }
 
-    Ref<PpToken_HeaderName> header_name;
+    StRef<PpToken_HeaderName> header_name;
     PpItemStream::PpItemResult res = pp_stream->getHeaderName (&header_name);
     if (res != PpItemStream::PpItemNormal)
-	throw ParsingException (fpos, String::forData (no_header_name_exc_str));
+	throw ParsingException (fpos, st_grab (new (std::nothrow) String (no_header_name_exc_str)));
 
-    if (!header_name.isNull ()) {
+    if (header_name) {
 	pp_stream->getWhitespace (&whsp);
-	if (whsp.isNull () ||
+	if (!whsp ||
 	    !whsp->has_newline)
 	{
 	    // FIXME "Garbage after the header name"
-	    throw ParsingException (fpos, String::forData (no_header_name_exc_str));
+	    throw ParsingException (fpos, st_grab (new (std::nothrow) String (no_header_name_exc_str)));
 	}
     }
 
-    if (header_name.isNull ()) {
+    if (!header_name) {
       // Here we expand all macros up to a newline and check if the resulting
       // preprocessing token sequence matches an h-header or q-header form.
 
-	List< Ref<PpItem> > hn_items;
+	List< StRef<PpItem> > hn_items;
 	for (;;) {
 	    pp_stream->getWhitespace (&whsp);
-	    if (!whsp.isNull ()) {
+	    if (whsp) {
 		if (whsp->has_newline)
 		    break;
 
 		hn_items.append (whsp.ptr ());
 	    }
 
-	    Ref<PpToken> pp_token;
+	    StRef<PpToken> pp_token;
 	    pp_stream->getPpToken (&pp_token);
-	    if (pp_token.isNull ())
+	    if (!pp_token)
 		break;
 
 	    translatePpToken (pp_stream, pp_token, &hn_items);
 	}
 
-	Ref<String> hn_str = ppItemsToString (&hn_items);
+	StRef<String> hn_str = ppItemsToString (&hn_items);
 	DEBUG (
 	    errf->print ("Scruffy.CppPreprocessor.translateIncludeDirective: "
 			 "spelling: ").print (hn_str).pendl ();
 	)
 
-	Ref<DirectArrayFile> tmp_file = grab (new DirectArrayFile (hn_str->getMemoryDesc ()));
-	Ref<FileByteStream> tmp_byte_stream = grab (new FileByteStream (tmp_file));
-	Ref<Utf8UnicharStream> tmp_unichar_stream = grab (new Utf8UnicharStream (tmp_byte_stream));
-	Ref<UnicharPpItemStream> tmp_pp_stream = grab (new UnicharPpItemStream (tmp_unichar_stream, pp_token_match_func));
+	MemoryFile tmp_file (hn_str->mem());
+	StRef<FileByteStream>      tmp_byte_stream    = st_grab (new (std::nothrow) FileByteStream (&tmp_file));
+	StRef<Utf8UnicharStream>   tmp_unichar_stream = st_grab (new (std::nothrow) Utf8UnicharStream (tmp_byte_stream));
+	StRef<UnicharPpItemStream> tmp_pp_stream      = st_grab (new (std::nothrow) UnicharPpItemStream (tmp_unichar_stream, pp_token_match_func));
 
 	tmp_pp_stream->getHeaderName (&header_name);
-	if (header_name.isNull ())
-	    throw ParsingException (fpos, String::forData (no_header_name_exc_str));
+	if (!header_name)
+	    throw ParsingException (fpos, st_grab (new (std::nothrow) String (no_header_name_exc_str)));
 
 	do { 
 	    tmp_pp_stream->getWhitespace (&whsp);
-	} while (!whsp.isNull ());
+	} while (whsp);
 
 	if (tmp_pp_stream->getNextItem (NULL) != PpItemStream::PpItemEof)
 	    // FIXME "Garbage after the header name"
-	    throw ParsingException (fpos, String::forData (no_header_name_exc_str));
+	    throw ParsingException (fpos, st_grab (new (std::nothrow) String (no_header_name_exc_str)));
     }
 
     DEBUG (
@@ -1603,33 +1614,32 @@ CppPreprocessor::translateDefineDirective (PpItemStream *pp_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (pp_stream == NULL)
-	abortIfReached ();
+    assert (pp_stream);
 
     DEBUG (
 	errf->print ("Scruffy.translateDefineDirective")
 	     .pendl ();
     )
 
-    Ref<Whitespace> whsp;
+    StRef<Whitespace> whsp;
     pp_stream->getWhitespace (&whsp);
-    if (!whsp.isNull ()) {
+    if (whsp) {
 	if (whsp->has_newline)
 	    throw ParsingException (whsp->fpos,
-				    String::forData ("no macro name given in #define directive"));
+				    st_grab (new (std::nothrow) String ("no macro name given in #define directive")));
     }
 
-    Ref<PpToken> pp_token;
+    StRef<PpToken> pp_token;
     PpItemStream::PpItemResult pres = pp_stream->getPpToken (&pp_token);
     if (pres != PpItemStream::PpItemNormal)
 	throw ParsingException (pp_stream->getFpos (),
-				String::forData ("identifier expected"));
+				st_grab (new (std::nothrow) String ("identifier expected")));
 
     if (pp_token->pp_token_type != PpTokenIdentifier)
 	throw ParsingException (pp_token->fpos,
-				String::forData ("identifier expected"));
+				st_grab (new (std::nothrow) String ("identifier expected")));
 
-    Ref<String> macro_name = pp_token->str;
+    StRef<String> macro_name = pp_token->str;
 
     DEBUG (
 	errf->print ("Scruffy.translateDefineDirective: macro name: ")
@@ -1637,13 +1647,13 @@ CppPreprocessor::translateDefineDirective (PpItemStream *pp_stream)
 	     .pendl ();
     )
 
-    Ref< List_< Ref<String>, SimplyReferenced > > params;
+    StRef< List_< StRef<String>, StReferenced > > params;
     bool lparen = false;
 
-    Ref<PpItemStream::PositionMarker> pmark = pp_stream->getPosition ();
+    StRef<PpItemStream::PositionMarker> pmark = pp_stream->getPosition ();
     pp_stream->getPpToken (&pp_token);
-    if (!pp_token.isNull () &&
-	compareStrings (pp_token->str->getData (), "("))
+    if (pp_token &&
+	equal (pp_token->str->mem(), "("))
     {
 	params = extractMacroParameters (pp_stream);
 	lparen = true;
@@ -1672,50 +1682,47 @@ CppPreprocessor::translateDefineDirective (PpItemStream *pp_stream)
      * declared within its scope. */
     if (!checkIdentifierUniqueness (params))
 	throw ParsingException (pp_stream->getFpos (pmark),
-				String::forData ("duplicate macro parameters"));
+				st_grab (new (std::nothrow) String ("duplicate macro parameters")));
 
     FilePosition replacement_list_fpos = pp_stream->getFpos ();
-    Ref< List_< Ref<PpItem>, SimplyReferenced > > replacement_list = extractReplacementList (pp_stream);
+    StRef< List_< StRef<PpItem>, StReferenced > > replacement_list = extractReplacementList (pp_stream);
 
-    Ref<MacroDefinition> mdef = grab (new MacroDefinition);
+    StRef<MacroDefinition> mdef = st_grab (new (std::nothrow) MacroDefinition);
     mdef->name = macro_name;
     mdef->replacement_list = replacement_list;
     mdef->params = params;
     mdef->lparen = lparen;
 
-    MapBase< Ref<MacroDefinition> >::Entry prv_mdef_entry = macro_definitions.lookupValue (mdef);
+    MapBase< StRef<MacroDefinition> >::Entry prv_mdef_entry = macro_definitions.lookupValue (mdef);
     if (!prv_mdef_entry.isNull ()) {
 	/* This is a redefinition of a previously defined macro.
 	 * Check if we can redefine (C++98 16.3 #1 #2 #3). */
 
-	Ref<MacroDefinition> &prv_mdef = prv_mdef_entry.getData ();
+	StRef<MacroDefinition> &prv_mdef = prv_mdef_entry.getData ();
 
 	if (!compareReplacementLists (mdef->replacement_list,
 				      prv_mdef->replacement_list))
 	{
 	    throw ParsingException (replacement_list_fpos,
-				    String::forData ("invalid macro redefinition"));
+				    st_grab (new (std::nothrow) String ("invalid macro redefinition")));
 	}
 
 	if (mdef->lparen != prv_mdef->lparen)
 	    throw ParsingException (replacement_list_fpos,
-				    String::forData ("invalid macro redefinition (lparen)"));
+				    st_grab (new (std::nothrow) String ("invalid macro redefinition (lparen)")));
 
-	if (!mdef->params.isNull ()) {
+	if (mdef->params) {
 	  /* Implies prv_mdef->params.isNull () */
-	    List< Ref<String> >::Element *cur_param = mdef->params->first,
-					 *cur_param_prv = prv_mdef->params->first;
+	    List< StRef<String> >::Element *cur_param = mdef->params->first,
+                                           *cur_param_prv = prv_mdef->params->first;
 	    while (cur_param     != NULL &&
 		   cur_param_prv != NULL)
 	    {
-		Ref<String> &param = cur_param->data,
-			    &param_prv = cur_param_prv->data;
+		StRef<String> &param = cur_param->data,
+                              &param_prv = cur_param_prv->data;
 
-		if (!compareStrings (param->getData (),
-				     param_prv->getData ()))
-		{
+		if (!equal (param->mem(), param_prv->mem()))
 		    break;
-		}
 
 		cur_param = cur_param->next;
 		cur_param_prv = cur_param_prv->next;
@@ -1725,7 +1732,7 @@ CppPreprocessor::translateDefineDirective (PpItemStream *pp_stream)
 		cur_param_prv != NULL)
 	    {
 		throw ParsingException (replacement_list_fpos,
-					String::forData ("invalid macro redefinition (parameters)"));
+					st_grab (new (std::nothrow) String ("invalid macro redefinition (parameters)")));
 	    }
 	}
     } else {
@@ -1739,43 +1746,42 @@ CppPreprocessor::translateUndefDirective (PpItemStream *pp_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (pp_stream == NULL)
-	abortIfReached ();
+    assert (pp_stream);
 
     DEBUG (
 	errf->print ("Scruffy.CppParser.translateUndefDirective")
 	     .pendl ();
     )
 
-    Ref<Whitespace> whsp;
+    StRef<Whitespace> whsp;
     pp_stream->getWhitespace (&whsp);
-    if (!whsp.isNull ()) {
+    if (whsp) {
 	if (whsp->has_newline)
 	    throw ParsingException (whsp->fpos,
-				    String::forData ("identifier expected #1"));
+				    st_grab (new (std::nothrow) String ("identifier expected #1")));
     }
 
-    Ref<PpToken> pp_token;
+    StRef<PpToken> pp_token;
     PpItemStream::PpItemResult pres = pp_stream->getPpToken (&pp_token);
     if (pres != PpItemStream::PpItemNormal)
 	throw ParsingException (pp_stream->getFpos (),
-				String::forData ("identifier expected #2"));
+				st_grab (new (std::nothrow) String ("identifier expected #2")));
 
     if (pp_token->pp_token_type != PpTokenIdentifier)
 	throw ParsingException (pp_token->fpos,
-				String::forData ("identifier expected #2"));
+				st_grab (new (std::nothrow) String ("identifier expected #2")));
 
-    Ref<String> macro_name = pp_token->str;
+    StRef<String> macro_name = pp_token->str;
 
     pp_stream->getWhitespace (&whsp);
-    if (whsp.isNull () ||
+    if (!whsp ||
 	!whsp->has_newline)
     {
 	throw ParsingException (whsp->fpos,
-				String::forData ("newline expected"));
+				st_grab (new (std::nothrow) String ("newline expected")));
     }
 
-    MapBase< Ref<MacroDefinition> >::Entry mdef_entry = macro_definitions.lookup (macro_name->getMemoryDesc ());
+    MapBase< StRef<MacroDefinition> >::Entry mdef_entry = macro_definitions.lookup (macro_name->mem());
     if (!mdef_entry.isNull ()) {
 	DEBUG (
 	    errf->print ("Scruffy.CppParser.translateUndefDirecrive: "
@@ -1794,17 +1800,16 @@ CppPreprocessor::translatePreprocessingDirective (PpItemStream *pp_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (pp_stream == NULL)
-	abortIfReached ();
+    assert (pp_stream);
 
     DEBUG (
 	errf->print ("Scruffy.translatePreprocessingDirective")
 	     .pendl ();
     )
 
-    Ref<Whitespace> whsp;
+    StRef<Whitespace> whsp;
     pp_stream->getWhitespace (&whsp);
-    if (!whsp.isNull ()) {
+    if (whsp) {
 	if (whsp->has_newline) {
 	    DEBUG (
 		errf->print ("Scruffy.translatePreprocessingDirective: "
@@ -1816,15 +1821,15 @@ CppPreprocessor::translatePreprocessingDirective (PpItemStream *pp_stream)
 	}
     }
 
-    Ref<PpToken> pp_token;
+    StRef<PpToken> pp_token;
     PpItemStream::PpItemResult pres = pp_stream->getPpToken (&pp_token);
     if (pres != PpItemStream::PpItemNormal)
 	throw ParsingException (pp_stream->getFpos (),
-				String::forData ("pp-token expected"));
+				st_grab (new (std::nothrow) String ("pp-token expected")));
 
-    Ref<String> pp_directive_name = pp_token->str;
+    StRef<String> pp_directive_name = pp_token->str;
 
-    if (compareStrings (pp_directive_name->getData (), "if")) {
+    if (equal (pp_directive_name->mem(), "if")) {
 	DEBUG (
 	    errf->print ("Scruffy.translatePreprocessingDirective: "
 			 "\"if\" directive")
@@ -1834,7 +1839,7 @@ CppPreprocessor::translatePreprocessingDirective (PpItemStream *pp_stream)
 	translateIfDirective (pp_stream);
 	return;
     } else
-    if (compareStrings (pp_directive_name->getData (), "ifdef")) {
+    if (equal (pp_directive_name->mem(), "ifdef")) {
 	DEBUG (
 	    errf->print ("Scruffy.translatePreprocessingDirective: "
 			 "\"ifdef\" directive")
@@ -1844,7 +1849,7 @@ CppPreprocessor::translatePreprocessingDirective (PpItemStream *pp_stream)
 	translateIfdefDirective (pp_stream);
 	return;
     } else
-    if (compareStrings (pp_directive_name->getData (), "ifndef")) {
+    if (equal (pp_directive_name->mem(), "ifndef")) {
 	DEBUG (
 	    errf->print ("Scruffy.translatePreprocessingDirective: "
 			 "\"ifndef\" directive")
@@ -1854,7 +1859,7 @@ CppPreprocessor::translatePreprocessingDirective (PpItemStream *pp_stream)
 	translateIfndefDirective (pp_stream);
 	return;
     } else
-    if (compareStrings (pp_directive_name->getData (), "elif")) {
+    if (equal (pp_directive_name->mem(), "elif")) {
 	DEBUG (
 	    errf->print ("Scruffy.translatePreprocessingDirective: "
 			 "\"elif\" directive")
@@ -1864,7 +1869,7 @@ CppPreprocessor::translatePreprocessingDirective (PpItemStream *pp_stream)
 	translateElifDirective (pp_stream);
 	return;
     } else
-    if (compareStrings (pp_directive_name->getData (), "else")) {
+    if (equal (pp_directive_name->mem(), "else")) {
 	DEBUG (
 	    errf->print ("Scruffy.translatePreprocessingDirective: "
 			 "\"else\" directive")
@@ -1874,7 +1879,7 @@ CppPreprocessor::translatePreprocessingDirective (PpItemStream *pp_stream)
 	translateElseDirective (pp_stream);
 	return;
     } else
-    if (compareStrings (pp_directive_name->getData (), "endif")) {
+    if (equal (pp_directive_name->mem(), "endif")) {
 	DEBUG (
 	    errf->print ("Scruffy.translatePreprocessingDirective: "
 			 "\"endif\" directive")
@@ -1888,7 +1893,7 @@ CppPreprocessor::translatePreprocessingDirective (PpItemStream *pp_stream)
     if (if_skipping)
 	return;
 
-    if (compareStrings (pp_directive_name->getData (), "include")) {
+    if (equal (pp_directive_name->mem(), "include")) {
 	DEBUG (
 	    errf->print ("Scruffy.translatePreprocessingDirective: "
 			 "\"include\" directive")
@@ -1897,7 +1902,7 @@ CppPreprocessor::translatePreprocessingDirective (PpItemStream *pp_stream)
 
 	translateIncludeDirective (pp_stream);
     } else
-    if (compareStrings (pp_directive_name->getData (), "define")) {
+    if (equal (pp_directive_name->mem(), "define")) {
 	DEBUG (
 	    errf->print ("Scruffy.translatePreprocessingDirective: "
 			 "\"define\" directive")
@@ -1906,7 +1911,7 @@ CppPreprocessor::translatePreprocessingDirective (PpItemStream *pp_stream)
 
 	translateDefineDirective (pp_stream);
     } else
-    if (compareStrings (pp_directive_name->getData (), "undef")) {
+    if (equal (pp_directive_name->mem(), "undef")) {
 	DEBUG (
 	    errf->print ("Scruffy.translatePreprocessingDirective: "
 			 "\"undef\" directive")
@@ -1915,7 +1920,7 @@ CppPreprocessor::translatePreprocessingDirective (PpItemStream *pp_stream)
 
 	translateUndefDirective (pp_stream);
     } else
-    if (compareStrings (pp_directive_name->getData (), "line")) {
+    if (equal (pp_directive_name->mem(), "line")) {
 	DEBUG (
 	    errf->print ("Scruffy.translatePreprocessingDirective: "
 			 "\"line\" directive")
@@ -1924,7 +1929,7 @@ CppPreprocessor::translatePreprocessingDirective (PpItemStream *pp_stream)
 
 	// TODO
     } else
-    if (compareStrings (pp_directive_name->getData (), "error")) {
+    if (equal (pp_directive_name->mem(), "error")) {
 	DEBUG (
 	    errf->print ("Scruffy.translatePreprocessingDirective: "
 			 "\"error\" directive")
@@ -1932,9 +1937,9 @@ CppPreprocessor::translatePreprocessingDirective (PpItemStream *pp_stream)
 	)
 
 	// TODO Parse the error message and push it to the user.
-	throw ParsingException (pp_stream->getFpos ());
+	throw ParsingException (pp_stream->getFpos (), st_grab (new (std::nothrow) String ("#error")));
     } else
-    if (compareStrings (pp_directive_name->getData (), "pragma")) {
+    if (equal (pp_directive_name->mem(), "pragma")) {
 	DEBUG (
 	    errf->print ("Scruffy.translatePreprocessingDirective: "
 			 "\"pragma\" directive")
@@ -1944,27 +1949,21 @@ CppPreprocessor::translatePreprocessingDirective (PpItemStream *pp_stream)
 	// TODO
     } else {
 	throw ParsingException (pp_token->fpos,
-				String::forPrintTask (
-				    (Pr ("invalid preprocessing directive #"))
-				    (Pr (pp_directive_name))));
+				st_makeString ("invalid preprocessing directive #",
+                                               pp_directive_name));
     }
 }
 
-Ref< List_< Ref<PpItem>, SimplyReferenced > >
+StRef< List_< StRef<PpItem>, StReferenced > >
 CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 					   MacroDefinition *mdef,
 					   MacroBan        *macro_ban)
     throw (InternalException,
 	   ParsingException)
 {
-    if (pp_stream == NULL ||
-	mdef == NULL)
-    {
-	abortIfReached ();
-    }
+    assert (pp_stream && mdef);
 
-    if (!mdef->lparen)
-	abortIfReached ();
+    assert (mdef->lparen);
 
     DEBUG (
 	errf->print ("Scruffy.CppParser.translateMacroInvocation: macro name: \"")
@@ -1973,7 +1972,7 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 	     .pendl ();
     )
 
-    Ref<MacroBan> new_ban = grab (new MacroBan);
+    StRef<MacroBan> new_ban = st_grab (new (std::nothrow) MacroBan);
     new_ban->mdef = mdef;
     new_ban->outer_ban = macro_ban;
     new_ban->active = false;
@@ -1982,54 +1981,52 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 
     FilePosition arguments_fpos = pp_stream->getFpos ();
 
-    List< Ref< List_< Ref<PpItem>, SimplyReferenced > > > arguments,
-							  nonrepl_arguments;
+    List< StRef< List_< StRef<PpItem>, StReferenced > > > arguments,
+                                                          nonrepl_arguments;
     for (;;) {
       /* Extracting next argument */
 
 	FilePosition start_fpos = pp_stream->getFpos ();
-	Ref< List_< Ref<PpItem>, SimplyReferenced > > arg_list = grab (new List_< Ref<PpItem>, SimplyReferenced >);
+	StRef< List_< StRef<PpItem>, StReferenced > > arg_list = st_grab (new (std::nothrow) List_< StRef<PpItem>, StReferenced >);
 
 	/* TODO Detect potential prepocessing directives (undefined behavior). */
 
 	bool end_of_args = false;
 	for (;;) {
-	    Ref<PpItem> pp_item;
+	    StRef<PpItem> pp_item;
 	    PpItemStream::PpItemResult pres = pp_stream->getNextItem (&pp_item);
 	    if (pres != PpItemStream::PpItemNormal)
 		throw ParsingException (pp_stream->getFpos (),
-					String::forData ("unexpected end of file #1"));
+					st_grab (new (std::nothrow) String ("unexpected end of file #1")));
 
 	    if (pp_item->type == PpItemWhitespace) {
 		arg_list->append (pp_item, arg_list->last);
 		continue;
 	    }
 
-	    if (pp_item->type != PpItemPpToken)
-		abortIfReached ();
+	    assert (pp_item->type == PpItemPpToken);
 
 	    PpToken *pp_token = static_cast <PpToken*> (pp_item.ptr ());
 
-	    if (compareStrings (pp_token->str->getData (), ")")) {
+	    if (equal (pp_token->str->mem(), ")")) {
 		end_of_args = true;
 		break;
 	    }
 
-	    if (compareStrings (pp_token->str->getData (), ","))
+	    if (equal (pp_token->str->mem(), ","))
 		break;
 
-	    Ref<PpToken> new_token = grab (new PpToken (pp_token->pp_token_type,
-							pp_token->str,
-							new_ban,
-							pp_token->fpos));
-
-	    if (compareStrings (pp_token->str->getData (), "(")) {
+	    StRef<PpToken> new_token = st_grab (new (std::nothrow) PpToken (pp_token->pp_token_type,
+                                                                            pp_token->str,
+                                                                            new_ban,
+                                                                            pp_token->fpos));
+	    if (equal (pp_token->str->mem(), "(")) {
 		unsigned long nopenings = 0;
 		for (;;) {
-		    if (compareStrings (pp_token->str->getData (), "("))
+		    if (equal (pp_token->str->mem(), "("))
 			nopenings ++;
 		    else
-		    if (compareStrings (pp_token->str->getData (), ")"))
+		    if (equal (pp_token->str->mem(), ")"))
 			nopenings --;
 
 		    DEBUG (
@@ -2047,7 +2044,7 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 			pres = pp_stream->getNextItem (&pp_item);
 			if (pres != PpItemStream::PpItemNormal)
 			    throw ParsingException (pp_stream->getFpos (),
-						    String::forData ("unexpected end of file #2"));
+						    st_grab (new (std::nothrow) String ("unexpected end of file #2")));
 
 			if (pp_item->type == PpItemWhitespace)
 			    arg_list->append (pp_item, arg_list->last);
@@ -2055,8 +2052,7 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 			    break;
 		    }
 
-		    if (pp_item->type != PpItemPpToken)
-			abortIfReached ();
+		    assert (pp_item->type == PpItemPpToken);
 
 		    pp_token = static_cast <PpToken*> (pp_item.ptr ());
 
@@ -2067,10 +2063,10 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 			     .pendl ();
 		    )
 
-		    new_token = grab (new PpToken (pp_token->pp_token_type,
-						   pp_token->str,
-						   new_ban,
-						   pp_token->fpos));
+		    new_token = st_grab (new (std::nothrow) PpToken (pp_token->pp_token_type,
+                                                                     pp_token->str,
+                                                                     new_ban,
+                                                                     pp_token->fpos));
 		}
 	    } else {
 		DEBUG (
@@ -2093,12 +2089,14 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 
       /* Performing macro replacement for the extracted argument */
 
-	Ref< List_< Ref<PpItem>, SimplyReferenced > > replaced_arg_list = grab (new List_< Ref<PpItem>, SimplyReferenced >);
-	Ref<PpItemStream> arg_pp_stream = grab (static_cast <PpItemStream*> (new ListPpItemStream (arg_list->first, start_fpos)));
+	StRef< List_< StRef<PpItem>, StReferenced > > replaced_arg_list =
+                st_grab (new List_< StRef<PpItem>, StReferenced >);
+	StRef<PpItemStream> arg_pp_stream =
+                st_grab (static_cast <PpItemStream*> (new (std::nothrow) ListPpItemStream (arg_list->first, start_fpos)));
 	for (;;) {
-	    Ref<PpItem> pp_item;
+	    StRef<PpItem> pp_item;
 	    arg_pp_stream->getNextItem (&pp_item);
-	    if (pp_item.isNull ())
+	    if (!pp_item)
 		break;
 
 	    if (pp_item->type == PpItemWhitespace) {
@@ -2107,8 +2105,9 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 	    if (pp_item->type == PpItemPpToken) {
 		PpToken *pp_token = static_cast <PpToken*> (pp_item.ptr ());
 		translatePpToken (arg_pp_stream, pp_token, replaced_arg_list);
-	    } else
-		abortIfReached ();
+	    } else {
+                unreachable ();
+            }
 	}
 
       /* (End of performing macro replacement for the extracted argument) */
@@ -2116,7 +2115,7 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
       /* Checking that the argument is not empty */
 
 	bool arg_is_empty = true;
-	List< Ref<PpItem> >::Element *cur_item = replaced_arg_list->first;
+	List< StRef<PpItem> >::Element *cur_item = replaced_arg_list->first;
 	while (cur_item != NULL) {
 	    if (cur_item->data->type == PpItemPpToken) {
 		arg_is_empty = false;
@@ -2128,10 +2127,9 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 
 	if (arg_is_empty) {
 //	    DEBUG (
-		errf->print ("Scruffy.CppParser.translateMacroInvocation: "
-			     "argument contains no preprocessing tokens before "
-			     "argument substitution (undefined behavior)")
-		     .pendl ();
+		errs->println ("Scruffy.CppParser.translateMacroInvocation: "
+                               "argument contains no preprocessing tokens before "
+                               "argument substitution (undefined behavior)");
 //	    )
 
 	    /* TODO throw ParsingException () ? */
@@ -2146,25 +2144,21 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 	    break;
     }
 
-    if (arguments.getNumElements () != nonrepl_arguments.getNumElements ())
-	abortIfReached ();
+    assert (arguments.getNumElements () == nonrepl_arguments.getNumElements ());
 
   /* (End of preparing the arguments for substitution) */
 
     new_ban->active = true;
 
     unsigned long nparams = 0;
-    if (!mdef->params.isNull ())
+    if (mdef->params)
 	nparams = mdef->params->getNumElements ();
 
     if (arguments.getNumElements () != nparams) {
 	throw ParsingException (arguments_fpos,
-				String::forPrintTask (
-				    (Pr ("bad number of arguments ("))
-				    (Pr (arguments.getNumElements ()))
-				    (Pr (" instead of "))
-				    (Pr (nparams))
-				    (Pr (")"))));
+                                makeString ("bad number of arguments (",
+                                            arguments.getNumElements(),
+                                            " instead of ", nparams, ")"));
     }
 
     DEBUG (
@@ -2173,17 +2167,17 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 	     .pendl ();
     )
 
-    if (mdef->replacement_list.isNull ())
+    if (!mdef->replacement_list)
 	return NULL;
 
-    Ref< List_< Ref<PpItem>, SimplyReferenced > > ret_list = grab (new List_< Ref<PpItem>, SimplyReferenced >);
+    StRef< List_< StRef<PpItem>, StReferenced > > ret_list = st_grab (new (std::nothrow) List_< StRef<PpItem>, StReferenced >);
 
     bool sharp_encountered = false;
 
-    List< Ref<PpItem> >::Element *cur_pp = mdef->replacement_list->first,
-				     *prv_pp_token_el = NULL;
+    List< StRef<PpItem> >::Element *cur_pp = mdef->replacement_list->first,
+                                   *prv_pp_token_el = NULL;
     while (cur_pp != NULL) {
-	Ref<PpItem> &rpl_item = cur_pp->data;
+	StRef<PpItem> &rpl_item = cur_pp->data;
 	if (rpl_item->type == PpItemWhitespace) {
 	    if (!sharp_encountered)
 		ret_list->append (rpl_item, ret_list->last);
@@ -2192,27 +2186,20 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 	    continue;
 	}
 
-	if (rpl_item->type != PpItemPpToken)
-	    abortIfReached ();
+	assert (rpl_item->type == PpItemPpToken);
 
 	PpToken *rpl_token = static_cast <PpToken*> (rpl_item.ptr ());
 
 	bool param_match = false;
-	if (!mdef->params.isNull ()) {
-	    List< Ref<String> >::Element *param_el = mdef->params->first;
-	    List< Ref< List_< Ref<PpItem>, SimplyReferenced > > >::Element
+	if (mdef->params) {
+	    List< StRef<String> >::Element *param_el = mdef->params->first;
+	    List< StRef< List_< StRef<PpItem>, StReferenced > > >::Element
 		    *cur_arg_list = arguments.first,
 		    *cur_nonrepl_arg_list = nonrepl_arguments.first;
 	    while (param_el != NULL) {
-		if (cur_arg_list == NULL ||
-		    cur_nonrepl_arg_list == NULL)
-		{
-		    abortIfReached ();
-		}
+		assert (cur_arg_list && cur_nonrepl_arg_list);
 
-		if (compareStrings (rpl_token->str->getData (),
-				    param_el->data->getData ()))
-		{
+		if (equal (rpl_token->str->mem(), param_el->data->mem())) {
 		  /* Checking for a neighboring sharp or double-sharp */
 
 		    bool sharp = false,
@@ -2220,20 +2207,20 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 
 		    if (prv_pp_token_el != NULL) {
 			PpToken *prv_pp_token = static_cast <PpToken*> (prv_pp_token_el->data.ptr ());
-			if (compareStrings (prv_pp_token->str->getData (), "##"))
+			if (equal (prv_pp_token->str->mem(), "##"))
 			    double_sharp = true;
 			else
-			if (compareStrings (prv_pp_token->str->getData (), "#"))
+			if (equal (prv_pp_token->str->mem(), "#"))
 			    sharp = true;
 		    }
 
-		    List< Ref<PpItem> >::Element *cur_ff = cur_pp->next;
+		    List< StRef<PpItem> >::Element *cur_ff = cur_pp->next;
 		    while (cur_ff != NULL) {
-			Ref<PpItem> &pp_item_ff = cur_ff->data;
+			StRef<PpItem> &pp_item_ff = cur_ff->data;
 			if (pp_item_ff->type == PpItemPpToken) {
 			    PpToken *pp_token_ff = static_cast <PpToken*> (pp_item_ff.ptr ());
 
-			    if (compareStrings (pp_token_ff->str->getData (), "##"))
+			    if (equal (pp_token_ff->str->mem(), "##"))
 				double_sharp = true;
 
 			    break;
@@ -2245,7 +2232,7 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 		  /* (End of checking for a neighboring sharp or double-sharp) */
 
 		    if (!sharp) {
-			List< Ref<PpItem> >::Element *cur_arg_pp;
+			List< StRef<PpItem> >::Element *cur_arg_pp;
 			if (!double_sharp)
 			    cur_arg_pp = cur_arg_list->data->first;
 			else
@@ -2265,31 +2252,28 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 
 			sharp_encountered = false;
 
-			Ref<String> spelling = spellPpItems (cur_nonrepl_arg_list->data);
+			StRef<String> spelling = spellPpItems (cur_nonrepl_arg_list->data);
 
-			Ref<File> sp_file = grab (static_cast <File*> (new DirectArrayFile (MemoryDesc ((unsigned char*) spelling->getData (),
-													spelling->getLength ()))));
-			Ref<ByteStream> sp_byte_stream = grab (static_cast <ByteStream*> (new FileByteStream (sp_file)));
-			Ref<UnicharStream> sp_unichar_stream = grab (static_cast <UnicharStream*> (new Utf8UnicharStream (sp_byte_stream)));
+			MemoryFile sp_file = MemoryFile (spelling->mem());
+			StRef<ByteStream> sp_byte_stream = st_grab (static_cast <ByteStream*> (new (std::nothrow) FileByteStream (&sp_file)));
+			StRef<UnicharStream> sp_unichar_stream = st_grab (static_cast <UnicharStream*> (new (std::nothrow) Utf8UnicharStream (sp_byte_stream)));
 
 			PpTokenType sp_pp_token_type;
 			unsigned long sp_pp_token_len = matchPreprocessingToken (sp_unichar_stream,
 										 &sp_pp_token_type);
-			if (sp_pp_token_len != spelling->getLength () ||
+			if (sp_pp_token_len != spelling->len() ||
 			    sp_pp_token_type != PpTokenStringLiteral)
 			{
 			    throw ParsingException (
 				    arguments_fpos,
-				    String::forPrintTask (
-					(Pr ("argument spelling is not a valid character string literal "
-					     "(undefined behavior): "))
-					(Pr (spelling))));
+                                    st_makeString ("argument spelling is not a valid character string literal "
+                                                   "(undefined behavior): ", spelling));
 			}
 
-			Ref<PpToken> pp_token = grab (new PpToken (PpTokenStringLiteral,
-								   spelling,
-								   new_ban,
-								   rpl_token->fpos));
+			StRef<PpToken> pp_token = st_grab (new (std::nothrow) PpToken (PpTokenStringLiteral,
+                                                                                       spelling,
+                                                                                       new_ban,
+                                                                                       rpl_token->fpos));
 			ret_list->append (pp_token.ptr (), ret_list->last);
 		    }
 
@@ -2306,15 +2290,15 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 	if (!param_match) {
 	    if (sharp_encountered)
 		throw ParsingException (arguments_fpos,
-					String::forData ("# is not followed by a parameter in the replacement list"));
+					st_grab (new (std::nothrow) String ("# is not followed by a parameter in the replacement list")));
 
-	    if (compareStrings (rpl_token->str->getData (), "#")) {
+	    if (equal (rpl_token->str->mem(), "#")) {
 		sharp_encountered = true;
 	    } else {
-		Ref<PpToken> new_token = grab (new PpToken (rpl_token->pp_token_type,
-							    rpl_token->str,
-							    new_ban,
-							    rpl_token->fpos));
+		StRef<PpToken> new_token = st_grab (new (std::nothrow) PpToken (rpl_token->pp_token_type,
+                                                                                rpl_token->str,
+                                                                                new_ban,
+                                                                                rpl_token->fpos));
 		ret_list->append (new_token.ptr (), ret_list->last);
 	    }
 	}
@@ -2325,7 +2309,7 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
 
     if (sharp_encountered)
 	throw ParsingException (arguments_fpos,
-				String::forData ("# is not followed by a parameter in the replacement list"));
+				st_grab (new (std::nothrow) String ("# is not followed by a parameter in the replacement list")));
 
     evaluateDoubleSharps (ret_list, new_ban);
 
@@ -2336,7 +2320,7 @@ CppPreprocessor::translateMacroInvocation (PpItemStream    *pp_stream,
  * duplicating 'mdef->replacement_list' and updating
  * 'macro_ban' fields in the new list.
  */
-Ref< List_< Ref<PpItem>, SimplyReferenced > >
+StRef< List_< StRef<PpItem>, StReferenced > >
 CppPreprocessor::translateObjectMacro (MacroDefinition *mdef,
 				       MacroBan        *macro_ban)
     throw (InternalException,
@@ -2347,37 +2331,37 @@ CppPreprocessor::translateObjectMacro (MacroDefinition *mdef,
 	     .pendl ();
     )
 
-    if (mdef == NULL)
-	abortIfReached ();
+    assert (mdef);
 
-    Ref<MacroBan> new_ban = grab (new MacroBan);
+    StRef<MacroBan> new_ban = st_grab (new (std::nothrow) MacroBan);
     new_ban->mdef = mdef;
     new_ban->outer_ban = macro_ban;
     new_ban->active = true;
 
-    Ref< List_< Ref<PpItem>, SimplyReferenced > > new_items;
-    if (!mdef->replacement_list.isNull ()) {
+    StRef< List_< StRef<PpItem>, StReferenced > > new_items;
+    if (mdef->replacement_list) {
 	/* We have to create a new list of tokens with
 	 * '.macro_ban' set to 'new_ban'. */
 
-	new_items = grab (new List_< Ref<PpItem>, SimplyReferenced >);
-	List< Ref<PpItem> >::Element *rpl_el = mdef->replacement_list->first;
+	new_items = st_grab (new (std::nothrow) List_< StRef<PpItem>, StReferenced >);
+	List< StRef<PpItem> >::Element *rpl_el = mdef->replacement_list->first;
 	while (rpl_el != NULL) {
-	    Ref<PpItem> &rpl_item = rpl_el->data;
+	    StRef<PpItem> &rpl_item = rpl_el->data;
 	    if (rpl_item->type == PpItemWhitespace) {
 		new_items->append (rpl_item, new_items->last);
 	    } else
 	    if (rpl_item->type == PpItemPpToken) {
 		PpToken *rpl_token = static_cast <PpToken*> (rpl_item.ptr ());
 
-		Ref<PpToken> new_token = grab (new PpToken (rpl_token->pp_token_type,
-							    rpl_token->str,
-							    new_ban,
-							    rpl_token->fpos));
+		StRef<PpToken> new_token = st_grab (new (std::nothrow) PpToken (rpl_token->pp_token_type,
+                                                                                rpl_token->str,
+                                                                                new_ban,
+                                                                                rpl_token->fpos));
 
 		new_items->append (new_token.ptr (), new_items->last);
-	    } else
-		abortIfReached ();
+	    } else {
+                unreachable ();
+            }
 
 	    rpl_el = rpl_el->next;
 	}
@@ -2389,7 +2373,7 @@ CppPreprocessor::translateObjectMacro (MacroDefinition *mdef,
 }
 
 void
-CppPreprocessor::evaluateDoubleSharps (List< Ref<PpItem> > *pp_items,
+CppPreprocessor::evaluateDoubleSharps (List< StRef<PpItem> > *pp_items,
 				       MacroBan *macro_ban)
     throw (InternalException,
 	   ParsingException)
@@ -2397,10 +2381,10 @@ CppPreprocessor::evaluateDoubleSharps (List< Ref<PpItem> > *pp_items,
     if (pp_items == NULL)
 	return;
 
-    List< Ref<PpItem> >::Element *cur = pp_items->first,
-				     *prv_pp_token_el = NULL;
-    while (cur != NULL) {
-	Ref<PpItem> &pp_item = cur->data;
+    List< StRef<PpItem> >::Element *cur = pp_items->first,
+                                   *prv_pp_token_el = NULL;
+    while (cur) {
+	StRef<PpItem> &pp_item = cur->data;
 	if (pp_item->type != PpItemPpToken) {
 	    cur = cur->next;
 	    continue;
@@ -2408,7 +2392,7 @@ CppPreprocessor::evaluateDoubleSharps (List< Ref<PpItem> > *pp_items,
 
 	PpToken *pp_token = static_cast <PpToken*> (pp_item.ptr ());
 
-	if (compareStrings (pp_token->str->getData (), "##")) {
+	if (equal (pp_token->str->mem(), "##")) {
 	    DEBUG (
 		errf->print ("Scruffy.CppParser.evaluateDoubleSharps: "
 			     "## preprocessing token")
@@ -2417,12 +2401,12 @@ CppPreprocessor::evaluateDoubleSharps (List< Ref<PpItem> > *pp_items,
 
 	    if (prv_pp_token_el == NULL)
 		throw ParsingException (pp_token->fpos,
-					String::forData ("## at the beginning of the replacement list"));
+					st_grab (new (std::nothrow) String ("## at the beginning of the replacement list")));
 
-	    List< Ref<PpItem> >::Element *cur_ff = cur->next,
-					 *next_pp_token_el = NULL;
+	    List< StRef<PpItem> >::Element *cur_ff = cur->next,
+                                           *next_pp_token_el = NULL;
 	    while (cur_ff != NULL) {
-		Ref<PpItem> &pp_item_ff = cur_ff->data;
+		StRef<PpItem> &pp_item_ff = cur_ff->data;
 		if (pp_item_ff->type == PpItemPpToken) {
 		    next_pp_token_el = cur_ff;
 		    break;
@@ -2433,23 +2417,12 @@ CppPreprocessor::evaluateDoubleSharps (List< Ref<PpItem> > *pp_items,
 
 	    if (next_pp_token_el == NULL)
 		throw ParsingException (pp_token->fpos,
-					String::forData ("## at the end of the replacement list"));
+					st_grab (new (std::nothrow) String ("## at the end of the replacement list")));
 
 	    PpToken *prv_pp_token  = static_cast <PpToken*> (prv_pp_token_el->data.ptr ());
 	    PpToken *next_pp_token = static_cast <PpToken*> (next_pp_token_el->data.ptr ());
 
-	    Ref<String> new_token_str;
-	    {
-		String * str_arr [2] = {
-		    prv_pp_token->str,
-		    next_pp_token->str
-		};
-
-		ArrayIterator< String*,
-			       String&,
-			       DereferenceExtractor<String> > str_iter (str_arr, 2);
-		new_token_str = String::catenate (str_iter);
-	    }
+	    StRef<String> new_token_str = st_makeString (prv_pp_token->str, next_pp_token->str);
 	    DEBUG (
 		errf->print ("Scruffy.CppParser.evaluateDoubleSharps: "
 			     "concatenation result: ")
@@ -2457,10 +2430,9 @@ CppPreprocessor::evaluateDoubleSharps (List< Ref<PpItem> > *pp_items,
 		     .pendl ();
 	    )
 
-	    Ref<File> ns_file = grab (static_cast <File*> (new DirectArrayFile (MemoryDesc ((unsigned char*) new_token_str->getData (),
-											    new_token_str->getLength ()))));
-	    Ref<ByteStream> ns_byte_stream = grab (static_cast <ByteStream*> (new FileByteStream (ns_file)));
-	    Ref<UnicharStream> ns_unichar_stream = grab (static_cast <UnicharStream*> (new Utf8UnicharStream (ns_byte_stream)));
+	    MemoryFile ns_file = MemoryFile (new_token_str->mem());
+	    StRef<ByteStream> ns_byte_stream = st_grab (static_cast <ByteStream*> (new (std::nothrow) FileByteStream (&ns_file)));
+	    StRef<UnicharStream> ns_unichar_stream = st_grab (static_cast <UnicharStream*> (new (std::nothrow) Utf8UnicharStream (ns_byte_stream)));
 
 	    DEBUG (
 		errf->print ("Scruffy.Preprocessor.evaluateDoubleSharps: "
@@ -2470,23 +2442,23 @@ CppPreprocessor::evaluateDoubleSharps (List< Ref<PpItem> > *pp_items,
 	    PpTokenType new_pp_token_type;
 	    unsigned long new_pp_token_len = matchPreprocessingToken (ns_unichar_stream,
 								      &new_pp_token_type);
-	    if (new_pp_token_len != new_token_str->getLength ()) {
+	    if (new_pp_token_len != new_token_str->len()) {
 		throw ParsingException (prv_pp_token->fpos,
-					String::forData ("the result of concatenation is not a valid "
-							 "preprocessing token (undefined behavior)"));
+					st_grab (new (std::nothrow) String ("the result of concatenation is not a valid "
+                                                                            "preprocessing token (undefined behavior)")));
 	    }
 
-	    Ref<PpToken> new_token = grab (new PpToken (new_pp_token_type,
-							new_token_str,
-							macro_ban,
-							prv_pp_token->fpos));
+	    StRef<PpToken> new_token = st_grab (new (std::nothrow) PpToken (new_pp_token_type,
+                                                                            new_token_str,
+                                                                            macro_ban,
+                                                                            prv_pp_token->fpos));
 
-	    List< Ref<PpItem> >::Element *new_pp_token_el =
+	    List< StRef<PpItem> >::Element *new_pp_token_el =
 		    pp_items->prepend (new_token.ptr (), prv_pp_token_el);
 
-	    List< Ref<PpItem> >::Element *cur_rm = prv_pp_token_el;
+	    List< StRef<PpItem> >::Element *cur_rm = prv_pp_token_el;
 	    for (;;) {
-		List< Ref<PpItem> >::Element *next_rm = cur_rm->next;
+		List< StRef<PpItem> >::Element *next_rm = cur_rm->next;
 		pp_items->remove (cur_rm);
 		if (cur_rm == next_pp_token_el)
 		    break;
@@ -2506,16 +2478,11 @@ CppPreprocessor::evaluateDoubleSharps (List< Ref<PpItem> > *pp_items,
 void
 CppPreprocessor::translatePpToken (PpItemStream *pp_stream,
 				   PpToken      *_pp_token,
-				   List< Ref<PpItem> > *receiving_pp_list)
+				   List< StRef<PpItem> > *receiving_pp_list)
     throw (InternalException,
 	   ParsingException)
 {
-    if (pp_stream == NULL ||
-	_pp_token == NULL ||
-	receiving_pp_list == NULL)
-    {
-	abortIfReached ();
-    }
+    assert (pp_stream && _pp_token && receiving_pp_list);
 
     DEBUG (
 	errf->print ("Scruffy.CppParser.translatePpToken: \"")
@@ -2524,9 +2491,9 @@ CppPreprocessor::translatePpToken (PpItemStream *pp_stream,
 	     .pendl ();
     )
 
-    Ref<Phase3ItemStream> phase3_stream = grab (new Phase3ItemStream (pp_stream));
+    StRef<Phase3ItemStream> phase3_stream = st_grab (new (std::nothrow) Phase3ItemStream (pp_stream));
 
-    Ref<PpToken> pp_token = _pp_token;
+    StRef<PpToken> pp_token = _pp_token;
 
     /* TODO "...nest level up to an implementation-defined limit":
      * introduce a limit for nest level. */
@@ -2539,16 +2506,15 @@ CppPreprocessor::translatePpToken (PpItemStream *pp_stream,
 	)
 
 	bool no_macro = true;
-	MapBase< Ref<MacroDefinition> >::Entry mdef_entry = macro_definitions.lookup (pp_token->str->getData ());
+	MapBase< StRef<MacroDefinition> >::Entry mdef_entry = macro_definitions.lookup (pp_token->str->mem());
 	if (!mdef_entry.isNull ()) {
-	    Ref<MacroDefinition> &mdef = mdef_entry.getData ();
+	    StRef<MacroDefinition> &mdef = mdef_entry.getData ();
 
 	    bool banned = false;
-	    Ref<MacroBan> macro_ban = pp_token->macro_ban;
-	    while (!macro_ban.isNull ()) {
+	    StRef<MacroBan> macro_ban = pp_token->macro_ban;
+	    while (macro_ban) {
 		if (macro_ban->active &&
-		    compareStrings (macro_ban->mdef->name->getData (),
-				    mdef->name->getData ()))
+		    equal (macro_ban->mdef->name->mem(), mdef->name->mem()))
 		{
 		    banned = true;
 		    break;
@@ -2559,34 +2525,34 @@ CppPreprocessor::translatePpToken (PpItemStream *pp_stream,
 
 	    if (!banned) {
 		if (mdef->lparen) {
-		    Ref<PpItemStream::PositionMarker> pmark = phase3_stream->getPosition ();
+		    StRef<PpItemStream::PositionMarker> pmark = phase3_stream->getPosition ();
 
-		    Ref<PpToken> ppt;
+		    StRef<PpToken> ppt;
 		    phase3_stream->getNextPpToken (&ppt);
-		    if (!ppt.isNull () &&
-			compareStrings (ppt->str->getData (), "("))
+		    if (ppt &&
+			equal (ppt->str->mem(), "("))
 		    {
 			no_macro = false;
 
-			Ref< List_< Ref<PpItem>, SimplyReferenced > >
+			StRef< List_< StRef<PpItem>, StReferenced > >
 				minv_items = translateMacroInvocation (phase3_stream,
 								       mdef,
 								       pp_token->macro_ban);
 
 			phase3_stream->trim ();
-			if (!minv_items.isNull ())
+			if (minv_items)
 			    phase3_stream->prependItems (minv_items);
 		    } else
 			phase3_stream->setPosition (pmark);
 		} else {
 		    no_macro = false;
 
-		    Ref< List_< Ref<PpItem>, SimplyReferenced > >
+		    StRef< List_< StRef<PpItem>, StReferenced > >
 				omacro_items = translateObjectMacro (mdef,
 								     pp_token->macro_ban);
 
 		    phase3_stream->trim ();
-		    if (!omacro_items.isNull ())
+		    if (omacro_items)
 			phase3_stream->prependItems (omacro_items);
 		}
 	    } else {
@@ -2605,10 +2571,9 @@ CppPreprocessor::translatePpToken (PpItemStream *pp_stream,
 	    break;
 
 	for (;;) {
-	    Ref<PpItem> pp_item;
+	    StRef<PpItem> pp_item;
 	    phase3_stream->getNextItem (&pp_item);
-	    if (pp_item.isNull ())
-		abortIfReached ();
+	    assert (pp_item);
 
 	    if (pp_item->type == PpItemWhitespace) {
 		receiving_pp_list->append (pp_item);
@@ -2616,8 +2581,9 @@ CppPreprocessor::translatePpToken (PpItemStream *pp_stream,
 	    if (pp_item->type == PpItemPpToken) {
 		pp_token = static_cast <PpToken*> (pp_item.ptr ());
 		break;
-	    } else
-		abortIfReached ();
+	    } else {
+                unreachable ();
+            }
 	}
 
 	phase3_stream->trim ();
@@ -2639,18 +2605,18 @@ CppPreprocessor::predefineMacros ()
      * __TIME__
      */
 
-    Ref<MacroDefinition> mdef;
+    StRef<MacroDefinition> mdef;
    
-    mdef = grab (new MacroDefinition);
-    mdef->name = grab (new String ("__cplusplus"));
+    mdef = st_grab (new (std::nothrow) MacroDefinition);
+    mdef->name = st_grab (new (std::nothrow) String ("__cplusplus"));
     mdef->lparen = false;
-    mdef->replacement_list = grab (new List_< Ref<PpItem>, SimplyReferenced >);
+    mdef->replacement_list = st_grab (new (std::nothrow) List_< StRef<PpItem>, StReferenced >);
     mdef->replacement_list->append (
-	    Ref<PpItem> (
-		grab (new PpToken (PpTokenPpNumber,
-				   Ref<String> (grab (new String ("199711L"))),
-				   NULL,
-				    FilePosition ()))),
+	    StRef<PpItem> (
+		st_grab (new (std::nothrow) PpToken (PpTokenPpNumber,
+                                                     StRef<String> (st_grab (new (std::nothrow) String ("199711L"))),
+                                                     NULL,
+                                                     FilePosition ()))),
 	    mdef->replacement_list->last);
 
     macro_definitions.add (mdef);
@@ -2661,8 +2627,7 @@ CppPreprocessor::translationPhase3 (File *in_file)
     throw (InternalException,
 	   ParsingException)
 {
-    if (in_file  == NULL)
-	abortIfReached ();
+    assert (in_file);
 
     DEBUG (
 	errf->print ("Scruffy.CppParser.translationPhase3")
@@ -2679,22 +2644,22 @@ CppPreprocessor::translationPhase3 (File *in_file)
 
   /* (End of initialization) */
 
-    Ref<ByteStream> byte_stream = grab (static_cast <ByteStream*> (new FileByteStream (in_file)));
-    Ref<UnicharStream> unichar_stream = grab (static_cast <UnicharStream*> (new Utf8UnicharStream (byte_stream)));
-    Ref<PpItemStream> pp_stream = grab (static_cast <PpItemStream*> (new UnicharPpItemStream (unichar_stream, pp_token_match_func)));
+    StRef<ByteStream> byte_stream = st_grab (static_cast <ByteStream*> (new (std::nothrow) FileByteStream (in_file)));
+    StRef<UnicharStream> unichar_stream = st_grab (static_cast <UnicharStream*> (new (std::nothrow) Utf8UnicharStream (byte_stream)));
+    StRef<PpItemStream> pp_stream = st_grab (static_cast <PpItemStream*> (new (std::nothrow) UnicharPpItemStream (unichar_stream, pp_token_match_func)));
 
     /* 'true' if we are at a point where a preprocessing directive can start. */
-    bool pp_directive_start = true;
+//    bool pp_directive_start = true;
     for (;;) {
-	Ref<Whitespace> whsp;
+	StRef<Whitespace> whsp;
 	DEBUG (
 	    errf->print ("Scruffy.CppParser.translationPhase3: calling pp_stream->getWhitespace()")
 		 .pendl ();
 	)
 	pp_stream->getWhitespace (&whsp);
-	if (!whsp.isNull ()) {
-	    if (whsp->has_newline)
-		pp_directive_start = true;
+	if (whsp) {
+//	    if (whsp->has_newline)
+//		pp_directive_start = true;
 
 	    pp_items->append (whsp.ptr (), pp_items->last);
 
@@ -2704,7 +2669,7 @@ CppPreprocessor::translationPhase3 (File *in_file)
 	    )
 	}
 
-	Ref<PpToken> pp_token;
+	StRef<PpToken> pp_token;
 	PpItemStream::PpItemResult pres;
 	DEBUG (
 	    errf->print ("Scruffy.CppParser.translationPhase3: calling pp_stream->getPpToken()")
@@ -2714,7 +2679,7 @@ CppPreprocessor::translationPhase3 (File *in_file)
 	if (pres == PpItemStream::PpItemEof) {
 	    if (!if_stack.isEmpty ())
 		throw ParsingException (pp_stream->getFpos (),
-					String::forData ("unterminated #if"));
+					st_grab (new (std::nothrow) String ("unterminated #if")));
 
 	    DEBUG (
 		errf->print ("Scruffy.CppParser.translationPhase3: "
@@ -2725,8 +2690,7 @@ CppPreprocessor::translationPhase3 (File *in_file)
 	    break;
 	}
 
-	if (pp_token.isNull ())
-	    abortIfReached ();
+	assert (pp_token);
 
 	DEBUG (
 	    errf->print ("Scruffy.CppParser.translationPhase3: got a PpToken: \"")
@@ -2735,22 +2699,20 @@ CppPreprocessor::translationPhase3 (File *in_file)
 		 .pendl ();
 	)
 
-	if (compareStrings (pp_token->str->getData (), "#")) {
+	if (equal (pp_token->str->mem(), "#")) {
 	    translatePreprocessingDirective (pp_stream);
-	    pp_directive_start = true;
+//	    pp_directive_start = true;
 	} else {
 	    if (!if_skipping)
 		translatePpToken (pp_stream, pp_token, pp_items);
 
-	    pp_directive_start = false;
+//	    pp_directive_start = false;
 	}
     }
 }
 
-void
+Result
 CppPreprocessor::performPreprocessing ()
-    throw (InternalException,
-	   ParsingException)
 {
     /* 4 Kb pages */
 //    Ref< DynamicTreeArray<char> > phase3_array = grab (new DynamicTreeArray<char> (12));
@@ -2759,21 +2721,32 @@ CppPreprocessor::performPreprocessing ()
 
 //    translationPhase3 (phase3_in_file, phase3_out_file);
 
-    translationPhase3 (source_file);
+    try {
+        translationPhase3 (source_file);
+    } catch (ParsingException &e) {
+        errs->println (_func, "ParsingException: ", e.toString());
+        exc_throw (ParsingException, e);
+        return Result::Failure;
+    } catch (...) {
+        errs->println (_func, "exception");
+        exc_throw (ParsingException, FilePosition(), st_grab (new (std::nothrow) String ("preprocessing error")));
+        return Result::Failure;
+    }
+
+    return Result::Success;
 }
 
 CppPreprocessor::CppPreprocessor (File             * const source_file,
 				  PpTokenMatchFunc   const pp_token_match_func)
     : pp_token_match_func (pp_token_match_func)
 {
-    if (source_file == NULL)
-	abortIfReached ();
+    assert (source_file);
 
     this->source_file = source_file;
 
     if_skipping = false;
 
-    pp_items = grab (new List_< Ref<PpItem>, SimplyReferenced >);
+    pp_items = st_grab (new (std::nothrow) List_< StRef<PpItem>, StReferenced >);
 }
 
 }

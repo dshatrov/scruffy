@@ -17,17 +17,18 @@
 */
 
 
-#ifndef __SCRUFFY__PHASE3_ITEM_STREAM_H__    
-#define __SCRUFFY__PHASE3_ITEM_STREAM_H__    
+#ifndef SCRUFFY__PHASE3_ITEM_STREAM__H__
+#define SCRUFFY__PHASE3_ITEM_STREAM__H__
 
-#include <mycpp/list.h>
-#include <mycpp/internal_exception.h>
+
+#include <libmary/libmary.h>
 
 #include <scruffy/pp_item_stream.h>
 
+
 namespace Scruffy {
 
-using namespace MyCpp;
+using namespace M;
 
 class Phase3ItemStream : public PpItemStream
 {
@@ -35,40 +36,40 @@ protected:
     class PositionMarker : public PpItemStream::PositionMarker
     {
     public:
-	List< Ref<PpItem> >::Element *pp_el;
-	Ref<PpItemStream::PositionMarker> stream_pmark;
+	List< StRef<PpItem> >::Element *pp_el;
+	StRef<PpItemStream::PositionMarker> stream_pmark;
     };
 
-    List< Ref<PpItem> > pp_items;
-    Ref<PpItemStream> pp_stream;
+    List< StRef<PpItem> > pp_items;
+    StRef<PpItemStream> pp_stream;
 
-    List< Ref<PpItem> >::Element *cur_pp;
-    Ref<PpItemStream::PositionMarker> cur_pmark;
+    List< StRef<PpItem> >::Element *cur_pp;
+    StRef<PpItemStream::PositionMarker> cur_pmark;
 
 public:
   /* PpItemStream interface */
 
-    PpItemResult getNextItem (Ref<PpItem> *pp_item)
+    PpItemResult getNextItem (StRef<PpItem> *pp_item)
 			    throw (InternalException,
 				   ParsingException);
 
-    PpItemResult getHeaderName (Ref<PpToken_HeaderName> *ret_hn_token)
+    PpItemResult getHeaderName (StRef<PpToken_HeaderName> *ret_hn_token)
 			 throw (ParsingException,
 				InternalException);
 
-    Ref<PpItemStream::PositionMarker> getPosition ()
+    StRef<PpItemStream::PositionMarker> getPosition ()
 			    throw (InternalException);
 
     void setPosition (PpItemStream::PositionMarker *pmark)
 			    throw (InternalException);
 
-    MyLang::FilePosition getFpos (PpItemStream::PositionMarker *pmark);
+    Pargen::FilePosition getFpos (PpItemStream::PositionMarker *pmark);
 
-    MyLang::FilePosition getFpos ();
+    Pargen::FilePosition getFpos ();
 
   /* (End of PpItemStream interface) */
 
-    void prependItems (List< Ref<PpItem> > *items);
+    void prependItems (List< StRef<PpItem> > *items);
 
     void trim ();
 
@@ -80,5 +81,6 @@ public:
 
 }
 
-#endif /* __SCRUFFY__PHASE3_ITEM_STREAM_H__ */
+
+#endif /* SCRUFFY__PHASE3_ITEM_STREAM__H__ */
 

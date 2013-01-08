@@ -17,25 +17,26 @@
 */
 
 
-#ifndef __SCRUFFY__PP_ITEM_STREAM_H__
-#define __SCRUFFY__PP_ITEM_STREAM_H__
+#ifndef SCRUFFY__PP_ITEM_STREAM__H__
+#define SCRUFFY__PP_ITEM_STREAM__H__
 
-#include <mycpp/object.h>
-#include <mycpp/internal_exception.h>
 
-#include <mylang/file_position.h>
+#include <libmary/libmary.h>
+
+#include <pargen/file_position.h>
 
 #include <scruffy/preprocessor_types.h>
 #include <scruffy/parsing_exception.h>
 
+
 namespace Scruffy {
 
-using namespace MyCpp;
+using namespace M;
 
-class PpItemStream : public SimplyReferenced
+class PpItemStream : public StReferenced
 {
 public:
-    class PositionMarker : public SimplyReferenced
+    class PositionMarker : public StReferenced
     {
     };
 
@@ -48,7 +49,7 @@ public:
 
     /* If 'PpTokenNormal' is returned, then it is guaranteed that
      * '*pp_item' is non-null and contains the next item. */
-    virtual PpItemResult getNextItem (Ref<PpItem> *pp_item)
+    virtual PpItemResult getNextItem (StRef<PpItem> *pp_item)
 			    throw (InternalException,
 				   ParsingException) = 0;
 
@@ -59,31 +60,31 @@ public:
     // If PpItemNormal is returned and ret_hn_token is non-null,
     // then the value of ret_hn_token determines if there was a match
     // after the call (if null, then no match).
-    virtual PpItemResult getHeaderName (Ref<PpToken_HeaderName> *ret_hn_token)
+    virtual PpItemResult getHeaderName (StRef<PpToken_HeaderName> *ret_hn_token)
 				 throw (ParsingException,
 					InternalException) = 0;
 
-    virtual Ref<PositionMarker> getPosition ()
+    virtual StRef<PositionMarker> getPosition ()
 				      throw (InternalException) = 0;
 
     virtual void setPosition (PositionMarker *pmark)
 		       throw (InternalException) = 0;
 
-    virtual MyLang::FilePosition getFpos (PositionMarker *pmark) = 0;
+    virtual Pargen::FilePosition getFpos (PositionMarker *pmark) = 0;
 
-    virtual MyLang::FilePosition getFpos () = 0;
+    virtual Pargen::FilePosition getFpos () = 0;
 
   /* (End of virtual methods) */
 
     /* 'whsp' is set to null if there is any non-whitespace character
      * in the way. */
-    PpItemResult getWhitespace (Ref<Whitespace> *whsp)
+    PpItemResult getWhitespace (StRef<Whitespace> *whsp)
 			 throw (InternalException,
 				ParsingException);
 
     /* 'pp_token' is set to null if there is something in the way
      * which is not a preprocessing token. */
-    PpItemResult getPpToken (Ref<PpToken> *pp_token)
+    PpItemResult getPpToken (StRef<PpToken> *pp_token)
 		      throw (InternalException,
 			     ParsingException);
 
@@ -93,12 +94,13 @@ public:
      * '*pp_token' is non-null and contains the next preprocessing token.
      * Otherwise it is guaranteed that '*pp_token' will be set to NULL
      * (as long as 'pp_token' is not NULL). */
-    PpItemResult getNextPpToken (Ref<PpToken> *pp_token)
+    PpItemResult getNextPpToken (StRef<PpToken> *pp_token)
 			  throw (InternalException,
 				 ParsingException);
 };
 
 }
 
-#endif /* __SCRUFFY__PP_ITEM_STREAM_H__ */
+
+#endif /* SCRUFFY__PP_ITEM_STREAM__H__ */
 

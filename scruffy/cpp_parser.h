@@ -17,8 +17,8 @@
 */
 
 
-#ifndef __SCRUFFY__CPP_PARSER_H__
-#define __SCRUFFY__CPP_PARSER_H__
+#ifndef SCRUFFY__CPP_PARSER_H__
+#define SCRUFFY__CPP_PARSER_H__
 
 #include <pargen/lookup_data.h>
 
@@ -48,5 +48,5 @@ public:
 
 }
 
-#endif /* __SCRUFFY__CPP_PARSER_H__ */
+#endif /* SCRUFFY__CPP_PARSER_H__ */
 

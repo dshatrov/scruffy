@@ -17,8 +17,8 @@
 */
 
 
-#ifndef __SCRUFFY__CPP_VISITOR_H__
-#define __SCRUFFY__CPP_VISITOR_H__
+#ifndef SCRUFFY__CPP_VISITOR_H__
+#define SCRUFFY__CPP_VISITOR_H__
 
 #include <mycpp/mycpp.h>
 
@@ -52,5 +52,5 @@ public:
 
 }
 
-#endif /* __SCRUFFY__CPP_VISITOR_H__ */
+#endif /* SCRUFFY__CPP_VISITOR_H__ */
 

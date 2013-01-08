@@ -17,8 +17,8 @@
 */
 
 
-#ifndef __SCRUFFY__NAME_TRACKER_H__
-#define __SCRUFFY__NAME_TRACKER_H__
+#ifndef SCRUFFY__NAME_TRACKER_H__
+#define SCRUFFY__NAME_TRACKER_H__
 
 #include <mycpp/mycpp.h>
 
@@ -110,5 +110,5 @@ public:
 
 }
 
-#endif /* __SCRUFFY__NAME_TRACKER_H__ */
+#endif /* SCRUFFY__NAME_TRACKER_H__ */
 

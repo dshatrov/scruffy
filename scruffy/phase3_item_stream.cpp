@@ -19,18 +19,19 @@
 
 #include <scruffy/phase3_item_stream.h>
 
-using namespace MyCpp;
-using namespace MyLang;
+
+using namespace M;
+using namespace Pargen;
 
 namespace Scruffy {
     
 PpItemStream::PpItemResult
-Phase3ItemStream::getNextItem (Ref<PpItem> *pp_item)
+Phase3ItemStream::getNextItem (StRef<PpItem> *pp_item)
     throw (InternalException,
 	   ParsingException)
 {
     if (cur_pp != NULL) {
-	List< Ref<PpItem> >::Element *next_pp = cur_pp->next;
+	List< StRef<PpItem> >::Element *next_pp = cur_pp->next;
 	if (pp_item != NULL)
 	    *pp_item = cur_pp->data;
 
@@ -49,7 +50,7 @@ Phase3ItemStream::getNextItem (Ref<PpItem> *pp_item)
 }
 
 PpItemStream::PpItemResult
-Phase3ItemStream::getHeaderName (Ref<PpToken_HeaderName> *ret_hn_token)
+Phase3ItemStream::getHeaderName (StRef<PpToken_HeaderName> * /* ret_hn_token */)
     throw (ParsingException,
 	   InternalException)
 {
@@ -57,16 +58,16 @@ Phase3ItemStream::getHeaderName (Ref<PpToken_HeaderName> *ret_hn_token)
 
     // No-op
 
-    abortIfReached ();
+    unreachable ();
 
     return PpItemNormal;
 }
 
-Ref<PpItemStream::PositionMarker>
+StRef<PpItemStream::PositionMarker>
 Phase3ItemStream::getPosition ()
     throw (InternalException)
 {
-    Ref<PpItemStream::PositionMarker> ret_pmark = grab (static_cast <PpItemStream::PositionMarker*> (new PositionMarker));
+    StRef<PpItemStream::PositionMarker> ret_pmark = st_grab (static_cast <PpItemStream::PositionMarker*> (new (std::nothrow) PositionMarker));
 
     PositionMarker *pmark = static_cast <PositionMarker*> (ret_pmark.ptr ());
     pmark->pp_el = cur_pp;
@@ -80,23 +81,19 @@ void
 Phase3ItemStream::setPosition (PpItemStream::PositionMarker *_pmark)
     throw (InternalException)
 {
-    if (_pmark == NULL)
-	abortIfReached ();
+    assert (_pmark);
 
     PositionMarker *pmark = static_cast <PositionMarker*> (_pmark);
 
     if (pmark->pp_el != NULL) {
-	if (!pmark->stream_pmark.isNull ())
-	    abortIfReached ();
-
-	if (pp_items.first == NULL)
-	    abortIfReached ();
+	assert (!pmark->stream_pmark);
+	assert (pp_items.first);
 
       /* DEBUG
        * Check that there is such an element in 'pp_items' list.
        */
 	bool match = false;
-	List< Ref<PpItem> >::Element *cur = pp_items.first;
+	List< StRef<PpItem> >::Element *cur = pp_items.first;
 	while (cur != NULL) {
 	    if (cur == pmark->pp_el) {
 		match = true;
@@ -105,14 +102,12 @@ Phase3ItemStream::setPosition (PpItemStream::PositionMarker *_pmark)
 
 	    cur = cur->next;
 	}
-	if (!match)
-	    abortIfReached ();
+	assert (match);
       /* (DEBUG) */
 
 	cur_pp = pmark->pp_el;
     } else {
-	if (pmark->stream_pmark.isNull ())
-		abortIfReached ();
+	assert (pmark->stream_pmark);
 
 	cur_pmark = pmark->stream_pmark;
     }
@@ -121,8 +116,7 @@ Phase3ItemStream::setPosition (PpItemStream::PositionMarker *_pmark)
 FilePosition
 Phase3ItemStream::getFpos (PpItemStream::PositionMarker *_pmark)
 {
-    if (_pmark == NULL)
-	abortIfReached ();
+    assert (_pmark);
 
     PositionMarker *pmark = static_cast <PositionMarker*> (_pmark);
     if (pmark->pp_el != NULL)
@@ -141,18 +135,18 @@ Phase3ItemStream::getFpos ()
 }
 
 void
-Phase3ItemStream::prependItems (List< Ref<PpItem> > *items)
+Phase3ItemStream::prependItems (List< StRef<PpItem> > *items)
 {
     if (cur_pp == NULL &&
 	pp_items.first != NULL)
     {
-	abortIfReached ();
+        unreachable ();
     }
 
     if (items == NULL)
 	return;
 
-    List< Ref<PpItem> >::Element *cur_item = items->last;
+    List< StRef<PpItem> >::Element *cur_item = items->last;
     while (cur_item != NULL) {
 	pp_items.prepend (cur_item->data, pp_items.first);
 	cur_item = cur_item->previous;
@@ -171,9 +165,9 @@ Phase3ItemStream::trim ()
 
   // Removing all elements except the current one.
 
-    List< Ref<PpItem> >::Element *cur = cur_pp->previous;
+    List< StRef<PpItem> >::Element *cur = cur_pp->previous;
     while (cur != NULL) {
-	List< Ref<PpItem> >::Element *prv = cur->previous;
+	List< StRef<PpItem> >::Element *prv = cur->previous;
 	pp_items.remove (cur);
 	cur = prv;
     }
@@ -191,8 +185,7 @@ Phase3ItemStream::hasPrependedItems ()
 Phase3ItemStream::Phase3ItemStream (PpItemStream *pp_stream)
     throw (InternalException)
 {
-    if (pp_stream == NULL)
-	abortIfReached ();
+    assert (pp_stream);
 
     this->pp_stream = pp_stream;
 

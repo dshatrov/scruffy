@@ -17,26 +17,27 @@
 */
 
 
-#include <mycpp/io.h>
+#include <libmary/libmary.h>
 
 #include <scruffy/unichar_pp_item_stream.h>
 #include <scruffy/preprocessor_util.h>
 
+
 // Internal
 #define DEBUG_INT(a) ;
 
-using namespace MyCpp;
-using namespace MyLang;
+
+using namespace M;
 
 namespace Scruffy {
     
 PpItemStream::PpItemResult
-UnicharPpItemStream::getNextItem (Ref<PpItem> *pp_item)
+UnicharPpItemStream::getNextItem (StRef<PpItem> *pp_item)
     throw (InternalException,
 	   ParsingException)
 {
     unichar_stream->setPosition (cur_pmark);
-    const MyLang::FilePosition fpos = unichar_stream->getFpos (cur_pmark);
+    const Pargen::FilePosition fpos = unichar_stream->getFpos (cur_pmark);
 
   DEBUG_INT (
     errf->print ("Scruffy.UnicharPpItemStream.getNextItem: "
@@ -48,7 +49,7 @@ UnicharPpItemStream::getNextItem (Ref<PpItem> *pp_item)
     unsigned long whsp_len = matchWhitespace (unichar_stream, &newline);
     if (whsp_len > 0) {
 	unichar_stream->setPosition (cur_pmark);
-	Ref<String> whsp_str = extractString (unichar_stream, whsp_len);
+	StRef<String> whsp_str = extractString (unichar_stream, whsp_len);
 	cur_pmark = unichar_stream->getPosition ();
 
       DEBUG_INT (
@@ -61,7 +62,7 @@ UnicharPpItemStream::getNextItem (Ref<PpItem> *pp_item)
       );
 
 	if (pp_item != NULL)
-	    *pp_item = grab (new Whitespace (whsp_str, newline, fpos));
+	    *pp_item = st_grab (new (std::nothrow) Whitespace (whsp_str, newline, fpos));
 
 	return PpItemNormal;
     }
@@ -90,9 +91,9 @@ UnicharPpItemStream::getNextItem (Ref<PpItem> *pp_item)
       /* Determining if an EOF is reached */
 
 	unichar_stream->setPosition (cur_pmark);
-	MyLang::UnicharStream::UnicharResult ures;
+	UnicharStream::UnicharResult ures;
 	ures = unichar_stream->getNextUnichar (NULL);
-	if (ures == MyLang::UnicharStream::UnicharEof) {
+	if (ures == UnicharStream::UnicharEof) {
 	  DEBUG_INT (
 	    errf->print ("Scruffy.UnicharPpItemStream.getNextItem: "
 			 "returning PpItemEof")
@@ -102,8 +103,7 @@ UnicharPpItemStream::getNextItem (Ref<PpItem> *pp_item)
 	    return PpItemEof;
 	}
 
-	if (ures != MyLang::UnicharStream::UnicharNormal)
-	    abortIfReached ();
+	assert (ures == UnicharStream::UnicharNormal);
 
       /* (End of determining if an EOF is reached) */
 
@@ -113,11 +113,11 @@ UnicharPpItemStream::getNextItem (Ref<PpItem> *pp_item)
 	     .pendl ();
       );
 
-	throw ParsingException (fpos);
+	throw ParsingException (fpos, NULL);
     }
 
     unichar_stream->setPosition (cur_pmark);
-    Ref<String> pp_token_str = extractString (unichar_stream, pp_token_len);
+    StRef<String> pp_token_str = extractString (unichar_stream, pp_token_len);
     cur_pmark = unichar_stream->getPosition ();
 
   DEBUG_INT (
@@ -132,13 +132,13 @@ UnicharPpItemStream::getNextItem (Ref<PpItem> *pp_item)
 	pp_token_str = unescapeStringLiteral (pp_token_str);
 
     if (pp_item != NULL)
-	*pp_item = grab (new PpToken (pp_token_type, pp_token_str, NULL, fpos));
+	*pp_item = st_grab (new (std::nothrow) PpToken (pp_token_type, pp_token_str, NULL, fpos));
 
     return PpItemNormal;
 }
 
 PpItemStream::PpItemResult
-UnicharPpItemStream::getHeaderName (Ref<PpToken_HeaderName> *ret_hn_token)
+UnicharPpItemStream::getHeaderName (StRef<PpToken_HeaderName> *ret_hn_token)
     throw (ParsingException,
 	   InternalException)
 {
@@ -146,10 +146,10 @@ UnicharPpItemStream::getHeaderName (Ref<PpToken_HeaderName> *ret_hn_token)
 	*ret_hn_token = NULL;
 
     unichar_stream->setPosition (cur_pmark);
-    const MyLang::FilePosition fpos = unichar_stream->getFpos (cur_pmark);
+    const Pargen::FilePosition fpos = unichar_stream->getFpos (cur_pmark);
 
     PpToken_HeaderName::HeaderNameType hn_type;
-    Ref<String> header_name;
+    StRef<String> header_name;
     Size header_name_len = matchHeaderName (unichar_stream, &hn_type, &header_name);
     if (header_name_len > 0) {
 	unichar_stream->setPosition (cur_pmark);
@@ -157,7 +157,7 @@ UnicharPpItemStream::getHeaderName (Ref<PpToken_HeaderName> *ret_hn_token)
 	cur_pmark = unichar_stream->getPosition ();
 
 	if (ret_hn_token != NULL)
-	    *ret_hn_token = grab (new PpToken_HeaderName (hn_type, header_name, NULL, fpos));
+	    *ret_hn_token = st_grab (new (std::nothrow) PpToken_HeaderName (hn_type, header_name, NULL, fpos));
 
 	return PpItemNormal;
     }
@@ -167,16 +167,16 @@ UnicharPpItemStream::getHeaderName (Ref<PpToken_HeaderName> *ret_hn_token)
     if (res == UnicharStream::UnicharEof)
 	return PpItemEof;
 
-    abortIf (res != UnicharStream::UnicharNormal);
+    assert (res == UnicharStream::UnicharNormal);
 
     return PpItemNormal;
 }
 
-Ref<PpItemStream::PositionMarker>
+StRef<PpItemStream::PositionMarker>
 UnicharPpItemStream::getPosition ()
     throw (InternalException)
 {
-    Ref<PpItemStream::PositionMarker> ret_pmark = grab (static_cast <PpItemStream::PositionMarker*> (new PositionMarker));
+    StRef<PpItemStream::PositionMarker> ret_pmark = st_grab (static_cast <PpItemStream::PositionMarker*> (new (std::nothrow) PositionMarker));
 
     PositionMarker *pmark = static_cast <PositionMarker*> (ret_pmark.ptr ());
     pmark->unichar_pmark = cur_pmark;
@@ -188,36 +188,33 @@ void
 UnicharPpItemStream::setPosition (PpItemStream::PositionMarker *_pmark)
     throw (InternalException)
 {
-    if (_pmark == NULL)
-	abortIfReached ();
+    assert (_pmark);
 
     PositionMarker *pmark = static_cast <PositionMarker*> (_pmark);
     cur_pmark = pmark->unichar_pmark;
 }
 
-MyLang::FilePosition
+Pargen::FilePosition
 UnicharPpItemStream::getFpos (PpItemStream::PositionMarker *_pmark)
 {
-    if (_pmark == NULL)
-	abortIfReached ();
+    assert (_pmark);
 
     PositionMarker *pmark = static_cast <PositionMarker*> (_pmark);
     return unichar_stream->getFpos (pmark->unichar_pmark);
 }
 
-MyLang::FilePosition
+Pargen::FilePosition
 UnicharPpItemStream::getFpos ()
 {
     return unichar_stream->getFpos (cur_pmark);
 }
 
-UnicharPpItemStream::UnicharPpItemStream (MyLang::UnicharStream * const unichar_stream,
+UnicharPpItemStream::UnicharPpItemStream (UnicharStream * const unichar_stream,
 					  CppPreprocessor::PpTokenMatchFunc const pp_token_match_func)
     throw (InternalException)
     : pp_token_match_func (pp_token_match_func)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
     this->unichar_stream = unichar_stream;
     this->cur_pmark = unichar_stream->getPosition ();

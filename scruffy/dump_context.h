@@ -17,8 +17,8 @@
 */
 
 
-#ifndef __SCRUFFY__DUMP_CONTEXT_H__
-#define __SCRUFFY__DUMP_CONTEXT_H__
+#ifndef SCRUFFY__DUMP_CONTEXT_H__
+#define SCRUFFY__DUMP_CONTEXT_H__
 
 #include <mycpp/mycpp.h>
 
@@ -113,5 +113,5 @@ public:
 } // namespace Cpp
 } // namespace Scruffy
 
-#endif /* __SCRUFFY__DUMP_CONTEXT_H__ */
+#endif /* SCRUFFY__DUMP_CONTEXT_H__ */
 

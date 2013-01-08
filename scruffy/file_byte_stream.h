@@ -1,4 +1,4 @@
-/*  Scruffy - C/C++ parser and source code analyzer
+/*  MyLang - Utility library for writing parsers
     Copyright (C) 2011 Dmitry Shatrov
 
     This library is free software; you can redistribute it and/or
@@ -17,28 +17,52 @@
 */
 
 
-#ifndef SCRUFFY__MACRO_DEFINITION__H__
-#define SCRUFFY__MACRO_DEFINITION__H__
+#ifndef SCRUFFY__FILE_BYTE_STREAM__H__
+#define SCRUFFY__FILE_BYTE_STREAM__H__
 
 
 #include <libmary/libmary.h>
+
+#include <scruffy/byte_stream.h>
 
 
 namespace Scruffy {
 
 using namespace M;
 
-class MacroDefinition : public StReferenced
+class FileByteStream : public ByteStream
 {
+protected:
+    class PositionMarker : public ByteStream::PositionMarker
+    {
+    public:
+	FileSize offset;
+    };
+
+    File *in_file;
+    FileSize start_offset;
+
 public:
-    StRef<String> name;
-    StRef< List_< StRef<PpItem>, StReferenced > > replacement_list;
-    StRef< List_< StRef<String>, StReferenced > > params;
-    bool lparen;
+  /* ByteStream interface */
+  mt_iface (ByteStream)
+
+    ByteResult getNextByte (char *c)
+                     throw (InternalException);
+
+    StRef<ByteStream::PositionMarker> getPosition ()
+                                            throw (InternalException);
+
+    void setPosition (ByteStream::PositionMarker *pmark)
+               throw (InternalException);
+
+  mt_iface_end
+
+    FileByteStream (File *in_file)
+	     throw (InternalException);
 };
 
 }
 
 
-#endif /* SCRUFFY__MACRO_DEFINITION__H__ */
+#endif /* SCRUFFY__FILE_BYTE_STREAM__H__ */
 

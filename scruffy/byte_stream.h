@@ -1,4 +1,4 @@
-/*  Scruffy - C/C++ parser and source code analyzer
+/*  MyLang - Utility library for writing parsers
     Copyright (C) 2011 Dmitry Shatrov
 
     This library is free software; you can redistribute it and/or
@@ -17,28 +17,41 @@
 */
 
 
-#ifndef SCRUFFY__CPP_DISPATCHER_H__
-#define SCRUFFY__CPP_DISPATCHER_H__
+#ifndef SCRUFFY__BYTE_STREAM__H__
+#define SCRUFFY__BYTE_STREAM__H__
 
-#include <mycpp/mycpp.h>
 
-#include <scruffy/cpp.h>
+#include <libmary/libmary.h>
+
 
 namespace Scruffy {
 
-using namespace MyCpp;
+using namespace M;
 
-class CppDispatcher : public virtual Object
+class ByteStream : public StReferenced
 {
 public:
-//    virtual void declaration (Cpp::Identifier *identifier) = 0;
+    class PositionMarker : public StReferenced
+    {
+    };
 
-//    virtual void definition (Cpp::Identifier *identifier) = 0;
+    enum ByteResult {
+	ByteNormal = 0,
+	ByteEof
+    };
 
-//    virtual void instantiation () = 0;
+    virtual ByteResult getNextByte (char *c)
+			     throw (InternalException) = 0;
+
+    virtual StRef<PositionMarker> getPosition ()
+                                        throw (InternalException) = 0;
+
+    virtual void setPosition (PositionMarker *pmark)
+                       throw (InternalException) = 0;
 };
 
 }
 
-#endif /* SCRUFFY__CPP_DISPATCHER_H__ */
+
+#endif /* SCRUFFY__BYTE_STREAM__H__ */
 

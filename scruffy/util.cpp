@@ -17,24 +17,26 @@
 */
 
 
-#include <mycpp/unicode.h>
-
 #include <scruffy/util.h>
 
-using namespace MyCpp;
+
+using namespace M;
 
 namespace Scruffy {
    
 void
-validateStringNumberPairs (const StringNumberPair *pairs,
-			   unsigned long           num_pairs)
+validateStringNumberPairs (const StringNumberPair * /* pairs */,
+			   unsigned long            /* num_pairs */)
     throw (InternalException)
 {
+// Always valid
+#if 0
     unsigned long i;
     for (i = 0; i < num_pairs; i++) {
 	if (!utf8_validate_sz (pairs [i].string, NULL))
-	    throw InternalException ();
+	    throw InternalException (InternalException::BadInput);
     }
+#endif
 }
 
 bool
@@ -45,8 +47,11 @@ matchStringNumberPairs (const char             *str,
 {
     unsigned long i;
     for (i = 0; i < num_pairs; i++) {
-	if (compareStrings (str, pairs [i].string))
+	if (equal (ConstMemory (str, strlen (str)),
+                   ConstMemory (pairs [i].string, strlen (pairs [i].string))))
+        {
 	    break;
+        }
     }
 
     if (i >= num_pairs)
@@ -59,15 +64,18 @@ matchStringNumberPairs (const char             *str,
 }
 
 void
-validateStrings (const char   **strs,
-		 unsigned long  num_strs)
+validateStrings (const char   ** /* strs */,
+		 unsigned long   /* num_strs */)
     throw (InternalException)
 {
+// Always valid
+#if 0
     unsigned long i;
     for (i = 0; i < num_strs; i++) {
 	if (!utf8_validate_sz (strs [i], NULL))
 	    throw InternalException ();
     }
+#endif
 }
 
 unsigned long
@@ -77,7 +85,8 @@ matchStrings (const char     *str,
 {
     unsigned long i;
     for (i = 0; i < num_strs; i++) {
-	if (compareStrings (str, strs [i]))
+	if (equal (ConstMemory (str, strlen (str)),
+                   ConstMemory (strs [i], strlen (strs [i]))))
 	    break;
     }
 
@@ -118,8 +127,7 @@ unsigned long
 maxNumberOf (const unsigned long *number_set,
 	     unsigned long        nnumbers)
 {
-    if (nnumbers == 0)
-	abortIfReached ();
+    assert (nnumbers != 0);
 
     unsigned long max = number_set [0];
 

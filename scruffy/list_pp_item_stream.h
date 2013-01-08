@@ -17,16 +17,18 @@
 */
 
 
-#ifndef __SCRUFFY__LIST_PP_ITEM_STREAM_H__
-#define __SCRUFFY__LIST_PP_ITEM_STREAM_H__
+#ifndef SCRUFFY__LIST_PP_ITEM_STREAM__H__
+#define SCRUFFY__LIST_PP_ITEM_STREAM__H__
 
-#include <mycpp/list.h>
+
+#include <libmary/libmary.h>
 
 #include <scruffy/pp_item_stream.h>
 
+
 namespace Scruffy {
 
-using namespace MyCpp;
+using namespace M;
 
 class ListPpItemStream : public PpItemStream
 {
@@ -34,41 +36,41 @@ protected:
     class PositionMarker : public PpItemStream::PositionMarker
     {
     public:
-	List< Ref<PpItem> >::Element *pp_el;
+	List< StRef<PpItem> >::Element *pp_el;
     };
 
-    List< Ref<PpItem> >::Element *cur_pp;
+    List< StRef<PpItem> >::Element *cur_pp;
 
-    const MyLang::FilePosition start_fpos;
+    const Pargen::FilePosition start_fpos;
 
 public:
   /* PpItemStream interface */
 
-    PpItemResult getNextItem (Ref<PpItem> *pp_item)
+    PpItemResult getNextItem (StRef<PpItem> *pp_item)
 			    throw (InternalException,
 				   ParsingException);
 
-    PpItemResult getHeaderName (Ref<PpToken_HeaderName> *ret_hn_token)
+    PpItemResult getHeaderName (StRef<PpToken_HeaderName> *ret_hn_token)
 			 throw (ParsingException,
 				InternalException);
 
-    Ref<PpItemStream::PositionMarker> getPosition ()
+    StRef<PpItemStream::PositionMarker> getPosition ()
 			    throw (InternalException);
 
     void setPosition (PpItemStream::PositionMarker *pmark)
 			    throw (InternalException);
 
-    MyLang::FilePosition getFpos (PpItemStream::PositionMarker *pmark);
+    Pargen::FilePosition getFpos (PpItemStream::PositionMarker *pmark);
 
-    MyLang::FilePosition getFpos ();
+    Pargen::FilePosition getFpos ();
 
   /* (End of PpItemStream interface) */
 
-    ListPpItemStream (List< Ref<PpItem> >::Element *cur_pp,
-		      const MyLang::FilePosition &start_fpos);
+    ListPpItemStream (List< StRef<PpItem> >::Element *cur_pp,
+		      const Pargen::FilePosition &start_fpos);
 };
 
 }
 
-#endif /* __SCRUFFY__LIST_PP_ITEM_STREAM_H__ */
+#endif /* SCRUFFY__LIST_PP_ITEM_STREAM_H__ */
 

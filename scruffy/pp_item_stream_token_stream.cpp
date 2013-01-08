@@ -20,8 +20,9 @@
 #include <scruffy/pp_item_stream_token_stream.h>
 #include <scruffy/preprocessor_util.h>
 
-using namespace MyCpp;
-using namespace MyLang;
+
+using namespace M;
+using namespace Pargen;
 
 namespace Scruffy {
 
@@ -53,17 +54,16 @@ namespace {
 
 }
 
-ConstMemoryDesc
-PpItemStreamTokenStream::getNextToken ()
-    throw (InternalException)
+Result
+PpItemStreamTokenStream::getNextToken (ConstMemory *ret_mem)
 {
-    return getNextToken (NULL, NULL);
+    return getNextToken (ret_mem, NULL, NULL);
 }
     
-ConstMemoryDesc
-PpItemStreamTokenStream::getNextToken (Ref<SimplyReferenced> *ret_user_obj,
-				       void **ret_user_ptr)
-    throw (InternalException)
+mt_throws Result
+PpItemStreamTokenStream::getNextToken (ConstMemory          *ret_mem,
+                                       StRef<StReferenced>  *ret_user_obj,
+				       void                **ret_user_ptr)
 {
     if (ret_user_obj != NULL)
 	*ret_user_obj = NULL;
@@ -73,25 +73,26 @@ PpItemStreamTokenStream::getNextToken (Ref<SimplyReferenced> *ret_user_obj,
 
     pp_stream->setPosition (cur_pmark);
 
-    Ref<PpItem> pp_item;
+    StRef<PpItem> pp_item;
     // Whitespace is stripped here.
     do {
 	PpItemStream::PpItemResult pres = pp_stream->getNextItem (&pp_item);
 	if (pres == PpItemStream::PpItemEof) {
 	    pp_stream->setPosition (cur_pmark);
-	    return ConstMemoryDesc();
+            *ret_mem = ConstMemory ();
+            return Result::Success;
 	}
 
 	if (pp_item->type == PpItemWhitespace) {
 	    Whitespace * const whsp = static_cast <Whitespace*> (pp_item.ptr());
 	    if (whsp->has_newline &&
-		!newline_replacement.isNull())
+		newline_replacement)
 	    {
-		pp_item = grab (new PpToken (PpTokenPpOpOrPunc, // TODO Introduce PpTokenWhitespace
-					     newline_replacement,
-					     NULL /* macro_ban */,
-					     // TODO Real file position
-					     MyLang::FilePosition()));
+		pp_item = st_grab (new (std::nothrow) PpToken (PpTokenPpOpOrPunc, // TODO Introduce PpTokenWhitespace
+                                                               newline_replacement,
+                                                               NULL /* macro_ban */,
+                                                               // TODO Real file position
+                                                               Pargen::FilePosition()));
 		break;
 	    }
 	}
@@ -122,17 +123,19 @@ PpItemStreamTokenStream::getNextToken (Ref<SimplyReferenced> *ret_user_obj,
     if (ret_user_ptr)
 	*ret_user_ptr = (void*) (pp_item.ptr());
 
-    return pp_item->str->getMemoryDesc();
+    *ret_mem = pp_item->str->mem();
+
+    return Result::Success;
 }
 
-void
+Result
 PpItemStreamTokenStream::getPosition (TokenStream::PositionMarker * const ret_pmark /* non-null */)
-    throw (InternalException)
 {
     ret_pmark->body.copy_func = pmark_copy_func;
     ret_pmark->body.release_func = pmark_release_func;
     ret_pmark->body.ptr = cur_pmark;
     cur_pmark->ref ();
+    return Result::Success;
 
 #if 0
 // Old variant
@@ -145,17 +148,16 @@ PpItemStreamTokenStream::getPosition (TokenStream::PositionMarker * const ret_pm
 #endif
 }
 
-void
+Result
 PpItemStreamTokenStream::setPosition (TokenStream::PositionMarker const * const pmark /* non-null */)
-    throw (InternalException)
 {
     cur_pmark = static_cast <PpItemStream::PositionMarker*> (pmark->body.ptr);
+    return Result::Success;
 }
 
 PpItemStreamTokenStream::PpItemStreamTokenStream (PpItemStream * const pp_stream)
 {
-    if (pp_stream == NULL)
-	abortIfReached ();
+    assert (pp_stream);
 
     this->pp_stream = pp_stream;
     this->cur_pmark = pp_stream->getPosition ();

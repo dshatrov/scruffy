@@ -17,31 +17,32 @@
 */
 
 
-#ifndef __SCRUFFY__PREPROCESSOR_H__
-#define __SCRUFFY__PREPROCESSOR_H__
+#ifndef SCRUFFY__PREPROCESSOR__H__
+#define SCRUFFY__PREPROCESSOR__H__
 
-#include <mycpp/mycpp.h>
-#include <mycpp/io.h>
 
-#include <mylang/unichar_stream.h>
+#include <libmary/libmary.h>
+
+#include <scruffy/unichar_stream.h>
 
 #include <scruffy/preprocessor_types.h>
 #include <scruffy/pp_item_stream.h>
 #include <scruffy/parsing_exception.h>
 
+
 namespace Scruffy {
 
-using namespace MyCpp;
+using namespace M;
 
 // mt_throws ((InternalException, ParsingException))
-unsigned long matchPreprocessingToken (MyLang::UnicharStream *unichar_stream,
+unsigned long matchPreprocessingToken (UnicharStream *unichar_stream,
 				       PpTokenType *ret_pp_token_type);
 
-class CppPreprocessor : public virtual Object
+class CppPreprocessor : public StReferenced
 {
 public:
     // mt_throws ((InternalException, ParsingException))
-    typedef unsigned long (*PpTokenMatchFunc) (MyLang::UnicharStream *unichar_stream,
+    typedef unsigned long (*PpTokenMatchFunc) (UnicharStream *unichar_stream,
 					       PpTokenType *ret_pp_token_type);
 
 public:
@@ -83,27 +84,27 @@ public:
     List<IfStackEntry> if_stack;
     bool if_skipping;
 
-    Map< Ref<MacroDefinition>,
+    Map< StRef<MacroDefinition>,
 	 MemberExtractor< MacroDefinition,
-			  Ref<String>,
+			  StRef<String>,
 			  &MacroDefinition::name,
-			  MemoryDesc,
+			  Memory,
 			  AccessorExtractor< String,
-					     MemoryDesc,
-					     &String::getMemoryDesc > >,
+					     Memory,
+					     &String::mem > >,
 	 MemoryComparator<> >
 	    macro_definitions;
 
-    Ref< List_< Ref<PpItem>, SimplyReferenced > > pp_items;
+    StRef< List_< StRef<PpItem>, StReferenced > > pp_items;
 
-    Ref<File> source_file;
+    File *source_file;
 
-    Ref< List_< Ref<String>, SimplyReferenced > >
+    StRef< List_< StRef<String>, StReferenced > >
 	    extractMacroParameters (PpItemStream *pp_stream)
 			     throw (InternalException,
 				    ParsingException);
 
-    Ref< List_< Ref<PpItem>, SimplyReferenced > >
+    StRef< List_< StRef<PpItem>, StReferenced > >
 	    extractReplacementList (PpItemStream *pp_stream)
 			     throw (InternalException,
 				    ParsingException);
@@ -158,27 +159,27 @@ public:
 				   throw (InternalException,
 					  ParsingException);
 
-    Ref< List_< Ref<PpItem>, SimplyReferenced > >
+    StRef< List_< StRef<PpItem>, StReferenced > >
 	    translateMacroInvocation (PpItemStream   *pp_token_stream,
 				      MacroDefinition *mdef,
 				      MacroBan        *macro_ban)
 			       throw (InternalException,
 				      ParsingException);
 
-    Ref< List_< Ref<PpItem>, SimplyReferenced > >
+    StRef< List_< StRef<PpItem>, StReferenced > >
 	    translateObjectMacro (MacroDefinition *mdef,
 				  MacroBan        *macro_ban)
 			   throw (InternalException,
 				  ParsingException);
 
-    void evaluateDoubleSharps (List< Ref<PpItem> > *pp_items,
+    void evaluateDoubleSharps (List< StRef<PpItem> > *pp_items,
 			       MacroBan *macro_ban)
 			throw (InternalException,
 			       ParsingException);
 
     void translatePpToken (PpItemStream *pp_token_stream,
 			   PpToken       *pp_token,
-			   List< Ref<PpItem> > *receiving_list)
+			   List< StRef<PpItem> > *receiving_list)
 		    throw (InternalException,
 			   ParsingException);
 
@@ -189,11 +190,9 @@ public:
 			    ParsingException);
 
 public:
-    void performPreprocessing ()
-			throw (InternalException,
-			       ParsingException);
+    mt_throws Result performPreprocessing ();
 
-    Ref< List_< Ref<PpItem>, SimplyReferenced > > getPpItems ()
+    StRef< List_< StRef<PpItem>, StReferenced > > getPpItems ()
     {
 	return pp_items;
     }
@@ -204,5 +203,6 @@ public:
 
 }
 
-#endif /* __SCRUFFY__PREPROCESSOR_H__ */
+
+#endif /* SCRUFFY__PREPROCESSOR__H__ */
 

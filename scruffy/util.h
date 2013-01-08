@@ -17,12 +17,16 @@
 */
 
 
-#ifndef __SCRUFFY_UTIL_H__
-#define __SCRUFFY_UTIL_H__
+#ifndef SCRUFFY__UTIL__H__
+#define SCRUFFY__UTIL__H__
 
-#include <mycpp/internal_exception.h>
+
+#include <libmary/libmary.h>
+
 
 namespace Scruffy {
+
+using namespace M;
 
 struct StringNumberPair
 {
@@ -32,7 +36,7 @@ struct StringNumberPair
 
 void validateStringNumberPairs (const StringNumberPair *pairs,
 				unsigned long           num_pairs)
-			 throw (MyCpp::InternalException);
+			 throw (InternalException);
 
 bool matchStringNumberPairs (const char             *str,
 			     unsigned long          *ret_number,
@@ -41,7 +45,7 @@ bool matchStringNumberPairs (const char             *str,
 
 void validateStrings (const char    **strs,
 		      unsigned long   num_strs)
-	       throw (MyCpp::InternalException);
+	       throw (InternalException);
 
 unsigned long matchStrings (const char     *str,
 			    const char    **strs,
@@ -59,5 +63,6 @@ unsigned long maxNumberOf (const unsigned long *number_set,
 
 }
 
-#endif /* __SCRUFFY_UTIL_H__ */
+
+#endif /* SCRUFFY__UTIL__H__ */
 

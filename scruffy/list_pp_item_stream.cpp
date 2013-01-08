@@ -19,13 +19,14 @@
 
 #include <scruffy/list_pp_item_stream.h>
 
-using namespace MyCpp;
-using namespace MyLang;
+
+using namespace M;
+using namespace Pargen;
 
 namespace Scruffy {
     
 PpItemStream::PpItemResult
-ListPpItemStream::getNextItem (Ref<PpItem> *pp_item)
+ListPpItemStream::getNextItem (StRef<PpItem> *pp_item)
     throw (InternalException,
 	   ParsingException)
 {
@@ -44,7 +45,7 @@ ListPpItemStream::getNextItem (Ref<PpItem> *pp_item)
 }
 
 PpItemStream::PpItemResult
-ListPpItemStream::getHeaderName (Ref<PpToken_HeaderName> *ret_hn_token)
+ListPpItemStream::getHeaderName (StRef<PpToken_HeaderName> *ret_hn_token)
     throw (ParsingException,
 	   InternalException)
 {
@@ -52,16 +53,16 @@ ListPpItemStream::getHeaderName (Ref<PpToken_HeaderName> *ret_hn_token)
 
     // No-op
 
-    abortIfReached ();
+    unreachable ();
 
     return PpItemNormal;
 }
 
-Ref<PpItemStream::PositionMarker>
+StRef<PpItemStream::PositionMarker>
 ListPpItemStream::getPosition ()
     throw (InternalException)
 {
-    Ref<PpItemStream::PositionMarker> ret_pmark = grab (static_cast <PpItemStream::PositionMarker*> (new PositionMarker));
+    StRef<PpItemStream::PositionMarker> ret_pmark = st_grab (static_cast <PpItemStream::PositionMarker*> (new (std::nothrow) PositionMarker));
 
     PositionMarker *pmark = static_cast <PositionMarker*> (ret_pmark.ptr ());
     pmark->pp_el = cur_pp;
@@ -73,8 +74,7 @@ void
 ListPpItemStream::setPosition (PpItemStream::PositionMarker *_pmark)
     throw (InternalException)
 {
-    if (_pmark == NULL)
-	abortIfReached ();
+    assert (_pmark);
 
     PositionMarker *pmark = static_cast <PositionMarker*> (_pmark);
     cur_pp = pmark->pp_el;
@@ -83,8 +83,7 @@ ListPpItemStream::setPosition (PpItemStream::PositionMarker *_pmark)
 FilePosition
 ListPpItemStream::getFpos (PpItemStream::PositionMarker *_pmark)
 {
-    if (_pmark == NULL)
-	abortIfReached ();
+    assert (_pmark == NULL);
 
     PositionMarker *pmark = static_cast <PositionMarker*> (_pmark);
     if (pmark->pp_el != NULL)
@@ -102,7 +101,7 @@ ListPpItemStream::getFpos ()
     return start_fpos;
 }
 
-ListPpItemStream::ListPpItemStream (List< Ref<PpItem> >::Element *cur_pp,
+ListPpItemStream::ListPpItemStream (List< StRef<PpItem> >::Element *cur_pp,
 				    const FilePosition &start_fpos)
     : start_fpos (start_fpos)
 {

@@ -17,17 +17,18 @@
 */
 
 
-#ifndef __SCRUFFY__PREPROCESSOR_TYPES_H__
-#define __SCRUFFY__PREPROCESSOR_TYPES_H__
+#ifndef SCRUFFY__PREPROCESSOR_TYPES__H__
+#define SCRUFFY__PREPROCESSOR_TYPES__H__
 
-#include <mycpp/object.h>
-#include <mycpp/string.h>
 
-#include <mylang/file_position.h>
+#include <libmary/libmary.h>
+
+#include <pargen/file_position.h>
+
 
 namespace Scruffy {
 
-using namespace MyCpp;
+using namespace M;
 
 enum PpTokenType
 {
@@ -49,25 +50,25 @@ enum PpItemType
 
 class MacroDefinition;
 
-class MacroBan : public SimplyReferenced
+class MacroBan : public StReferenced
 {
 public:
-    Ref<MacroBan> outer_ban;
-    Ref<MacroDefinition> mdef;
+    StRef<MacroBan> outer_ban;
+    StRef<MacroDefinition> mdef;
     bool active;
 };
 
-class PpItem : public SimplyReferenced
+class PpItem : public StReferenced
 {
 public:
     const PpItemType type;
 
-    const MyLang::FilePosition fpos;
+    const Pargen::FilePosition fpos;
 
-    Ref<String> str;
+    StRef<String> str;
 
     PpItem (PpItemType type,
-	    const MyLang::FilePosition &fpos)
+	    const Pargen::FilePosition &fpos)
 	: type (type),
 	  fpos (fpos)
     {
@@ -79,9 +80,9 @@ class Whitespace : public PpItem
 public:
     bool has_newline;
 
-    Whitespace (Ref<String> str,
-		bool has_newline,
-		const MyLang::FilePosition &fpos)
+    Whitespace (String *str,
+		bool    has_newline,
+		const Pargen::FilePosition &fpos)
 	: PpItem (PpItemWhitespace, fpos)
     {
 	this->str = str;
@@ -93,12 +94,12 @@ class PpToken : public PpItem
 {
 public:
     PpTokenType pp_token_type;
-    Ref<MacroBan> macro_ban;
+    StRef<MacroBan> macro_ban;
 
     PpToken (PpTokenType  pp_token_type,
 	     String      *str,
 	     MacroBan    *macro_ban,
-	     const MyLang::FilePosition &fpos)
+	     const Pargen::FilePosition &fpos)
 	: PpItem (PpItemPpToken, fpos)
     {
 	this->pp_token_type = pp_token_type;
@@ -120,7 +121,7 @@ public:
     PpToken_HeaderName (HeaderNameType header_name_type,
 			String *str,
 			MacroBan *macro_ban,
-			const MyLang::FilePosition &fpos)
+			const Pargen::FilePosition &fpos)
 	: PpToken (PpTokenHeaderName,
 		   str,
 		   macro_ban,
@@ -148,17 +149,17 @@ enum LiteralType
     LiteralBoolean
 };
 
-class Token : public SimplyReferenced
+class Token : public StReferenced
 {
 public:
     TokenType token_type;
-    Ref<String> str;
+    StRef<String> str;
 
-    const MyLang::FilePosition fpos;
+    const Pargen::FilePosition fpos;
 
     Token (TokenType token_type,
 	   String *str,
-	   const MyLang::FilePosition &fpos)
+	   const Pargen::FilePosition &fpos)
 	: fpos (fpos)
     {
 	this->token_type = token_type;
@@ -173,7 +174,7 @@ public:
 
     Literal (LiteralType literal_type,
 	     String *str,
-	     const MyLang::FilePosition &fpos)
+	     const Pargen::FilePosition &fpos)
 	: Token (TokenLiteral, str, fpos)
     {
 	this->literal_type = literal_type;
@@ -182,7 +183,9 @@ public:
 
 }
 
+
 #include <scruffy/macro_definition.h>
 
-#endif /* __SCRUFFY__PREPROCESSOR_TYPES_H__ */
+
+#endif /* SCRUFFY__PREPROCESSOR_TYPES__H__ */
 

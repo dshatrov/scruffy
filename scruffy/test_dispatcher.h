@@ -17,8 +17,8 @@
 */
 
 
-#ifndef __SCRUFFY__TEST_DISPATCHER_H__
-#define __SCRUFFY__TEST_DISPATCHER_H__
+#ifndef SCRUFFY__TEST_DISPATCHER__H__
+#define SCRUFFY__TEST_DISPATCHER__H__
 
 #include <mycpp/mycpp.h>
 
@@ -40,5 +40,5 @@ public:
 
 }
 
-#endif /* __SCRUFFY__TEST_DISPATCHER_H__ */
+#endif /* SCRUFFY__TEST_DISPATCHER__H__ */
 

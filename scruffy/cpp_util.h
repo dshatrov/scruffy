@@ -17,8 +17,8 @@
 */
 
 
-#ifndef __SCRUFFY__CPP_UTIL_H__
-#define __SCRUFFY__CPP_UTIL_H__
+#ifndef SCRUFFY__CPP_UTIL_H__
+#define SCRUFFY__CPP_UTIL_H__
 
 #include <scruffy/cpp.h>
 
@@ -36,5 +36,5 @@ void dumpMemberInfo (Member const *member /* non-null */);
 
 }
 
-#endif /* __SCRUFFY__CPP_UTIL_H__ */
+#endif /* SCRUFFY__CPP_UTIL_H__ */
 

@@ -17,24 +17,26 @@
 */
 
 
-#ifndef __SCRUFFY__CHECKPOINT_TRACKER_H__
-#define __SCRUFFY__CHECKPOINT_TRACKER_H__
+#ifndef SCRUFFY__CHECKPOINT_TRACKER__H__
+#define SCRUFFY__CHECKPOINT_TRACKER__H__
 
-#include <mycpp/mycpp.h>
+
+#include <libmary/libmary.h>
+
 #include <pargen/lookup_data.h>
+
 
 namespace Scruffy {
 
-using namespace MyCpp;
+using namespace M;
 
-class CheckpointTracker : public Pargen::LookupData,
-			  public virtual SimplyReferenced
+class CheckpointTracker : public Pargen::LookupData
 {
 protected:
     class CancellableEntry;
 
 public:
-    class Cancellable : public virtual SimplyReferenced
+    class Cancellable : public virtual StReferenced
     {
     public:
 	virtual void cancel () = 0;
@@ -45,9 +47,9 @@ public:
 	friend class CheckpointTracker;
 
     private:
-	Ref<CancellableEntry> cancellable_entry;
+	StRef<CancellableEntry> cancellable_entry;
 
-	CancellableKey (Ref<CancellableEntry> const &cancellable_entry)
+	CancellableKey (StRef<CancellableEntry> const &cancellable_entry)
 	    : cancellable_entry (cancellable_entry)
 	{
 	}
@@ -66,7 +68,7 @@ public:
 protected:
     class Checkpoint;
 
-    class CancellableEntry : public SimplyReferenced
+    class CancellableEntry : public StReferenced
     {
     public:
 	enum Type {
@@ -79,14 +81,14 @@ protected:
 
 	Type cancellable_entry_type;
 
-	Ref<Cancellable> cancellable;
+	StRef<Cancellable> cancellable;
 
 	// The checkpoint that currently holds this cancellable.
 	Checkpoint *checkpoint;
 	// An element of Checkpoint::cancellables or
 	// Checkpoint::sticky_cancellables (for sticky cancellables)
 	// that refers to this cancellable.
-	List< Ref<CancellableEntry> >::Element *cancellables_el;
+	List< StRef<CancellableEntry> >::Element *cancellables_el;
 
 	// The checkpoint that this cancellable is bound to.
 	Checkpoint *bound_checkpoint;
@@ -124,8 +126,8 @@ protected:
 	// which we forget about after rerurning to this checkpoint.
 	List<CancellableEntry*> bound_cancellables;
 
-	List< Ref<CancellableEntry> > cancellables;
-	List< Ref<CancellableEntry> > sticky_cancellables;
+	List< StRef<CancellableEntry> > cancellables;
+	List< StRef<CancellableEntry> > sticky_cancellables;
 
 	Bool is_barrier;
 
@@ -170,7 +172,7 @@ public:
 
     CheckpointKey getCurrentCheckpoint ()
     {
-	abortIf (checkpoints.isEmpty ());
+	assert (!checkpoints.isEmpty ());
 	return CheckpointKey (checkpoints.getLast ());
     }
 
@@ -217,7 +219,7 @@ public:
 };
 
 template <class T, class V>
-Ref<CheckpointTracker::Cancellable> createValueCancellable (T &obj, V const &value)
+StRef<CheckpointTracker::Cancellable> createValueCancellable (T &obj, V const &value)
 {
     return grab (new Cancellable_Value<T, V> (obj, value));
 }
@@ -226,7 +228,7 @@ template <class T>
 class Cancellable_Ref : public CheckpointTracker::Cancellable
 {
 private:
-    Ref<T> &ref;
+    StRef<T> &ref;
 
 public:
     void cancel ()
@@ -244,7 +246,7 @@ public:
 	ref = NULL;
     }
 
-    Cancellable_Ref (Ref<T> &ref)
+    Cancellable_Ref (StRef<T> &ref)
 	: ref (ref)
     {
     }
@@ -267,7 +269,7 @@ public:
 	: list (list),
 	  el (list.last)
     {
-	abortIf (list.isEmpty ());
+	assert (!list.isEmpty ());
     }
 
     Cancellable_ListElement (List<T> &list,
@@ -275,15 +277,15 @@ public:
 	: list (list),
 	  el (el)
     {
-	abortIf (el == NULL);
+	assert (el);
     }
 };
 
 template <class T>
-Ref<CheckpointTracker::Cancellable> createLastElementCancellable (List<T> &list)
+StRef<CheckpointTracker::Cancellable> createLastElementCancellable (List<T> &list)
 {
-    Ref< Cancellable_ListElement<T> > cancellable =
-	    grab (new Cancellable_ListElement<T> (list, list.last));
+    StRef< Cancellable_ListElement<T> > cancellable =
+	    st_grab (new  (std::nothrow) Cancellable_ListElement<T> (list, list.last));
     return cancellable;
 }
 
@@ -310,5 +312,6 @@ public:
 
 }
 
-#endif /* __SCRUFFY__CHECKPOINT_TRACKER_H__ */
+
+#endif /* SCRUFFY__CHECKPOINT_TRACKER__H__ */
 

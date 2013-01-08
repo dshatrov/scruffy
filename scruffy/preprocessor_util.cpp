@@ -17,32 +17,27 @@
 */
 
 
+#include <libmary/libmary.h>
 #include <cstring>
-
-#include <string>
-//#include <boost/unordered/unordered_set.hpp>
 
 #include <libmary/hash.h>
 
-#include <mycpp/mycpp.h>
-#include <mycpp/io.h>
-#include <mycpp/direct_array_file.h>
-
-#include <mylang/util.h>
-#include <mylang/file_byte_stream.h>
-#include <mylang/utf8_unichar_stream.h>
+#include <scruffy/file_byte_stream.h>
+#include <scruffy/utf8_unichar_stream.h>
 
 #include <scruffy/preprocessor_util.h>
 #include <scruffy/util.h>
+
 
 #define DEBUG(a) ;
 // Internal
 #define DEBUG_INT(a) ;
 
-using namespace std;
 
-using namespace MyCpp;
-using namespace MyLang;
+//using namespace std;
+
+using namespace M;
+using namespace Pargen;
 
 namespace Scruffy {
 
@@ -52,35 +47,41 @@ using namespace Scruffy_PreprocessorUtil_priv;
 static inline bool
 is_newline (Unichar const uc)
 {
-    return unicode_isNewline (uc) != FuzzyResult::No;
+//    return unicode_isNewline (uc) != FuzzyResult::No;
+    return uc == '\n' || uc == '\r';
 }
 
-Ref<String>
+StRef<String>
 extractString (UnicharStream *unichar_stream,
 	       unsigned long  len)
     throw (InternalException,
 	   ParsingException)
 {
-    Ref<String> ret_str;
-
     /* TODO Come up with something like a smart pointer. */
-    Unichar *uchars = new Unichar [len]; // no grab() needed
+    Unichar *uchars = new (std::nothrow) Unichar [len]; // no grab() needed
+    assert (uchars);
     unsigned long i;
     for (i = 0; i < len; i++) {
 	UnicharStream::UnicharResult ures;
 	ures = unichar_stream->getNextUnichar (&uchars [i]);
 	if (ures != UnicharStream::UnicharNormal) {
 	    delete[] uchars;
-	    throw InternalException ();
+	    throw InternalException (InternalException::BadInput);
 	}
     }
 
+#if 0
     ret_str = ucs4_to_utf8 (uchars, len);
     if (ret_str.isNull ()) {
 	delete[] uchars;
 	throw InternalException ();
     }
 
+    delete[] uchars;
+    return ret_str;
+#endif
+
+    StRef<String> const ret_str = st_grab (new (std::nothrow) String (ConstMemory (uchars, len)));
     delete[] uchars;
     return ret_str;
 }
@@ -97,34 +98,34 @@ bool isHexQuad (const char *str)
 #endif
 
 const unsigned long num_digits = 10;
-const char* digits [num_digits] = {
-    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
+const char digits [num_digits] = {
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
 };
 
 const unsigned long num_octal_digits = 8;
-const char* octal_digits [num_octal_digits] = {
-    "0", "1", "2", "3", "4", "5", "6", "7"
+const char octal_digits [num_octal_digits] = {
+    '0', '1', '2', '3', '4', '5', '6', '7'
 };
 
 const unsigned long num_hex_digits = 22;
-const char *hex_digits [num_hex_digits] = {
-    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-    "a", "b", "c", "d", "e", "f",
-    "A", "B", "C", "D", "E", "F"
+const char hex_digits [num_hex_digits] = {
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    'a', 'b', 'c', 'd', 'e', 'f',
+    'A', 'B', 'C', 'D', 'E', 'F'
 };
 
 const unsigned long num_nondigits = 53;
-const char* nondigits [num_nondigits] = {
-    "_", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
-	 "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
-	 "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-	 "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
+const char nondigits [num_nondigits] = {
+    '_', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+	 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+	 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+	 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
 };
 
 const unsigned long num_whitespace = 4;
-const char* whitespace [num_whitespace] = {
+const char whitespace [num_whitespace] = {
     /* TODO Take a look at the standard. */
-    " ", "\t", "\n", "\r"
+    ' ', '\t', '\n', '\r'
 };
 
 Size
@@ -133,7 +134,7 @@ matchSingleChar (UnicharStream *unichar_stream,
     throw (ParsingException,
 	   InternalException)
 {
-    abortIf (unichar_stream == NULL);
+    assert (unichar_stream);
 
     Unichar uc;
     UnicharStream::UnicharResult res;
@@ -167,7 +168,7 @@ matchSign (UnicharStream *unichar_stream)
     throw (ParsingException,
 	   InternalException)
 {
-    abortIf (unichar_stream == NULL);
+    assert (unichar_stream);
 
     Unichar uc;
     UnicharStream::UnicharResult res;
@@ -266,8 +267,7 @@ matchDigit (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
     Unichar uc;
     UnicharStream::UnicharResult ures;
@@ -277,12 +277,16 @@ matchDigit (UnicharStream *unichar_stream)
 
     unsigned long i;
     for (i = 0; i < num_digits; i++) {
+#if 0
 	if (!utf8_validate_sz (digits [i], NULL))
 	    throw InternalException ();
 
 	Unichar digit = utf8_valid_to_unichar (digits [i]);
 	if (uc == digit)
 	    return 1;
+#endif
+        if (uc == digits [i])
+            return 1;
     }
 
     return 0;
@@ -296,8 +300,7 @@ matchOctalDigit (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
     Unichar uc;
     UnicharStream::UnicharResult ures;
@@ -307,12 +310,16 @@ matchOctalDigit (UnicharStream *unichar_stream)
 
     unsigned long i;
     for (i = 0; i < num_octal_digits; i++) {
+#if 0
 	if (!utf8_validate_sz (octal_digits [i], NULL))
 	    throw InternalException ();
 
 	Unichar octal_digit = utf8_valid_to_unichar (octal_digits [i]);
 	if (uc == octal_digit)
 	    return 1;
+#endif
+        if (uc == octal_digits [i])
+            return 1;
     }
 
     return 0;
@@ -328,8 +335,7 @@ matchHexadecimalDigit (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
     Unichar uc;
     UnicharStream::UnicharResult ures;
@@ -339,12 +345,16 @@ matchHexadecimalDigit (UnicharStream *unichar_stream)
 
     unsigned long i;
     for (i = 0; i < num_hex_digits; i++) {
+#if 0
 	if (!utf8_validate_sz (hex_digits [i], NULL))
 	    throw InternalException ();
 
 	Unichar hex_digit = utf8_valid_to_unichar (hex_digits [i]);
 	if (uc == hex_digit)
 	    return 1;
+#endif
+        if (uc == hex_digits [i])
+            return 1;
     }
 
     return 0;
@@ -362,8 +372,7 @@ matchNondigit (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
     Unichar uc;
     UnicharStream::UnicharResult ures;
@@ -373,12 +382,16 @@ matchNondigit (UnicharStream *unichar_stream)
 
     unsigned long i;
     for (i = 0; i < num_nondigits; i++) {
+#if 0
 	if (!utf8_validate_sz (nondigits [i], NULL))
 	    throw InternalException ();
 
 	Unichar nondigit = utf8_valid_to_unichar (nondigits [i]);
 	if (uc == nondigit)
 	    return 1;
+#endif
+        if (uc == nondigits [i])
+            return 1;
     }
 
     return 0;
@@ -445,17 +458,17 @@ matchWhitespace (UnicharStream *unichar_stream,
 	   ParsingException)
 {
     DEBUG (
-	errf->print ("Scruffy.Preprocessor.matchWhitespace").pendl ();
+      errs->println (_func_);
     )
 
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
     unsigned long total_len = 0;
 
     if (contains_newline != NULL)
 	*contains_newline = false;
 
+#if 0
     const char *backslash = "\\",
 	       *fwslash = "/",
 	       *star = "*";
@@ -466,11 +479,18 @@ matchWhitespace (UnicharStream *unichar_stream,
     {
 	throw InternalException ();
     }
+#endif
 
+#if 0
     // TODO Just use the codepoint values.
     Unichar backslash_uc = utf8_valid_to_unichar (backslash),
 	    fwslash_uc   = utf8_valid_to_unichar (fwslash),
 	    star_uc      = utf8_valid_to_unichar (star);
+#endif
+
+    Unichar backslash_uc = '\\',
+	    fwslash_uc   = '/',
+	    star_uc      = '*';
 
     Unichar uc;
     UnicharStream::UnicharResult ures;
@@ -481,22 +501,23 @@ matchWhitespace (UnicharStream *unichar_stream,
 	    return total_len;
 
 	DEBUG (
-	    errf->print ("Scruffy.Preprocessor.matchWhitespace: "
-			 "unichar: 0x").printHex ((Uint32) uc).pendl ();
+          errs->println (_func, "unichar: 0x", fmt_hex, (Uint32) uc);
 	)
 
 	bool is_whitespace = false;
 	unsigned long i;
 	for (i = 0; i < num_whitespace; i++) {
+#if 0
 	    if (!utf8_validate_sz (whitespace [i], NULL))
 		throw InternalException ();
 
 	    // TODO Just use the codepoint values.
 	    Unichar whsp_uc = utf8_valid_to_unichar (whitespace [i]);
 	    if (uc == whsp_uc) {
+#endif
+            if (uc == whitespace [i]) {
 		DEBUG (
-		    errf->print ("Scruffy.Preprocessor.matchWhitespace: "
-				 "whitespace").pendl ();
+                  errs->println (_func, "whitespace");
 		)
 
 		total_len ++;
@@ -510,8 +531,7 @@ matchWhitespace (UnicharStream *unichar_stream,
 
 	    if (is_newline (uc)) {
 		DEBUG (
-		    errf->print ("Scruffy.Preprocessor.matchWhitespace: "
-				 "newline").pendl ();
+                  errs->println (_func, "newline");
 		)
 
 		if (contains_newline != NULL)
@@ -523,8 +543,7 @@ matchWhitespace (UnicharStream *unichar_stream,
 
 	if (uc == backslash_uc) {
 	    DEBUG (
-		errf->print ("Scruffy.Preprocessor.matchWhitespace: "
-			     "backslash").pendl ();
+              errs->println (_func, "backslash");
 	    )
 
 	    ures = unichar_stream->getNextUnichar (&uc);
@@ -532,14 +551,12 @@ matchWhitespace (UnicharStream *unichar_stream,
 		return total_len;
 
 	    DEBUG (
-		errf->print ("Scruffy.Preprocessor.matchWhitespace: "
-			     "next unichar: 0x").printHex ((Uint32) uc).pendl ();
+              errs->println (_func, "next unichar: 0x", fmt_hex, (Uint32) uc);
 	    )
 
 	    if (is_newline (uc)) {
 		DEBUG (
-		    errf->print ("Scruffy.Preprocessor.matchWhitespace: "
-				 "backslash + newline").pendl ();
+                  errs->println (_func, "backslash + newline");
 		)
 
 		total_len += 2;
@@ -548,8 +565,7 @@ matchWhitespace (UnicharStream *unichar_stream,
 	} else
 	if (uc == fwslash_uc) {
 	    DEBUG (
-		errf->print ("Scruffy.Preprocessor.matchWhitespace: "
-			     "fwslash").pendl ();
+              errs->println (_func, "fwslash");
 	    )
 
 	    ures = unichar_stream->getNextUnichar (&uc);
@@ -557,14 +573,12 @@ matchWhitespace (UnicharStream *unichar_stream,
 		return total_len;
 
 	    DEBUG (
-		errf->print ("Scruffy.Preprocessor.matchWhitespace: "
-			     "next unichar: 0x").printHex ((Uint32) uc).pendl ();
+              errs->println (_func, "next unichar: 0x", fmt_hex, (Uint32) uc);
 	    )
 
 	    if (uc == star_uc) {
 		DEBUG (
-		    errf->print ("Scruffy.Preprocessor.matchWhitespace: "
-				 "fwslash + star").pendl ();
+                  errs->println (_func, "fwslash + star");
 		)
 
 		total_len += 2;
@@ -575,7 +589,7 @@ matchWhitespace (UnicharStream *unichar_stream,
 		    ures = unichar_stream->getNextUnichar (&uc);
 		    if (ures != UnicharStream::UnicharNormal) {
 			throw ParsingException (unichar_stream->getFpos (),
-						String::forData ("unterminated multiline comment"));
+						st_grab (new (std::nothrow) String ("unterminated multiline comment")));
 		    }
 		    total_len ++;
 
@@ -590,7 +604,7 @@ matchWhitespace (UnicharStream *unichar_stream,
 			ures = unichar_stream->getNextUnichar (&uc);
 			if (ures != UnicharStream::UnicharNormal) {
 			    throw ParsingException (unichar_stream->getFpos (),
-						    String::forData ("unterminated multiline comment"));
+						    st_grab (new (std::nothrow) String ("unterminated multiline comment")));
 			}
 			total_len ++;
 
@@ -608,8 +622,7 @@ matchWhitespace (UnicharStream *unichar_stream,
 	    } else
 	    if (uc == fwslash_uc) {
 		DEBUG (
-		    errf->print ("Scruffy.Preprocessor.matchWhitespace: "
-				 "fwslash + fwslash").pendl ();
+                  errs->println (_func, "fwslash + fwslash");
 		)
 
 		total_len += 2;
@@ -619,16 +632,13 @@ matchWhitespace (UnicharStream *unichar_stream,
 
 		    ures = unichar_stream->getNextUnichar (&uc);
 		    if (ures == UnicharStream::UnicharEof) {
-			errf->print ("Scruffy.matchWhitespace: "
-				     "warning: single-line comment does not "
-				     "end with a newline")
-			     .pendl ();
-
+			errs->println ("Scruffy.matchWhitespace: "
+                                       "warning: single-line comment does not "
+                                       "end with a newline");
 			return total_len;
 		    }
 
-		    if (ures != UnicharStream::UnicharNormal)
-			abortIfReached ();
+		    assert (ures == UnicharStream::UnicharNormal);
 
 		    total_len ++;
 
@@ -646,7 +656,7 @@ matchWhitespace (UnicharStream *unichar_stream,
     }
 
     /* Unreachable */
-    abortIfReached ();
+    unreachable ();
     return 0;
 }
 
@@ -662,8 +672,7 @@ matchIdentifier (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
     unsigned long total_len = 0;
 
@@ -677,7 +686,7 @@ matchIdentifier (UnicharStream *unichar_stream)
     total_len += nondigit_len;
 
     for (;;) {
-	Ref<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
+	StRef<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
 
 	nondigit_len = matchNondigit (unichar_stream);
 
@@ -718,7 +727,7 @@ matchPpNumber (UnicharStream *unichar_stream)
     throw (ParsingException,
 	   InternalException)
 {
-    abortIf (unichar_stream == NULL);
+    assert (unichar_stream);
 
     Size total_len = 0;
 
@@ -777,7 +786,7 @@ matchPpNumber (UnicharStream *unichar_stream)
 #if 0
   // DEBUG
     if (total_len > 0)
-	errf->print ("NUMBER: len: ").print (total_len).pendl ();
+	errs->println ("NUMBER: len: ", total_len);
   // (DEBUG)
 #endif
 
@@ -785,8 +794,8 @@ matchPpNumber (UnicharStream *unichar_stream)
 }
 
 const unsigned long num_ses_chars = 11;
-const char* ses_chars [num_ses_chars] = {
-    "'", "\"", "?", "\\", "a", "b", "f", "n", "r", "t", "v"
+const char ses_chars [num_ses_chars] = {
+    '\'', '\"', '?', '\\', 'a', 'b', 'f', 'n', 'r', 't', 'v'
 };
 
 /* simple-escape-sequence: one of
@@ -798,15 +807,17 @@ matchSimpleEscapeSequence (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
+#if 0
     const char *backslash = "\\";
 
     if (!utf8_validate_sz (backslash, NULL))
 	throw InternalException ();
+#endif
 
-    const Unichar backslash_uc = utf8_valid_to_unichar (backslash);
+//    const Unichar backslash_uc = utf8_valid_to_unichar (backslash);
+    const Unichar backslash_uc = '\\';
 
     Unichar uc;
     UnicharStream::UnicharResult ures;
@@ -819,12 +830,16 @@ matchSimpleEscapeSequence (UnicharStream *unichar_stream)
 
     unsigned long i;
     for (i = 0; i < num_ses_chars; i++) {
+#if 0
 	if (!utf8_validate_sz (ses_chars [i], NULL))
 	    throw InternalException ();
 
 	Unichar ses_char = utf8_valid_to_unichar (ses_chars [i]);
 	if (uc == ses_char)
 	    return 2;
+#endif
+        if (uc == ses_chars [i])
+            return 2;
     }
 
     return 0;
@@ -840,15 +855,17 @@ matchOctalEscapeSequence (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
+#if 0
     const char *backslash = "\\";
 
     if (!utf8_validate_sz (backslash, NULL))
 	throw InternalException ();
 
     const Unichar backslash_uc = utf8_valid_to_unichar (backslash);
+#endif
+    const Unichar backslash_uc = '\\';
 
     unsigned long total_len = 0;
 
@@ -865,7 +882,7 @@ matchOctalEscapeSequence (UnicharStream *unichar_stream)
 
     unsigned long i;
     for (i = 0; i < 3; i++) {
-	Ref<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
+	StRef<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
 
 	unsigned long octal_digit_len = matchOctalDigit (unichar_stream);
 	if (octal_digit_len == 0)
@@ -891,9 +908,9 @@ matchHexadecimalEscapeSequence (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
+#if 0
     const char *backslash = "\\",
 	       *x_small = "x";
 
@@ -905,6 +922,9 @@ matchHexadecimalEscapeSequence (UnicharStream *unichar_stream)
 
     const Unichar backslash_uc = utf8_valid_to_unichar (backslash),
 		  x_small_uc = utf8_valid_to_unichar (x_small);
+#endif
+    const Unichar backslash_uc = '\\',
+		  x_small_uc = 'x';
 
     unsigned long total_len = 0;
 
@@ -930,7 +950,7 @@ matchHexadecimalEscapeSequence (UnicharStream *unichar_stream)
 
     unsigned long i;
     for (i = 0; i < 3; i++) {
-	Ref<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
+	StRef<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
 
 	unsigned long hex_digit_len = matchHexadecimalDigit (unichar_stream);
 	if (hex_digit_len == 0)
@@ -957,7 +977,7 @@ matchEscapeSequence (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    Ref<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
+    StRef<UnicharStream::PositionMarker> const pmark = unichar_stream->getPosition ();
 
     unsigned long simple_es_len = matchSimpleEscapeSequence (unichar_stream);
 
@@ -1001,10 +1021,9 @@ matchCChar (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
-    Ref<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
+    StRef<UnicharStream::PositionMarker> const pmark = unichar_stream->getPosition ();
 
     Unichar uc;
     UnicharStream::UnicharResult ures;
@@ -1012,6 +1031,7 @@ matchCChar (UnicharStream *unichar_stream)
     if (ures != UnicharStream::UnicharNormal)
 	return 0;
 
+#if 0
     const char *single_quote = "'",
 	       *backslash = "\\",
 	       *newline = "\n";
@@ -1026,6 +1046,11 @@ matchCChar (UnicharStream *unichar_stream)
     Unichar single_quote_uc = utf8_valid_to_unichar (single_quote),
 	    backslash_uc    = utf8_valid_to_unichar (backslash),
 	    newline_uc      = utf8_valid_to_unichar (newline);
+#endif
+
+    Unichar single_quote_uc = '\'',
+	    backslash_uc    = '\\',
+	    newline_uc      = '\n';
 
     if (uc == single_quote_uc ||
 	uc == backslash_uc    ||
@@ -1058,12 +1083,11 @@ matchCCharSequence (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
     unsigned long total_len = 0;
 
-    Ref<UnicharStream::PositionMarker> pmark;
+    StRef<UnicharStream::PositionMarker> pmark;
     for (;;) {
 	pmark = unichar_stream->getPosition ();
 
@@ -1089,9 +1113,9 @@ matchCharacterLiteral (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
+#if 0
     const char *single_quote = "'",
 	       *l_large = "L";
 
@@ -1103,6 +1127,9 @@ matchCharacterLiteral (UnicharStream *unichar_stream)
 
     const Unichar single_quote_uc = utf8_valid_to_unichar (single_quote),
 		  l_large_uc = utf8_valid_to_unichar (l_large);
+#endif
+    const Unichar single_quote_uc = '\'',
+		  l_large_uc = 'L';
 
     unsigned long total_len = 0;
 
@@ -1127,7 +1154,7 @@ matchCharacterLiteral (UnicharStream *unichar_stream)
     } else
 	return 0;
 
-    Ref<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
+    StRef<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
     unsigned long cchar_seq_len = matchCCharSequence (unichar_stream);
     if (cchar_seq_len == 0)
 	return 0;
@@ -1159,10 +1186,9 @@ matchSChar (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
-    Ref<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
+    StRef<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
 
     Unichar uc;
     UnicharStream::UnicharResult ures;
@@ -1170,6 +1196,7 @@ matchSChar (UnicharStream *unichar_stream)
     if (ures != UnicharStream::UnicharNormal)
 	return 0;
 
+#if 0
     const char *double_quote = "\"",
 	       *backslash = "\\",
 	       *newline = "\n";
@@ -1184,6 +1211,10 @@ matchSChar (UnicharStream *unichar_stream)
     Unichar double_quote_uc = utf8_valid_to_unichar (double_quote),
 	    backslash_uc    = utf8_valid_to_unichar (backslash),
 	    newline_uc      = utf8_valid_to_unichar (newline);
+#endif
+    Unichar double_quote_uc = '"',
+	    backslash_uc    = '\\',
+	    newline_uc      = '\n';
 
     if (uc == double_quote_uc ||
 	uc == backslash_uc    ||
@@ -1216,12 +1247,11 @@ matchSCharSequence (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
     unsigned long total_len = 0;
 
-    Ref<UnicharStream::PositionMarker> pmark;
+    StRef<UnicharStream::PositionMarker> pmark;
     for (;;) {
 	pmark = unichar_stream->getPosition ();
 
@@ -1247,9 +1277,9 @@ matchStringLiteral (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
+#if 0
     const char *double_quote = "\"",
 	       *l_large = "L";
 
@@ -1261,6 +1291,9 @@ matchStringLiteral (UnicharStream *unichar_stream)
 
     const Unichar double_quote_uc = utf8_valid_to_unichar (double_quote),
 		  l_large_uc = utf8_valid_to_unichar (l_large);
+#endif
+    const Unichar double_quote_uc = '"',
+		  l_large_uc = 'L';
 
     unsigned long total_len = 0;
 
@@ -1285,7 +1318,7 @@ matchStringLiteral (UnicharStream *unichar_stream)
     } else
 	return 0;
 
-    Ref<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
+    StRef<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
     unsigned long schar_seq_len = matchSCharSequence (unichar_stream);
     unichar_stream->setPosition (pmark);
     unichar_stream->skip (schar_seq_len);
@@ -1353,18 +1386,18 @@ namespace Scruffy_PreprocessorUtil_priv {
     class KeywordEntry : public M::HashEntry<>
     {
     public:
-	Ref<String> keyword;
+	StRef<String> keyword;
     };
 
     typedef M::Hash< KeywordEntry,
-		     MemoryDesc,
+		     Memory,
 		     MemberExtractor< KeywordEntry,
-				      Ref<String>,
+				      StRef<String>,
 				      &KeywordEntry::keyword,
-				      MemoryDesc,
+				      Memory,
 				      AccessorExtractor< String,
-							 MemoryDesc,
-							 &String::getMemoryDesc > >,
+							 Memory,
+							 &String::mem > >,
 		     MemoryComparator<> >
 	    KeywordHash;
 
@@ -1381,14 +1414,15 @@ namespace Scruffy_PreprocessorUtil_priv {
 //		keywords_set.insert (keywords [i]);
 		// TODO Global cleanup (keyword_hash entries are never deleted
 		//      currently).
-		KeywordEntry * const keyword_entry = new KeywordEntry;
-		keyword_entry->keyword = grab (new String (keywords [i]));
+		KeywordEntry * const keyword_entry = new (std::nothrow) KeywordEntry;
+                assert (keyword_entry);
+		keyword_entry->keyword = st_grab (new (std::nothrow) String (keywords [i]));
 		keyword_hash.add (keyword_entry);
 	    }
 	}
     }
 
-    static bool is_keyword (ConstMemoryDesc const &mem)
+    static bool is_keyword (ConstMemory const mem)
     {
 //	errf->print ("--- is_keyword: ").print (mem).pendl ();
 
@@ -1465,8 +1499,7 @@ matchPreprocessingOpOrPunc (UnicharStream *unichar_stream)
     throw (InternalException,
 	   ParsingException)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
     const char *best_fit = NULL;
     unsigned long best_fit_len = 0;
@@ -1494,9 +1527,10 @@ matchPreprocessingOpOrPunc (UnicharStream *unichar_stream)
 	    const char *candidate = matched [i];
 
 	    if (*candidate &&
-		utf8_valid_to_unichar (candidate) == uc)
+		/* utf8_valid_to_unichar (candidate) == uc */
+                *candidate == uc)
 	    {
-		matched_arr [new_nmatched] = utf8_valid_next (candidate);
+		matched_arr [new_nmatched] = /* utf8_valid_next (candidate) */ candidate + 1;
 		if (!*matched_arr [new_nmatched]) {
 		    best_fit = candidate;
 		    best_fit_len = len;
@@ -1515,23 +1549,15 @@ matchPreprocessingOpOrPunc (UnicharStream *unichar_stream)
 
     if (best_fit == NULL) {
       DEBUG_INT (
-	errf->print ("Scruffy.matchPreprocessingOpOrPunc: "
-		     "returning 0")
-	     .pendl ();
-      );
+        errs->println (_func, "returning 0");
+      )
 
 	return 0;
     }
 
   DEBUG_INT (
-    errf->print ("Scruffy.matchPreprocessingOpOrPunc: "
-		 "returning ")
-	 .print (countStrLength (best_fit))
-	 .print (" (best fit: ")
-	 .print (best_fit)
-	 .print (")")
-	 .pendl ();
-  );
+    errs->println ("returning ", strlen (best_fit), " (best fit: ", best_fit, ")");
+  )
 
     return best_fit_len;
 }
@@ -1562,16 +1588,16 @@ matchPreprocessingOpOrPunc (UnicharStream *unichar_stream)
 Size
 matchHeaderName (UnicharStream *unichar_stream,
 		 PpToken_HeaderName::HeaderNameType *ret_hn_type,
-		 Ref<String> *ret_header_name)
+		 StRef<String> *ret_header_name)
     throw (InternalException,
 	   ParsingException)
 {
-    if (ret_hn_type != NULL) {
+    if (ret_hn_type) {
 	// Setting to any valid value
 	*ret_hn_type = PpToken_HeaderName::HeaderNameType_Q;
     }
 
-    if (ret_header_name != NULL)
+    if (ret_header_name)
 	*ret_header_name = NULL;
 
     Size total_len = 0;
@@ -1583,7 +1609,7 @@ matchHeaderName (UnicharStream *unichar_stream,
 
     total_len ++;
 
-    Ref<String> res_str;
+    StRef<String> res_str;
     Unichar term_char;
     PpToken_HeaderName::HeaderNameType header_name_type;
     if (uc == 0x3c /* '<' */) {
@@ -1617,18 +1643,20 @@ matchHeaderName (UnicharStream *unichar_stream,
 	num_chars ++;
 
 	Byte str_utf8 [6];
-	Size str_utf8_len = unichar_to_utf8 (uc, str_utf8);
+	Size str_utf8_len;// = unichar_to_utf8 (uc, str_utf8);
+        str_utf8 [0] = uc;
+        str_utf8_len = 1;
 
-	if (res_str == NULL)
-	    res_str = grab (new String (ConstMemoryDesc (str_utf8, str_utf8_len)));
+	if (res_str)
+	    res_str = st_grab (new (std::nothrow) String (ConstMemory (str_utf8, str_utf8_len)));
 	else
-	    res_str = String::forPrintTask (Pt (res_str) (ConstMemoryDesc (str_utf8, str_utf8_len)));
+	    res_str = st_makeString (res_str, ConstMemory (str_utf8, str_utf8_len));
     }
 
-    if (ret_header_name != NULL)
+    if (ret_header_name)
 	*ret_header_name = res_str;
 
-    if (ret_hn_type != NULL)
+    if (ret_hn_type)
 	*ret_hn_type = header_name_type;
 
     return total_len;
@@ -1648,13 +1676,12 @@ unsigned long
 matchPreprocessingToken (UnicharStream *unichar_stream,
 			 PpTokenType   *ret_pp_token_type)
 {
-    if (unichar_stream == NULL)
-	abortIfReached ();
+    assert (unichar_stream);
 
-    if (ret_pp_token_type != NULL)
+    if (ret_pp_token_type)
 	*ret_pp_token_type = PpTokenInvalid;
 
-    Ref<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
+    StRef<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
 
     unsigned long identifier_len = matchIdentifier (unichar_stream);
 
@@ -1689,11 +1716,9 @@ matchPreprocessingToken (UnicharStream *unichar_stream,
 	    ures = unichar_stream->getNextUnichar (&uc);
 	    if (ures == UnicharStream::UnicharNormal) {
 	      DEBUG_INT (
-		errf->print ("Scruffy.matchPreprocessingToken: "
-			     "single non-whitespace character: ")
-		     .print ((char) uc).print (", 0x").printHex ((unsigned long) uc)
-		     .pendl ();
-	      );
+		errs->println (_func, "single non-whitespace character: ",
+		               (char) uc, ", 0x", (unsigned long) uc);
+	      )
 
 		if (ret_pp_token_type != NULL)
 		    *ret_pp_token_type = PpTokenSingleChar;
@@ -1714,9 +1739,8 @@ matchPreprocessingToken (UnicharStream *unichar_stream,
      * should be matched before 'identifier'. */
     if (numberIsMaxOf (preprocessing_op_or_punc_len, number_set, nnumbers)) {
       DEBUG_INT (
-	errf->print ("Scruffy.matchPreprocessingToken: preprocessing-op-or-punc")
-	     .pendl ();
-      );
+	errs->println (_func, "preprocessing-op-or-punc");
+      )
 
 	pp_token_type = PpTokenPpOpOrPunc;
     } else
@@ -1724,33 +1748,29 @@ matchPreprocessingToken (UnicharStream *unichar_stream,
      * should be matched before 'identifier'. */
     if (numberIsMaxOf (identifier_len, number_set, nnumbers)) {
       DEBUG_INT (
-	errf->print ("Scruffy.matchPreprocessingToken: identifier")
-	     .pendl ();
+	errs->println (_func, "identifier");
       );
 
 	pp_token_type = PpTokenIdentifier;
     } else
     if (numberIsMaxOf (pp_number_len, number_set, nnumbers)) {
       DEBUG_INT (
-	errf->print ("Scruffy.matchPreprocessingToken: pp-number")
-	     .pendl ();
-      );
+	errs->println (_func, "pp-number");
+      )
 
 	pp_token_type = PpTokenPpNumber;
     } else
     if (numberIsMaxOf (character_literal_len, number_set, nnumbers)) {
       DEBUG_INT (
-	errf->print ("Scruffy.matchPreprocessingToken: character-literal")
-	     .pendl ();
-      );
+	errs->println (_func, "character-literal");
+      )
 
 	pp_token_type = PpTokenCharacterLiteral;
     } else
     if (numberIsMaxOf (string_literal_len, number_set, nnumbers)) {
       DEBUG_INT (
-	errf->print ("Scruffy.matchPreprocessingToken: string-literal")
-	     .pendl ();
-      );
+	errs->println (_func, "string-literal");
+      )
 
 	pp_token_type = PpTokenStringLiteral;
     }
@@ -1770,27 +1790,54 @@ matchDecimalLiteral (UnicharStream *unichar_stream)
     throw (ParsingException,
 	   InternalException)
 {
+    DEBUG (
+      errs->println (_func_);
+    )
+
     Size total_len = 0;
 
     bool first_digit = true;
     for (;;) {
+        DEBUG (
+          errs->println (_func, "iteration");
+        )
+
 	Unichar uc;
 	UnicharStream::UnicharResult res = unichar_stream->getNextUnichar (&uc);
-	if (res != UnicharStream::UnicharNormal)
+	if (res != UnicharStream::UnicharNormal) {
+            DEBUG (
+              errs->println (_func, "!res, total_len: ", total_len);
+            )
 	    return total_len;
+        }
+
+        DEBUG (
+          errs->println (_func, "uc: ", ConstMemory::forObject (uc));
+        )
 
 	if (first_digit) {
 	    first_digit = false;
-	    if (!isNonzeroDigit (uc))
+	    if (!isNonzeroDigit (uc)) {
+                DEBUG (
+                  errs->println (_func, "!isNonzeroDigit: ", ConstMemory::forObject (uc));
+                )
 		break;
+            }
 	} else {
-	    if (!isDigit (uc))
+	    if (!isDigit (uc)) {
+                DEBUG (
+                  errs->println (_func, "!isDigit: ", ConstMemory::forObject (uc));
+                )
 		break;
+            }
 	}
 
 	total_len ++;
     }
 
+    DEBUG (
+      errs->println (_func, "total_len: ", total_len);
+    )
     return total_len;
 }
 
@@ -1957,7 +2004,7 @@ matchIntegerLiteral (UnicharStream *unichar_stream)
 
     Size total_len = 0;
 
-    Ref<UnicharStream::PositionMarker> pos = unichar_stream->getPosition ();
+    StRef<UnicharStream::PositionMarker> pos = unichar_stream->getPosition ();
 
     Size decimal_literal_len = matchDecimalLiteral (unichar_stream);
 
@@ -1976,8 +2023,7 @@ matchIntegerLiteral (UnicharStream *unichar_stream)
 
     if (numbersAreZero (number_set, num_numbers)) {
 	DEBUG (
-	    errf->print ("Scruffy.Preprocessor.matchIntegerLiteral: "
-			 "numbers are zero").pendl ();
+          errs->println (_func, "numbers are zero");
 	)
 	return 0;
     }
@@ -1994,7 +2040,7 @@ matchIntegerLiteral (UnicharStream *unichar_stream)
 	// TODO Parse hexadecimal number
 	total_len += hexadecimal_literal_len;
     } else
-	abortIfReached ();
+        unreachable ();
 
     unichar_stream->setPosition (pos);
     unichar_stream->skip (total_len);
@@ -2040,7 +2086,7 @@ matchFractionalConstant (UnicharStream *unichar_stream)
 {
     Size total_len = 0;
 
-    Ref<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
+    StRef<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
 
     Size digit_sequence_len = matchDigitSequence (unichar_stream);
     // True is fractional-constant starts with a digit sequence.
@@ -2090,7 +2136,7 @@ matchExponentPart (UnicharStream *unichar_stream)
 
     total_len ++;
 
-    Ref<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
+    StRef<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
     res = unichar_stream->getNextUnichar (&uc);
     if (isSign (uc))
 	total_len ++;
@@ -2141,7 +2187,7 @@ matchFloatingLiteral (UnicharStream *unichar_stream)
 {
     Size total_len = 0;
 
-    Ref<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
+    StRef<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
 
     Size fractional_constant_len = matchFractionalConstant (unichar_stream);
     if (fractional_constant_len > 0) {
@@ -2189,28 +2235,27 @@ matchFloatingLiteral (UnicharStream *unichar_stream)
 }
 
 // TODO We call this a lot of times for the same pp-number-token. Cache the result.
-Ref<Token>
+StRef<Token>
 ppNumberToken_to_Token (PpToken *pp_number_token)
     throw (ParsingException)
 {
-    abortIf (pp_number_token == NULL ||
-	     pp_number_token->pp_token_type != PpTokenPpNumber);
+    assert (!(pp_number_token == NULL ||
+	      pp_number_token->pp_token_type != PpTokenPpNumber));
 
     DEBUG (
-	errf->print ("Scruffy.Preprocessor.ppNumberToken_to_Token: "
-		     "\"").print (pp_number_token->str).print ("\"").pendl ();
+      errs->println (_func, "\"", pp_number_token->str, "\"");
     )
 
-    Ref<Token> token;
+    StRef<Token> token;
 
     Size total_len = 0;
 
     try {
-	Ref<DirectArrayFile> file = grab (new DirectArrayFile (pp_number_token->str->getMemoryDesc ()));
-	Ref<FileByteStream> byte_stream = grab (new FileByteStream (file));
-	Ref<Utf8UnicharStream> unichar_stream = grab (new Utf8UnicharStream (byte_stream));
+        MemoryFile file (pp_number_token->str->mem());
+	StRef<FileByteStream> byte_stream = st_grab (new (std::nothrow) FileByteStream (&file));
+	StRef<Utf8UnicharStream> unichar_stream = st_grab (new (std::nothrow) Utf8UnicharStream (byte_stream));
 
-	Ref<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
+	StRef<UnicharStream::PositionMarker> pmark = unichar_stream->getPosition ();
 
 	Size integer_literal_len = matchIntegerLiteral (unichar_stream);
 	if (integer_literal_len > 0) {
@@ -2218,8 +2263,7 @@ ppNumberToken_to_Token (PpToken *pp_number_token)
 	    unichar_stream->skip (integer_literal_len);
 	    if (unichar_stream->getNextUnichar (NULL) != UnicharStream::UnicharEof) {
 		DEBUG (
-		    errf->print ("Scruffy.Preprocessor.ppNumberToken_to_Token: "
-				 "integer_literal_len (").print (integer_literal_len).print (") not at eof").pendl ();
+                  errs->println ("integer_literal_len (", integer_literal_len, ") not at eof");
 		)
 		integer_literal_len = 0;
 	    }
@@ -2232,8 +2276,7 @@ ppNumberToken_to_Token (PpToken *pp_number_token)
 	    unichar_stream->skip (floating_literal_len);
 	    if (unichar_stream->getNextUnichar (NULL) != UnicharStream::UnicharEof) {
 		DEBUG (
-		    errf->print ("Scruffy.Preprocessor.ppNumberToken_to_Token: "
-				 "floating_literal_len (").print (floating_literal_len).print (") not at eof").pendl ();
+                  errs->println (_func, "floating_literal_len (", floating_literal_len, ") not at eof");
 		)
 		floating_literal_len = 0;
 	    }
@@ -2247,25 +2290,26 @@ ppNumberToken_to_Token (PpToken *pp_number_token)
 
 	if (numbersAreZero (number_set, num_numbers)) {
 	    DEBUG (
-		errf->print ("Scruffy.Preprocessor.ppNumberToken_to_Token: numbers are zero").pendl ();
+              errs->println (_func, "numbers are zero");
 	    )
-	    throw ParsingException (pp_number_token->fpos);
+	    throw ParsingException (pp_number_token->fpos, NULL);
 	}
 
 	if (numberIsMaxOf (integer_literal_len, number_set, num_numbers)) {
 	    total_len += integer_literal_len;
-	    token = grab (new Literal (LiteralInteger, pp_number_token->str, pp_number_token->fpos));
+	    token = st_grab (new (std::nothrow) Literal (LiteralInteger, pp_number_token->str, pp_number_token->fpos));
 	} else
 	if (numberIsMaxOf (floating_literal_len, number_set, num_numbers)) {
 	    total_len += integer_literal_len;
-	    token = grab (new Literal (LiteralFloating, pp_number_token->str, pp_number_token->fpos));
+	    token = st_grab (new (std::nothrow) Literal (LiteralFloating, pp_number_token->str, pp_number_token->fpos));
 	} else
-	    abortIfReached ();
+            unreachable ();
     } catch (ParsingException &exc) {
-	exc.raise ();
+//	exc.raise ();
+        throw;
     } catch (InternalException &exc) {
-	printException (errf, exc);
-	abortIfReached ();
+//	printException (errf, exc);
+        unreachable ();
     }
 
     return token;
@@ -2474,8 +2518,8 @@ isFloatingSuffix (const char *str)
 #endif
 
 bool
-compareReplacementLists (List< Ref<PpItem> > *left,
-			 List< Ref<PpItem> > *right)
+compareReplacementLists (List< StRef<PpItem> > *left,
+			 List< StRef<PpItem> > *right)
 {
     if (left == NULL ||
 	left->first == NULL)
@@ -2495,13 +2539,13 @@ compareReplacementLists (List< Ref<PpItem> > *left,
 	}
     }
 
-    List< Ref<PpItem> >::Element *cur_left  = left->first,
-				     *cur_right = right->first;
+    List< StRef<PpItem> >::Element *cur_left  = left->first,
+                                   *cur_right = right->first;
     while (cur_left  != NULL &&
 	   cur_right != NULL)
     {
-	Ref<PpItem> &left_pp_item  = cur_left->data,
-		    &right_pp_item = cur_right->data;
+	StRef<PpItem> &left_pp_item  = cur_left->data,
+                      &right_pp_item = cur_right->data;
 
       /* DEBUG
 	if (left_pp_item->type == PpItemWhitespace)
@@ -2532,8 +2576,8 @@ compareReplacementLists (List< Ref<PpItem> > *left,
 	    PpToken *left_pp_token  = static_cast <PpToken*> (left_pp_item.ptr ()),
 		    *right_pp_token = static_cast <PpToken*> (right_pp_item.ptr ());
 
-	    if (!compareStrings (left_pp_token->str->getData (),
-				 right_pp_token->str->getData ()))
+	    if (!equal (left_pp_token->str->mem(),
+                        right_pp_token->str->mem()))
 	    {
 		break;
 	    }
@@ -2561,34 +2605,35 @@ compareReplacementLists (List< Ref<PpItem> > *left,
     return true;
 }
 
-Ref<String>
-ppItemsToString (List< Ref<PpItem> > *pp_items)
+StRef<String>
+ppItemsToString (List< StRef<PpItem> > *pp_items)
     throw (ParsingException,
 	   InternalException)
 {
-    abortIf (pp_items == NULL);
+    assert (pp_items);
 
-    Ref<String> str = grab (new String);
+    StRef<String> str = st_grab (new (std::nothrow) String);
 
-    List< Ref<PpItem> >::DataIterator pp_item_iter (*pp_items);
-    while (!pp_item_iter.done ()) {
-	Ref<PpItem> &pp_item = pp_item_iter.next ();
+    List< StRef<PpItem> >::DataIterator pp_item_iter (*pp_items);
+    while (!pp_item_iter.done()) {
+	StRef<PpItem> &pp_item = pp_item_iter.next ();
 
 	// TODO This is ineffective
-	str = String::forPrintTask (Pt (str) (pp_item->str));
+	str = st_makeString (str, pp_item->str);
     }
 
     return str;
 }
 
-Ref<String>
-spellPpItems (List< Ref<PpItem> > *pp_items)
+StRef<String>
+spellPpItems (List< StRef<PpItem> > *pp_items)
     throw (InternalException,
 	   ParsingException)
 {
-    if (pp_items == NULL)
-	return grab (new String ("\"\""));
+    if (!pp_items)
+	return st_grab (new (std::nothrow) String ("\"\""));
 
+#if 0
     const char *backslash    = "\\",
 	       *double_quote = "\"",
 	       *whitespace   = " ";
@@ -2606,12 +2651,20 @@ spellPpItems (List< Ref<PpItem> > *pp_items)
 
     const Unichar backslash_uc    = utf8_valid_to_unichar (backslash),
 		  double_quote_uc = utf8_valid_to_unichar (double_quote);
+#endif
+
+    unsigned long backslash_len    = 1,
+		  double_quote_len = 1,
+		  whitespace_len   = 1;
+
+    const Unichar backslash_uc    = '\\',
+		  double_quote_uc = '\"';
 
     unsigned long len = double_quote_len + double_quote_len;
 
-    List< Ref<PpItem> >::Element *cur = pp_items->first;
+    List< StRef<PpItem> >::Element *cur = pp_items->first;
     while (cur != NULL) {
-	Ref<PpItem> &pp_item = cur->data;
+	StRef<PpItem> &pp_item = cur->data;
 	if (pp_item->type == PpItemWhitespace) {
 	    if (cur->previous != NULL &&
 		cur->next != NULL)
@@ -2622,19 +2675,22 @@ spellPpItems (List< Ref<PpItem> > *pp_items)
 	if (pp_item->type == PpItemPpToken) {
 	    PpToken *pp_token = static_cast <PpToken*> (pp_item.ptr ());
 
-	    if (!utf8_validate_sz (pp_token->str->getData (), NULL))
+#if 0
+	    if (!utf8_validate_sz (pp_token->str->mem(), NULL))
 		throw InternalException ();
+#endif
 
-	    len += pp_token->str->getLength ();
+	    len += pp_token->str->len();
 
 	    if (pp_token->pp_token_type == PpTokenCharacterLiteral ||
 		pp_token->pp_token_type == PpTokenStringLiteral)
 	    {
 		unsigned long len_bonus = 0;
 
-		const char *uchar = pp_token->str->getData ();
+		const char *uchar = pp_token->str->cstr();
 		while (*uchar) {
-		    const Unichar uc = utf8_valid_to_unichar (uchar);
+//		    const Unichar uc = utf8_valid_to_unichar (uchar);
+		    const Unichar uc = *uchar;
 
 		    if (uc == backslash_uc)
 			len_bonus += backslash_len;
@@ -2642,29 +2698,32 @@ spellPpItems (List< Ref<PpItem> > *pp_items)
 		    if (uc == double_quote_uc)
 			len_bonus += double_quote_len;
 
-		    uchar = utf8_valid_next (uchar);
+//		    uchar = utf8_valid_next (uchar);
+                    ++uchar;
 		}
 
 		len += len_bonus;
 	    }
-	} else
-	    abortIfReached ();
+	} else {
+            unreachable ();
+        }
 
 	cur = cur->next;
     }
 
-    Ref<String> spelling = grab (new String ());
+    StRef<String> spelling = st_grab (new (std::nothrow) String ());
     spelling->allocate (len);
 
-    char *dst_str = spelling->getData ();
+    char *dst_str = (char*) spelling->mem().mem();
     unsigned long pos = 0;
 
-    copyMemory (MemoryDesc (dst_str + pos, double_quote_len), ConstMemoryDesc (double_quote, double_quote_len));
+//    memcpy (dst_str + pos, double_quote, double_quote_len);
+    dst_str [pos] = '"';
     pos += double_quote_len;
 
     cur = pp_items->first;
     while (cur != NULL) {
-	Ref<PpItem> &pp_item = cur->data;
+	StRef<PpItem> &pp_item = cur->data;
 	if (pp_item->type == PpItemWhitespace) {
 	    if (cur->previous != NULL &&
 		cur->next != NULL)
@@ -2674,7 +2733,8 @@ spellPpItems (List< Ref<PpItem> > *pp_items)
 		    dst_str [pos] = '\n';
 		    ++pos;
 		} else {
-		    copyMemory (MemoryDesc (dst_str + pos, whitespace_len), ConstMemoryDesc (whitespace, whitespace_len));
+//                    memcpy (dst_str + pos, whitespace, whitespace_len);
+                    dst_str [pos] = ' ';
 		    pos += whitespace_len;
 		}
 	    }
@@ -2685,47 +2745,50 @@ spellPpItems (List< Ref<PpItem> > *pp_items)
 	    if (pp_token->pp_token_type == PpTokenCharacterLiteral ||
 		pp_token->pp_token_type == PpTokenStringLiteral)
 	    {
-		const char *uchar = pp_token->str->getData ();
+		const char *uchar = pp_token->str->cstr();
 		while (*uchar) {
-		    unsigned long uchar_len = utf8_valid_char_len (uchar);
-		    const Unichar uc = utf8_valid_to_unichar (uchar);
+//		    unsigned long uchar_len = utf8_valid_char_len (uchar);
+//		    const Unichar uc = utf8_valid_to_unichar (uchar);
+                    unsigned long const uchar_len = 1;
+                    Unichar const uc = *uchar;
 
 		    if (uc == backslash_uc) {
-			copyMemory (MemoryDesc (dst_str + pos, backslash_len), ConstMemoryDesc (backslash, backslash_len));
+//			copyMemory (MemoryDesc (dst_str + pos, backslash_len), ConstMemoryDesc (backslash, backslash_len));
+                        dst_str [pos] = '\\';
 			pos += backslash_len;
 		    } else
 		    if (uc == double_quote_uc) {
-			copyMemory (MemoryDesc (dst_str + pos, backslash_len), ConstMemoryDesc (backslash, backslash_len));
+//			copyMemory (MemoryDesc (dst_str + pos, backslash_len), ConstMemoryDesc (backslash, backslash_len));
+                        dst_str [pos] = '\\';
 			pos += backslash_len;
 		    }
 
-		    copyMemory (MemoryDesc (dst_str + pos, uchar_len), ConstMemoryDesc (uchar, uchar_len));
+//                    memcpy (dst_str + pos, uchar, uchar_len);
+                    dst_str [pos] = *uchar;
 		    pos += uchar_len;
 
-		    uchar = utf8_valid_next (uchar);
+//		    uchar = utf8_valid_next (uchar);
+                    ++uchar;
 		}
 	    } else {
-		copyMemory (MemoryDesc (dst_str + pos, pp_token->str->getLength ()),
-			    ConstMemoryDesc (pp_token->str->getData (), pp_token->str->getLength ()));
-		pos += pp_token->str->getLength ();
+                memcpy (dst_str + pos, pp_token->str->mem().mem(), pp_token->str->len());
+		pos += pp_token->str->len();
 	    }
-	} else
-	    abortIfReached ();
+	} else {
+            unreachable ();
+        }
 
 	cur = cur->next;
     }
 
-    copyMemory (MemoryDesc (dst_str + pos, double_quote_len), ConstMemoryDesc (double_quote, double_quote_len));
+//    memcpy (dst_str + pos, double_quote, double_quote_len);
+    dst_str [pos] = '"';
     pos += double_quote_len;
 
     // FIXME ? remove this 'if' block altogether?
     if (pos != len) {
-	errf->print ("--- pos: ")
-	     .print (pos)
-	     .print (", len: ")
-	     .print (len)
-	     .pendl ();
-	abortIfReached ();
+	errs->println ("--- pos: ", pos, ", len: ", len);
+        unreachable ();
     }
 
     dst_str [len] = 0;
@@ -2733,14 +2796,14 @@ spellPpItems (List< Ref<PpItem> > *pp_items)
     return spelling;
 }
 
-Ref<String>
+StRef<String>
 unescapeStringLiteral (String * const mt_nonnull str)
 {
     Size from_pos = 0;
     Size to_pos = 0;
 
-    Size const from_len = str->getLength ();
-    Byte * const data = (Byte*) str->getData ();
+    Size const from_len = str->len();
+    Byte * const data = (Byte*) str->mem().mem();
 
     /* Substituting only simple escape sequences for now.
      *     \' \" \? \\
@@ -2827,75 +2890,74 @@ unescapeStringLiteral (String * const mt_nonnull str)
 }
 
 // TODO What about boolean literals?
-Ref<Token>
+StRef<Token>
 ppTokenToToken (PpToken *pp_token)
     throw (ParsingException)
 {
-    if (pp_token == NULL)
-	abortIfReached ();
+    assert (pp_token);
 
-    Ref<Token> token;
+    StRef<Token> token;
 
     if (pp_token->pp_token_type == PpTokenSingleChar) {
-	throw ParsingException (pp_token->fpos);
+	throw ParsingException (pp_token->fpos, NULL);
     } else
     if (pp_token->pp_token_type == PpTokenHeaderName) {
-	throw ParsingException (pp_token->fpos);
+	throw ParsingException (pp_token->fpos, NULL);
     } else
     if (pp_token->pp_token_type == PpTokenPpOpOrPunc) {
-	if (matchStrings (pp_token->str->getData (), operators, num_operators))
-	    token = grab (new Token (TokenOperator, pp_token->str, pp_token->fpos));
+	if (matchStrings (pp_token->str->cstr(), operators, num_operators))
+	    token = st_grab (new (std::nothrow) Token (TokenOperator, pp_token->str, pp_token->fpos));
 	else
-	    token = grab (new Token (TokenPunctuator, pp_token->str, pp_token->fpos));
+	    token = st_grab (new (std::nothrow)  Token (TokenPunctuator, pp_token->str, pp_token->fpos));
     } else
     if (pp_token->pp_token_type == PpTokenIdentifier) {
-	if (compareStrings (pp_token->str->getData (), "true") ||
-	    compareStrings (pp_token->str->getData (), "false"))
+	if (equal (pp_token->str->mem(), "true") ||
+	    equal (pp_token->str->mem(), "false"))
 	{
-	    token = grab (new Literal (LiteralBoolean, pp_token->str, pp_token->fpos));
+	    token = st_grab (new (std::nothrow) Literal (LiteralBoolean, pp_token->str, pp_token->fpos));
 	} else
-	if (is_keyword (pp_token->str->getMemoryDesc ()))
-	    token = grab (new Token (TokenKeyword, pp_token->str, pp_token->fpos));
+	if (is_keyword (pp_token->str->mem()))
+	    token = st_grab (new (std::nothrow) Token (TokenKeyword, pp_token->str, pp_token->fpos));
 	else
-	    token = grab (new Token (TokenIdentifier, pp_token->str, pp_token->fpos));
+	    token = st_grab (new (std::nothrow) Token (TokenIdentifier, pp_token->str, pp_token->fpos));
     } else
     if (pp_token->pp_token_type == PpTokenPpNumber) {
 	token = ppNumberToken_to_Token (pp_token);
     } else
     if (pp_token->pp_token_type == PpTokenCharacterLiteral) {
-	token = grab (new Literal (LiteralCharacter, pp_token->str, pp_token->fpos));
+	token = st_grab (new (std::nothrow) Literal (LiteralCharacter, pp_token->str, pp_token->fpos));
     } else
     if (pp_token->pp_token_type == PpTokenStringLiteral) {
-	token = grab (new Literal (LiteralString, pp_token->str, pp_token->fpos));
+	token = st_grab (new (std::nothrow) Literal (LiteralString, pp_token->str, pp_token->fpos));
     } else
     if (pp_token->pp_token_type == PpTokenInvalid) {
-	throw ParsingException (pp_token->fpos);
+	throw ParsingException (pp_token->fpos, NULL);
     } else {
 	/* Unreachable */
-	abortIfReached ();
+        unreachable ();
     }
 
     return token;
 }
 
 void
-ppTokensToTokens (List< Ref<PpToken> > * const pp_tokens  /* non-null */,
-		  List< Ref<Token> >   * const ret_tokens /* non-null */)
+ppTokensToTokens (List< StRef<PpToken> > * const pp_tokens  /* non-null */,
+		  List< StRef<Token> >   * const ret_tokens /* non-null */)
 {
-    List< Ref<PpToken> >::DataIterator iter (*pp_tokens);
-    while (!iter.done ()) {
-	Ref<PpToken> &pp_token = iter.next ();
+    List< StRef<PpToken> >::DataIterator iter (*pp_tokens);
+    while (!iter.done()) {
+	StRef<PpToken> &pp_token = iter.next ();
 	ret_tokens->append (ppTokenToToken (pp_token));
     }
 }
 
 void
-ppItemsToTokens (List< Ref<PpItem> > * const pp_items   /* non-null */,
-		 List< Ref<Token> >  * const ret_tokens /* non-null */)
+ppItemsToTokens (List< StRef<PpItem> > * const pp_items   /* non-null */,
+		 List< StRef<Token> >  * const ret_tokens /* non-null */)
 {
-    List< Ref<PpItem> >::DataIterator iter (*pp_items);
-    while (!iter.done ()) {
-	Ref<PpItem> &pp_item = iter.next ();
+    List< StRef<PpItem> >::DataIterator iter (*pp_items);
+    while (!iter.done()) {
+	StRef<PpItem> &pp_item = iter.next ();
 	if (pp_item->type == PpItemPpToken)
 	    ret_tokens->append (ppTokenToToken (static_cast <PpToken*> (pp_item.ptr ())));
     }

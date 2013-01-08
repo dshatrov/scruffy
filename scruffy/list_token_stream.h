@@ -17,28 +17,37 @@
 */
 
 
-#include <mycpp/mycpp.h>
+#ifndef SCRUFFY__LIST_TOKEN_STREAM__H__
+#define SCRUFFY__LIST_TOKEN_STREAM__H__
 
-#include <mylang/token_stream.h>
+
+#include <libmary/libmary.h>
+
+#include <pargen/token_stream.h>
+
 
 namespace Scruffy {
 
-class ListTokenStream : public MyLang::TokenStream,
-			public virtual SimplyReferenced
+using namespace M;
+
+class ListTokenStream : public Pargen::TokenStream,
+                        public StReferenced
 {
 private:
-    List< Ref<Token> > * const token_list;
-    List< Ref<Token> >::Element *cur_el;
+    List< StRef<Token> > * const token_list;
+    List< StRef<Token> >::Element *cur_el;
 
 public:
-    ConstMemoryDesc getNextToken ()
+  mt_iface (Pargen::TokenStream)
+
+    mt_throws Result getNextToken (ConstMemory * const ret_token)
     {
-	return getNextToken (NULL, NULL);
+	return getNextToken (ret_token, NULL, NULL);
     }
 
-    ConstMemoryDesc getNextToken (Ref<SimplyReferenced> * const ret_user_obj,
-				  void ** const ret_user_ptr)
-			   throw (InternalException)
+    Result getNextToken (ConstMemory          * const ret_token,
+                         StRef<StReferenced>  * const ret_user_obj,
+                         void                ** const ret_user_ptr)
     {
 	if (cur_el == NULL) {
 	    if (ret_user_obj != NULL)
@@ -47,7 +56,9 @@ public:
 	    if (ret_user_ptr != NULL)
 		*ret_user_ptr = NULL;
 
-	    return ConstMemoryDesc ();
+            if (ret_token)
+                *ret_token = ConstMemory();
+            return Result::Success;
 	}
 
 	Token * const token = cur_el->data;
@@ -58,32 +69,35 @@ public:
 	if (ret_user_ptr != NULL)
 	    *ret_user_ptr = token;
 
-	ConstMemoryDesc const ret_mem = token->str->getMemoryDesc ();
-
 	cur_el = cur_el->next;
 
-	return ret_mem;
+        if (ret_token)
+            *ret_token = token->str->mem();
+        return Result::Success;
     }
 
-    void getPosition (PositionMarker * const ret_pmark /* non-null */)
-	       throw (InternalException)
+    mt_throws Result getPosition (Pargen::TokenStream::PositionMarker * const mt_nonnull ret_pmark)
     {
 	ret_pmark->body.ptr = cur_el;
+        return Result::Success;
     }
 
-    void setPosition (PositionMarker const * const pmark /* non-null */)
-	       throw (InternalException)
+    mt_throws Result setPosition (Pargen::TokenStream::PositionMarker const * const mt_nonnull pmark)
     {
-	cur_el = static_cast < List< Ref<Token> >::Element* > (pmark->body.ptr);
+	cur_el = static_cast < List< StRef<Token> >::Element* > (pmark->body.ptr);
+        return Result::Success;
     }
 
-    MyLang::FilePosition getFilePosition ()
-				   throw (InternalException)
+    mt_throws Result getFilePosition (Pargen::FilePosition * const ret_fpos)
     {
-	return MyLang::FilePosition ();
+        if (ret_fpos)
+            *ret_fpos = Pargen::FilePosition ();
+        return Result::Success;
     }
 
-    ListTokenStream (List< Ref<Token> > * const token_list /* non-null */)
+  mt_iface_end
+
+    ListTokenStream (List< StRef<Token> > * const mt_nonnull token_list)
 	: token_list (token_list),
 	  cur_el (token_list->first)
     {
@@ -91,4 +105,7 @@ public:
 };
 
 }
+
+
+#endif /* SCRUFFY__LIST_TOKEN_STREAM__H__ */
 

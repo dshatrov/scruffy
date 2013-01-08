@@ -17,8 +17,8 @@
 */
 
 
-#ifndef __SCRUFFY__TYPE_H__
-#define __SCRUFFY__TYPE_H__
+#ifndef SCRUFFY__TYPE__H__
+#define SCRUFFY__TYPE__H__
 
 #include <mycpp/mycpp.h>
 
@@ -67,5 +67,5 @@ public:
 
 }
 
-#endif /* __SCRUFFY__TYPE_H__ */
+#endif /* SCRUFFY__TYPE__H__ */
 

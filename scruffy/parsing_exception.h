@@ -17,33 +17,46 @@
 */
 
 
-#ifndef __SCRUFFY__PARSING_EXCEPTION_H__
-#define __SCRUFFY__PARSING_EXCEPTION_H__
+#ifndef SCRUFFY__PARSING_EXCEPTION__H__
+#define SCRUFFY__PARSING_EXCEPTION__H__
 
-#include <mycpp/internal_exception.h>
 
-#include <mylang/file_position.h>
+#include <libmary/libmary.h>
+
+#include <pargen/file_position.h>
+
 
 namespace Scruffy {
 
-using namespace MyCpp;
+using namespace M;
 
-class ParsingException : public InternalException,
-			 public ExceptionBase <ParsingException>
+class ParsingException : public Exception
 {
 public:
-    const MyLang::FilePosition fpos;
+    Pargen::FilePosition const fpos;
+    StRef<String> message;
 
-    ParsingException (const MyLang::FilePosition &fpos,
-		      String    *message = String::nullString (),
-		      Exception *cause = NULL)
-	: InternalException (message, cause),
-	  fpos (fpos)
+    Ref<String> toString ()
     {
+        if (cause)
+            return makeString ("ParsingException: ", message->mem(), ": ", cause->toString()->mem());
+        else
+            return makeString ("ParsingException: ", message->mem());
+    }
+
+    ParsingException (Pargen::FilePosition const &fpos,
+		      String * const message)
+        : fpos (fpos),
+          message (message)
+    {
+        abort();
+        if (!this->message)
+            this->message = st_grab (new (std::nothrow) String);
     }
 };
 
 }
 
-#endif /* __SCRUFFY__PARSING_EXCEPTION_H__ */
+
+#endif /* SCRUFFY__PARSING_EXCEPTION__H__ */
 

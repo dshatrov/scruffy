@@ -17,8 +17,8 @@
 */
 
 
-#ifndef __SCRUFFY__CPP_H__
-#define __SCRUFFY__CPP_H__
+#ifndef SCRUFFY__CPP_H__
+#define SCRUFFY__CPP_H__
 
 #include <mycpp/mycpp.h>
 
@@ -2570,5 +2570,5 @@ public:
 
 } // namespace Scruffy
 
-#endif /* __SCRUFFY__CPP_H__ */
+#endif /* SCRUFFY__CPP_H__ */
 

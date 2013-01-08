@@ -17,23 +17,25 @@
 */
 
 
-#include <mycpp/io.h>
+#include <libmary/libmary.h>
 
 #include <scruffy/pp_item_stream.h>
+
 
 // Internal
 #define DEBUG_INT(a)
 
-using namespace MyCpp;
+
+using namespace M;
 
 namespace Scruffy {
     
 PpItemStream::PpItemResult
-PpItemStream::getWhitespace (Ref<Whitespace> *whsp)
+PpItemStream::getWhitespace (StRef<Whitespace> *whsp)
     throw (InternalException,
 	   ParsingException)
 {
-    Ref<PositionMarker> pmark = getPosition ();
+    StRef<PositionMarker> pmark = getPosition ();
 
   DEBUG_INT (
     errf->print ("Scruffy.PpItemStream.getWhitespace: "
@@ -41,7 +43,7 @@ PpItemStream::getWhitespace (Ref<Whitespace> *whsp)
 	 .pendl ();
   );
 
-    Ref<PpItem> pp_item;
+    StRef<PpItem> pp_item;
     PpItemResult pres;
     pres = getNextItem (&pp_item);
     if (pres != PpItemNormal) {
@@ -79,13 +81,13 @@ PpItemStream::getWhitespace (Ref<Whitespace> *whsp)
 }
 
 PpItemStream::PpItemResult
-PpItemStream::getPpToken (Ref<PpToken> *pp_token)
+PpItemStream::getPpToken (StRef<PpToken> *pp_token)
     throw (InternalException,
 	   ParsingException)
 {
-    Ref<PositionMarker> pmark = getPosition ();
+    StRef<PositionMarker> pmark = getPosition ();
 
-    Ref<PpItem> pp_item;
+    StRef<PpItem> pp_item;
     PpItemResult pres;
     pres = getNextItem (&pp_item);
     if (pres != PpItemNormal) {
@@ -111,14 +113,14 @@ PpItemStream::getPpToken (Ref<PpToken> *pp_token)
 }
 
 PpItemStream::PpItemResult
-PpItemStream::getNextPpToken (Ref<PpToken> *pp_token)
+PpItemStream::getNextPpToken (StRef<PpToken> *pp_token)
     throw (InternalException,
 	   ParsingException)
 {
-    Ref<PositionMarker> pmark = getPosition ();
+    StRef<PositionMarker> pmark = getPosition ();
 
     for (;;) {
-	Ref<PpItem> pp_item;
+	StRef<PpItem> pp_item;
 	PpItemResult pres;
 	pres = getNextItem (&pp_item);
 	if (pres != PpItemNormal) {
@@ -137,8 +139,7 @@ PpItemStream::getNextPpToken (Ref<PpToken> *pp_token)
 	}
     }
 
-    /* Unreachable */
-    abortIfReached ();
+    unreachable ();
 
     if (pp_token != NULL)
 	*pp_token = NULL;
