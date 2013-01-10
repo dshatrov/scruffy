@@ -1237,12 +1237,14 @@ CppPreprocessor::do_translateIfDirective (PpItemStream *pp_stream,
     StRef<Grammar> grammar = create_cpp_cond_grammar ();
     optimizeGrammar (grammar);
 
+    StRef<StReferenced> cpp_element_container;
     ParserElement *cpp_element = NULL;
     parse (token_stream,
 	   NULL,
 	   NULL /* user_data */,
 	   grammar,
 	   &cpp_element,
+           &cpp_element_container,
 	   "default",
 	   Pargen::createDefaultParserConfig (),
 	   false /* debug_dump */);
