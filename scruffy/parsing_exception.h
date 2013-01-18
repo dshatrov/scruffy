@@ -49,7 +49,6 @@ public:
         : fpos (fpos),
           message (message)
     {
-        abort();
         if (!this->message)
             this->message = st_grab (new (std::nothrow) String);
     }
