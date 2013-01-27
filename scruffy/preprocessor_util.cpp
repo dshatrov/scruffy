@@ -722,7 +722,7 @@ matchIdentifier (UnicharStream *unichar_stream)
  *     pp-number E sign
  *     pp-number .
  */
-Size
+unsigned long
 matchPpNumber (UnicharStream *unichar_stream)
     throw (ParsingException,
 	   InternalException)
