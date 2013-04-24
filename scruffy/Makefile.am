@@ -4,7 +4,7 @@ COMMON_CFLAGS =			\
 	$(THIS_CFLAGS)
 
 if !PLATFORM_WIN32
-    COMMON_CFLAGS += -rdynamic
+#    COMMON_CFLAGS += -rdynamic
 endif
 
 AM_CFLAGS   += -std=gnu99 $(COMMON_CFLAGS)
